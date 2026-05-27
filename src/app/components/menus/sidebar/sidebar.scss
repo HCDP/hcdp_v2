@@ -1,0 +1,146 @@
+.header-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px 8px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  margin-bottom: 8px;
+
+  .back-button {
+    flex-shrink: 0;
+  }
+
+  .breadcrumbs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: #666;
+
+    .crumb {
+      cursor: pointer;
+      transition: color 0.2s ease;
+
+      &:hover {
+        color: #000;
+        text-decoration: underline;
+      }
+
+      &.active-crumb {
+        font-weight: 500;
+        color: #333;
+        cursor: default;
+        pointer-events: none;
+        text-decoration: none;
+      }
+    }
+
+    .home-crumb {
+      font-size: 1.1rem;
+      height: 1.1rem;
+      width: 1.1rem;
+      line-height: 1.1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      &:hover {
+        text-decoration: none; 
+      }
+    }
+
+    .separator {
+      color: #aaa;
+      font-size: 0.8rem;
+    }
+  }
+}
+
+// ---------------------------------------------
+
+
+.container {
+  padding: 10px;
+}
+
+.nav-container {
+  display: grid;
+  grid-template-areas: "stack";
+}
+
+.button-container > * {
+  margin: 10px;
+}
+
+.category-chevron {
+  float: right;
+}
+
+.selector-container {
+  grid-area: stack;
+  width: 100%;
+}
+
+.category-item {
+  color: var(--mat-sys-on-primary-container);
+}
+
+.dataset-item {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.back-button {
+  color: var(--mat-sys-on-primary-container);
+}
+
+
+.enter-previous {
+  animation: slide-in-previous .75s;
+}
+@keyframes slide-in-previous {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.exit-previous {
+  animation: slide-out-previous .75s;
+}
+@keyframes slide-out-previous {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(150%);
+  }
+}
+
+
+.enter-next {
+  animation: slide-in-next .75s;
+}
+@keyframes slide-in-next {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.exit-next {
+  animation: slide-out-next .75s;
+}
+@keyframes slide-out-next {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-120%);
+  }
+}

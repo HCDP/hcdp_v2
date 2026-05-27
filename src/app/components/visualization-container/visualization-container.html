@@ -1,0 +1,14 @@
+<div class="vis-container">
+  <div #dataContainer class="data-container" [ngStyle]="{'height': dataContainerWidth}">
+    <app-data-panel></app-data-panel>
+    
+  </div>
+  <div #dragbar (touchstart)="startResize(true)" (mousedown)="startResize(false)" class="resize-bar">
+    <div class="line"></div>
+  </div>
+  <div #mapContainer class="map-container">
+    <app-map #map
+    [imageContainer]="mapContainerRef">
+    </app-map>
+  </div>
+</div>

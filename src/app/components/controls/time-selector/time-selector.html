@@ -1,0 +1,20 @@
+<form class="example-form">
+  <mat-form-field>
+    <mat-label>Time</mat-label>
+    
+    <input matInput 
+           [matTimepicker]="timepicker" 
+           mask="Hh:m0" 
+           [leadZeroDateTime]="true" 
+           [dropSpecialCharacters]="false"
+           
+           (keydown)="onColonPress($event)"
+           (input)="onTimeInput($event)"
+           (blur)="onTimeBlur($event)"
+           >
+           
+    <mat-timepicker-toggle matIconSuffix [for]="timepicker"></mat-timepicker-toggle>
+    <mat-timepicker #timepicker [interval]="intervalStr()"></mat-timepicker>
+    
+  </mat-form-field>
+</form>

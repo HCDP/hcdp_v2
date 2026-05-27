@@ -1,0 +1,21 @@
+#map {
+  height: 100%;
+  width: 100%;
+}
+
+.map-container {
+  height: 100%;
+  width: 100%;
+}
+
+.cursor-grabbing {
+  cursor: grabbing !important;
+}
+
+.cursor-crosshair {
+  cursor: crosshair;
+}
+
+::ng-deep .leaflet-control-scale-line {
+  font-size: 15px;
+}

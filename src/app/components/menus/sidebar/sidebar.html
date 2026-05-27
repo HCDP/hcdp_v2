@@ -1,0 +1,72 @@
+<div class="container">
+  <h2>Browse Datasets</h2>
+  
+  @if (hierarchyResource.isLoading()) {
+    <div class="loading-state">Loading datasets...</div>
+  }
+  @else if (hierarchyResource.error()) {
+    <div class="error-state">Failed to load datasets.</div>
+  }
+  @else {
+    <div class="nav-container">
+      @for(activeNodes of [currentNodes()]; track activeNodes) {
+        <div class="selector-container" [animate.enter]="slideNext() ? 'enter-next' : 'enter-previous'" [animate.exit]="slideNext() ? 'exit-next' : 'exit-previous'">
+          
+          @if(parents().length > 0) {
+            <div class="header-row">
+              <button matIconButton class="back-button" aria-label="Back to previous category" (click)="previousMenu()">
+                <mat-icon>arrow_back</mat-icon>
+              </button>
+
+              <div class="breadcrumbs">
+                <mat-icon class="crumb home-crumb" (click)="goHome()" aria-label="Go to Root Menu">home</mat-icon>
+                
+                @for(crumb of breadcrumbs(); track $index; let last = $last) {
+                  <span class="separator">/</span>
+                  <span class="crumb" [class.active-crumb]="last" (click)="!last && jumpToBreadcrumb($index)">
+                    {{ crumb }}
+                  </span>
+                }
+              </div>
+            </div>
+          }
+          
+          <mat-nav-list>
+            @for(node of currentNodes(); track node.label) {
+                @if(node.type == "category") {
+                  <mat-list-item (click)="nextMenu($any(node))">
+                    <div matListItemTitle class="category-item">
+                      {{node.label}}
+                      <mat-icon class="category-chevron">chevron_right</mat-icon>
+                    </div>
+                  </mat-list-item>
+                }
+                @else if(node.type == "dataset") {
+                  <div class="dataset-item">
+                    <mat-accordion>
+                      <mat-expansion-panel>
+                        <mat-expansion-panel-header>
+                          <mat-panel-title>{{node.label}}</mat-panel-title>
+                        </mat-expansion-panel-header>
+                        <p>
+                          {{$any(node).description}}
+                        </p>
+                        <div class="button-container">
+                          <button matButton="filled" aria-label="Visualize dataset data" (click)="selectViewComponent($any(node), true)">
+                            Visualize Data
+                          </button>
+                          <button matButton="filled" aria-label="Export dataset data" (click)="selectViewComponent($any(node), false)">
+                            Export Data 
+                          </button>
+                        </div>
+                      </mat-expansion-panel>
+                    </mat-accordion>
+                  </div>
+                }
+            }
+          </mat-nav-list>
+        </div>
+      }
+    </div>
+  }
+</div>

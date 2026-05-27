@@ -1,0 +1,571 @@
+import { Component, ViewChild, ElementRef, AfterViewInit, OnDestroy, OnInit, NgZone } from '@angular/core';
+import { TabBase } from "../tab-base/tab-base";
+import { NgApexchartsModule } from "ng-apexcharts";
+import { STANDARD_PERIOD_PRECEDENT } from "../../../models/datasets/dataset";
+import uPlot, { AlignedData, Options, Plugin } from 'uplot';
+
+import {
+  ChartComponent,
+  ApexAxisChartSeries,
+  ApexChart,
+  ApexXAxis,
+  ApexTitleSubtitle
+} from "ng-apexcharts";
+import { DateTime, DateTimeUnit } from 'luxon';
+
+export type ChartOptions = {
+  series: ApexAxisChartSeries;
+  chart: ApexChart;
+  xaxis: ApexXAxis;
+  title: ApexTitleSubtitle;
+};
+
+@Component({
+  selector: 'app-timeseries',
+  imports: [ NgApexchartsModule ],
+  templateUrl: './timeseries.html',
+  styleUrl: './timeseries.scss',
+})
+export class Timeseries extends TabBase {
+  @ViewChild('chartContainer') chartContainer!: ElementRef;
+  private uplotInst?: uPlot;
+  
+  // Track the current active interaction mode
+  currentMode: 'zoom' | 'pan' = 'zoom';
+
+  constructor(private ngZone: NgZone) {
+    super();
+  }
+
+  ngAfterViewInit() {
+    const data = this.generateUPlotData();
+
+    const opts: Options = {
+      title: "Temperature (1960 - Present)",
+      id: "weather-chart",
+      class: "my-weather-chart",
+      width: 1000, 
+      height: 400,
+      plugins: [
+        this.wheelZoomPlugin(),
+        this.panPlugin() // Inject the scroll-to-zoom logic here!
+      ],
+      series: [
+        {}, 
+        {
+          label: "Temp (°C)",
+          stroke: "#00458f",
+          fill: "#d7e3ff",
+          width: 1,
+        }
+      ],
+      axes: [
+        {}, 
+        {
+          values: (u, vals) => vals.map(v => v.toFixed(1) + '°'),
+        }
+      ],
+      scales: {
+    x: {
+      time: true,
+      range: (u, min, max) => {
+        // 1. Get the absolute boundaries of your dataset
+        const dataX = u.data[0];
+        const dataMin = dataX[0];
+        const dataMax = dataX[dataX.length - 1];
+
+        // Replace 86400 with 3600 for hourly data!
+        const timeStepSeconds = 86400; 
+        const minZoomWindow = timeStepSeconds * 10; 
+
+        // 2. Lock Zoom Out (Clamp to data bounds)
+        let newMin = Math.max(dataMin, min);
+        let newMax = Math.min(dataMax, max);
+
+        // 3. Lock Zoom In (Prevent zooming closer than 10 points)
+        if (newMax - newMin < minZoomWindow) {
+          // Keep the zoom centered on wherever the user was looking
+          const center = (newMax + newMin) / 2;
+          newMin = center - (minZoomWindow / 2);
+          newMax = center + (minZoomWindow / 2);
+
+          // Edge case: If forcing the 10-point window pushes the view 
+          // past the start or end of the data, snap it back to the edge.
+          if (newMin < dataMin) {
+            newMin = dataMin;
+            newMax = dataMin + minZoomWindow;
+          }
+          if (newMax > dataMax) {
+            newMax = dataMax;
+            newMin = dataMax - minZoomWindow;
+          }
+        }
+
+        return [newMin, newMax];
+      }
+    }}
+    };
+
+    this.ngZone.runOutsideAngular(() => {
+      this.uplotInst = new uPlot(opts, data, this.chartContainer.nativeElement);
+    });
+  }
+
+  ngOnDestroy() {
+    if (this.uplotInst) {
+      this.uplotInst.destroy();
+    }
+  }
+
+  /**
+   * The custom plugin that adds mouse-wheel zooming based on cursor position.
+   */
+  private wheelZoomPlugin(): Plugin {
+    const factor = 0.75; // The zoom multiplier (lower means faster zoom)
+
+    return {
+      hooks: {
+        ready: (u: uPlot) => {
+          // u.over is the interactive DOM element overlaid on the canvas
+          const over = u.over;
+
+          over.addEventListener("wheel", (e: WheelEvent) => {
+            e.preventDefault(); // Stop the whole page from scrolling
+
+            // Get the current mouse position relative to the chart data area
+            const { left, top } = u.cursor;
+            
+            if (left === undefined || top === undefined || left < 0 || top < 0) {
+                return; // Mouse is out of bounds
+            }
+
+            // Convert the X pixel position into an actual X-axis value (timestamp)
+            const xVal = u.posToVal(left, "x");
+
+            // Get the current min/max of the X axis
+            const xMin = u.scales['x'].min!;
+            const xMax = u.scales['x'].max!;
+
+            // Calculate distance from cursor to left and right edges
+            const leftDist = xVal - xMin;
+            const rightDist = xMax - xVal;
+
+            // Determine if we are zooming in or out based on wheel scroll direction
+            const zoomDir = Math.sign(e.deltaY); 
+            
+            // Calculate the new boundaries
+            let newMin, newMax;
+            if (zoomDir < 0) {
+              // Zoom In
+              newMin = xVal - (leftDist * factor);
+              newMax = xVal + (rightDist * factor);
+            } else {
+              // Zoom Out
+              newMin = xVal - (leftDist / factor);
+              newMax = xVal + (rightDist / factor);
+            }
+
+            // Apply the new scale boundaries to the X axis
+            // (You can also do this for the Y axis if you want 2D zooming)
+            u.setScale("x", { min: newMin, max: newMax });
+          });
+        }
+      }
+    };
+  }
+
+  exportAsImage() {
+  const chart = this.uplotInst;
+  if (!chart) return;
+
+  // 1. Grab your theme colors from the container DOM
+  const styles = getComputedStyle(this.chartContainer.nativeElement);
+  const bgColor = styles.getPropertyValue('--mat-sys-surface').trim() || '#ffffff';
+
+  this.ngZone.runOutsideAngular(() => {
+    // 2. Clear out any active cursor crosshairs so they don't get frozen into the image
+    const currentCursorLeft = chart.cursor.left;
+    const currentCursorTop = chart.cursor.top;
+    
+    // Hide cursor temporarily
+    if (chart.cursor) {
+      chart.cursor.left = -10;
+      chart.cursor.top = -10;
+      chart.setCursor({ left: -10, top: -10 });
+    }
+
+    // 3. Force uPlot to fully redraw its canvas with a solid background color
+    // This perfectly flattens the axes, text, grids, and series onto the background
+    chart.ctx.save();
+    chart.ctx.globalCompositeOperation = 'destination-over'; // Paint background BEHIND the chart
+    chart.ctx.fillStyle = bgColor;
+    chart.ctx.fillRect(0, 0, chart.ctx.canvas.width, chart.ctx.canvas.height);
+    chart.ctx.restore();
+
+    // 4. Extract the pristine data URL directly from the active uPlot canvas
+    const dataUrl = chart.ctx.canvas.toDataURL('image/png');
+
+    // 5. Restore the user's cursor back to where it was so the app doesn't glitch
+    if (chart.cursor && currentCursorLeft !== undefined && currentCursorTop !== undefined) {
+      chart.setCursor({ left: currentCursorLeft, top: currentCursorTop });
+    }
+
+    // 6. Trigger the automatic browser download
+    const link = document.createElement('a');
+    link.download = `weather-chart-${new Date().toISOString().split('T')[0]}.png`;
+    link.href = dataUrl;
+    link.click();
+
+    // 7. Force a quick internal uPlot redraw to clear the 'destination-over' background artifact from the screen
+    chart.redraw();
+  });
+}
+
+  private generateUPlotData(): AlignedData {
+  let start = DateTime.fromISO("1960-01-01");
+  let end = DateTime.now();
+  let date = start;
+  
+  const times: number[] = [];
+  // Notice the array now explicitly accepts nulls
+  const values: (number | null)[] = []; 
+
+  while (date < end) {
+    times.push(date.toSeconds());
+    
+    // Simulate a sensor failure roughly 5% of the time
+    const sensorOffline = Math.random() > 0.95;
+
+    if (sensorOffline) {
+      // CRITICAL: Push null to keep the array length identical to the times array
+      values.push(null);
+    } else {
+      // Generate the normal seasonal wave
+      const seasonPhase = Math.sin((date.toSeconds() / 31536000) * Math.PI * 2);
+      const value = 20 + (seasonPhase * 15) + ((Math.random() * 6) - 3);
+      values.push(value);
+    }
+    
+    date = date.plus({ days: 1 }); 
+  }
+
+  return [times, values];
+}
+
+
+/**
+   * Switches the chart mode and updates uPlot configuration dynamically
+   */
+setMode(mode: 'zoom' | 'pan') {
+  this.currentMode = mode;
+  
+  const chart = this.uplotInst;
+  if (!chart) return; 
+
+  this.ngZone.runOutsideAngular(() => {
+    // Check if both cursor and drag objects are safely initialized on the instance
+    if (chart.cursor && chart.cursor.drag) {
+      if (mode === 'zoom') {
+        chart.cursor.drag.x = true;
+        chart.cursor.drag.setScale = true;
+      } else {
+        chart.cursor.drag.x = false;
+        chart.cursor.drag.setScale = false;
+      }
+    }
+    
+    this.updateCursorStyle();
+  });
+}
+
+  /**
+   * Sets the visual CSS cursor over the chart depending on active mode
+   */
+  private updateCursorStyle() {
+  const chart = this.uplotInst;
+  if (!chart) return;
+
+  const over = chart.over;
+  over.style.cursor = this.currentMode === 'pan' ? 'grab' : 'crosshair';
+}
+
+  // ==========================================
+  // UPDATED PAN PLUGIN
+  // ==========================================
+  private panPlugin(): Plugin {
+    let isDragging = false;
+    let startX = 0;
+    let startMin = 0;
+    let startMax = 0;
+
+    return {
+      hooks: {
+        ready: (u: uPlot) => {
+          const over = u.over;
+
+          over.addEventListener('mousedown', (e: MouseEvent) => {
+            // ONLY execute pan math if we are explicitly in 'pan' mode
+            if (this.currentMode === 'pan' && e.button === 0) {
+              isDragging = true;
+              startX = e.clientX;
+              startMin = u.scales['x'].min!;
+              startMax = u.scales['x'].max!;
+              over.style.cursor = 'grabbing';
+            }
+          });
+
+          document.addEventListener('mouseup', () => {
+            if (isDragging) {
+              isDragging = false;
+              this.updateCursorStyle(); // Revert back to 'grab' instead of 'grabbing'
+            }
+          });
+
+          document.addEventListener('mousemove', (e: MouseEvent) => {
+            if (!isDragging || this.currentMode !== 'pan') return;
+
+            const dx = e.clientX - startX;
+            const cssWidth = over.getBoundingClientRect().width;
+            const timeSpan = startMax - startMin;
+            const timeShift = (dx / cssWidth) * timeSpan;
+
+            u.setScale('x', { 
+              min: startMin - timeShift, 
+              max: startMax - timeShift 
+            });
+          });
+        }
+      }
+    };
+  }
+  // @ViewChild("chartWrapper", { static: false }) chartWrapper!: ElementRef;
+  // @ViewChild("chart") chart: ChartComponent;
+  // public chartOptions: any;
+
+  // private period: DateTimeUnit = "day"
+  // private zoomTimeout: any;
+
+  // private data: {date: DateTime, value: number}[] = [];
+
+  // private lodData: {[period: string]: [number, number][]} = {};
+
+
+  // getNextGrouping(period: DateTimeUnit): DateTimeUnit {
+  //   let next = STANDARD_PERIOD_PRECEDENT[STANDARD_PERIOD_PRECEDENT.length - 1];
+  //   let index = STANDARD_PERIOD_PRECEDENT.indexOf(period) + 1;
+  //   if(index < STANDARD_PERIOD_PRECEDENT.length) {
+  //     next = STANDARD_PERIOD_PRECEDENT[index];
+  //   }
+  //   return next;
+  // }
+
+
+  // computeLODData(start: DateTime, end: DateTime) {
+  //   let diff = end.diff(start);
+  //   let maxPoints = 200
+
+  //   let period = this.period;
+  //   let periodDiff = diff.as(period);
+  //   console.log(period, periodDiff);
+  //   while(periodDiff > maxPoints && period != STANDARD_PERIOD_PRECEDENT[STANDARD_PERIOD_PRECEDENT.length - 1]) {
+  //     period = this.getNextGrouping(period);
+  //     periodDiff = diff.as(period);
+  //   }
+  //   console.log(period);
+
+  //   let lodData = this.lodData[period];
+  //   if(!lodData) {
+  //     let averageData: {[timestamp: number]: { agg: number, count: number }} = {};
+  //     for(let point of this.data) {
+  //       let group = point.date.startOf(period).toMillis();
+  //       let groupAvgData = averageData[group];
+  //       if(!groupAvgData) {
+  //         groupAvgData = { agg: 0, count: 0 };
+  //         averageData[group] = groupAvgData;
+  //       }
+  //       groupAvgData.agg += point.value;
+  //       groupAvgData.count++;
+  //     }
+  //     lodData = [];
+  //     for(let group in averageData) {
+  //       let timestamp = Number(group)
+  //       let groupAvgData = averageData[timestamp];
+  //       let value = groupAvgData.agg / groupAvgData.count;
+  //       lodData.push([timestamp, value]);
+  //     }
+  //     lodData.sort((a, b) => a[0] - b[0]);
+
+
+  //     this.lodData[period] = lodData;
+  //   }
+  //   return lodData;
+  // }
+
+  // // getAggregatedChartData(start: DateTime, end: DateTime) {
+  // //   let diff = start.diff(end);
+  // //   let maxPoints = 200
+
+  // //   let period = this.period;
+  // //   let periodDiff = diff.as(period);
+  // //   while(periodDiff > maxPoints && period != PERIOD_PRECEDENT[PERIOD_PRECEDENT.length - 1]) {
+  // //     period = this.getNextGrouping(period);
+  // //     periodDiff = diff.as(period);
+  // //   }
+
+  // //   console.log(period);
+
+  // //   let visibleData = this.data.filter((item) => item.date >= start && item.date <= end);
+  // //   let averageData: {[timestamp: number]: { agg: number, count: number }} = {};
+  // //   for(let point of visibleData) {
+  // //     let group = point.date.startOf(period).toMillis();
+  // //     let groupAvgData = averageData[group];
+  // //     if(!groupAvgData) {
+  // //       groupAvgData = { agg: 0, count: 0 };
+  // //       averageData[group] = groupAvgData;
+  // //     }
+  // //     groupAvgData.agg += point.value;
+  // //     groupAvgData.count++;
+  // //   }
+  // //   let aggData: [number, number][] = [];
+  // //   for(let group in averageData) {
+  // //     let timestamp = Number(group)
+  // //     let groupAvgData = averageData[timestamp];
+  // //     let value = groupAvgData.agg / groupAvgData.count;
+  // //     aggData.push([timestamp, value]);
+  // //   }
+
+    
+
+  // //   return aggData;
+  // // }
+
+
+  // handleZoom(min: number, max: number) {
+  //   // 1. Keep the debounce! It is still absolutely necessary to prevent event thrashing.
+  //   if (this.zoomTimeout) {
+  //     clearTimeout(this.zoomTimeout);
+  //   }
+
+  //   this.zoomTimeout = setTimeout(() => {
+  //     let viewRangeStart = DateTime.fromMillis(min);
+  //     let viewRangeEnd = DateTime.fromMillis(max);
+
+  //     // 2. Compute the LOD (This still returns the full 64 years at the new resolution)
+  //     let fullAggData = this.computeLODData(viewRangeStart, viewRangeEnd);
+
+  //     // 3. Calculate a buffer window (e.g., 1 view-width on the left, 1 on the right)
+  //     // This gives the chart enough data to connect the lines off-screen and allows for smooth panning
+  //     let viewportWidthMs = max - min;
+  //     let bufferMin = min - viewportWidthMs;
+  //     let bufferMax = max + viewportWidthMs;
+
+  //     // 4. Filter the massive array down to ONLY the buffered window
+  //     let windowedData = fullAggData.filter(point => point[0] >= bufferMin && point[0] <= bufferMax);
+
+  //     this.chart.updateOptions({
+  //       series: [{
+  //         name: "XYZ MOTORS",
+  //         data: windowedData // Pass the filtered data here!
+  //       }],
+  //       xaxis: {
+  //         min: min,
+  //         max: max
+  //       }
+  //     }, true, false);
+  //   }, 500); 
+  // }
+
+  // constructor() {
+  //   super();
+    
+
+  //   this.chartOptions = {
+  //     series: [
+  //       {
+  //         name: 'XYZ MOTORS',
+  //         data: [],
+  //       },
+  //     ],
+  //     chart: {
+  //       type: 'area',
+  //       stacked: false,
+  //       height: 350,
+  //       zoom: {
+  //         type: 'x',
+  //         enabled: true,
+  //         autoScaleYaxis: true,
+  //       },
+  //       events: {
+  //         // 2. Listen for zoom and pan events!
+  //         zoomed: (chartContext: any, { xaxis }: any) => this.handleZoom(xaxis.min, xaxis.max),
+  //         scrolled: (chartContext: any, { xaxis }: any) => this.handleZoom(xaxis.min, xaxis.max)
+  //       },
+  //       toolbar: {
+  //         autoSelected: 'zoom',
+  //       },
+  //     },
+  //     dataLabels: {
+  //       enabled: false,
+  //     },
+  //     markers: {
+  //       size: 0,
+  //     },
+  //     title: {
+  //       text: 'Stock Price Movement',
+  //       align: 'left',
+  //     },
+  //     fill: {
+  //       type: 'gradient',
+  //       gradient: {
+  //         shadeIntensity: 1,
+  //         inverseColors: false,
+  //         opacityFrom: 0.5,
+  //         opacityTo: 0,
+  //         stops: [0, 90, 100],
+  //       },
+  //     },
+  //     yaxis: {
+  //       labels: {
+  //         formatter: function (val: number) {
+  //           return (val / 1000000).toFixed(0)
+  //         },
+  //       },
+  //       title: {
+  //         text: 'Price',
+  //       },
+  //     },
+  //     xaxis: {
+  //       type: 'datetime',
+  //     },
+  //     tooltip: {
+  //       shared: false,
+  //       y: {
+  //         formatter: function (val: number) {
+  //           return (val / 1000000).toFixed(0)
+  //         },
+  //       },
+  //     },
+  //   }
+
+  //   let start = DateTime.fromISO("1960-01-01");
+  //   let end = DateTime.now();
+  //   let date = start;
+  //   let data = this.data;
+  //   while(date < end) {
+  //     let value = Math.random() * 50;
+  //     date = date.plus({days: 1})
+  //     data.push({value, date});
+  //   }
+  //   this.chartOptions.series[0].data = this.computeLODData(start, end);
+    
+  // }
+
+
+  // ngAfterViewInit() {
+    
+  // }
+
+  // ngOnDestroy() {
+    
+  // }
+}

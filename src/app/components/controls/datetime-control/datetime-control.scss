@@ -1,0 +1,39 @@
+.control-button {
+  width: 30px;
+  height: 100%;
+  padding: 2px;
+  margin: 2px;
+  border-radius: 10px;
+}
+
+.button-container {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.date-container {
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+
+.main-container {
+  position: relative;
+  width: max-content;
+  padding: 5px;
+  display: inline-flex;
+  align-items: stretch; /* Changed from center to stretch */
+  justify-content: center;
+  height: fit-content;
+}
+
+
+:host ::ng-deep app-datetime-selector .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+:host ::ng-deep .control-button.mat-mdc-button-base .mat-icon {
+  min-height: unset !important;
+  margin: auto !important;
+}

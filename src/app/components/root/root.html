@@ -1,0 +1,18 @@
+<div class="root-container">
+  <app-topbar [sidenav]="sidenav"></app-topbar>
+  <mat-sidenav-container class="sidenav-container">
+    
+    <mat-sidenav #sidenav class="sidenav">
+      <app-sidebar [visualizationSelected]="visualizationSelected"></app-sidebar>
+    </mat-sidenav>
+    
+    <mat-sidenav-content>
+      @if(visualizationSelected()) {
+        <app-visualization-container></app-visualization-container>
+      }
+      @else {
+        <app-export-container></app-export-container>
+      }
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>
