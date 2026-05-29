@@ -5,7 +5,7 @@
     </div>
   </mat-tab>
   @for (tab of tabs; track tab) {
-    <mat-tab [label]="tab.label">
+    <mat-tab style="background-color:red;" [label]="tab.label">
       <div class="data-tab">
         <ng-container appDynamicTabTemplate [component]="tab.component"></ng-container>
       </div>

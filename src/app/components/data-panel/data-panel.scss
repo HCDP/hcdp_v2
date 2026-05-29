@@ -10,3 +10,7 @@
 .tab-content {
   height: 100%;
 }
+
+.tab-content ::ng-deep .mat-mdc-tab-body-wrapper {
+  flex-grow: 1;
+}

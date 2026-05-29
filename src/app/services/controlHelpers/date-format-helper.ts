@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { DateTimeUnit } from 'luxon';
-import { PERIOD_PRECEDENT } from "../../models/datasets/dataset";
+import { UNIT_PRECEDENT } from '../../models/datasets/time';
 
 // "year" | "quarter" | "month" | "week" | "day" | "hour" | "minute" | "second" | "millisecond"
 
@@ -188,7 +188,7 @@ export class DateFormatHelper {
 
   checkShowTime(period: DateTimeUnit): boolean {
     let showTime = false;
-    let periodIndex = PERIOD_PRECEDENT.indexOf(period); 
+    let periodIndex = UNIT_PRECEDENT.lookup(period)!;
     if(periodIndex < 4) {
       showTime = true;
     }

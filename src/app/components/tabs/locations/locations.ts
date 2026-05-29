@@ -2,6 +2,7 @@ import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatSortModule, MatSort } from '@angular/material/sort';
 import { TabBase } from "../tab-base/tab-base";
+import { LocationSelector } from '../../controls/location-selector/location-selector';
 
 // Define the interface for our test data
 export interface LocationData {
@@ -14,7 +15,7 @@ export interface LocationData {
 
 @Component({
   selector: 'app-locations',
-  imports: [MatTableModule, MatSortModule],
+  imports: [MatTableModule, MatSortModule, LocationSelector],
   templateUrl: './locations.html',
   styleUrl: './locations.scss',
 })

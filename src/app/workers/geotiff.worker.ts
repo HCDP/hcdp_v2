@@ -2,15 +2,47 @@
 
 import * as geotiff from "geotiff";
 
-type BandData = {[bandName: string]: number[][]};
+type Images = ImageData[];
+
+type ImageData = {
+  header: ImageHeader,
+  bands: Bands
+};
+
+type ImageHeader = {
+  nCols: number,
+  nRows: number,
+  xllCorner: number,
+  yllCorner: number,
+  cellXSize: number,
+  cellYSize:  number,
+};
+
+type BandData = {
+  values: [number, number][],
+  stats: BandStats
+};
+
+type Bands = {[bandName: string]: BandData};
+
+type BandStats = {
+  min: number,
+  max: number,
+  mean: number,
+  stddev: number
+};
 
 addEventListener("message", async ({ data }) => {
-  let { buffer, customNoData, bands, id } = data;
-  let imageData: BandData[] = [];
+  let { buffer, customNoData, bands, images, id } = data;
+  let imageData: Images = [];
+
   try {
     let tiff: geotiff.GeoTIFF = await geotiff.fromArrayBuffer(buffer);
     const imageCount = await tiff.getImageCount();
     for(let imageIndex = 0; imageIndex < imageCount; imageIndex++) {
+      if(images && !images.includes(imageIndex)) {
+        continue;
+      }
       let image: geotiff.GeoTIFFImage = await tiff.getImage(imageIndex);
       // must provide upper left corner tiepoint as first tiepoint, other tiepoints not used
       let tiepoint = (await image.getTiePoints())[0];
@@ -37,25 +69,63 @@ addEventListener("message", async ({ data }) => {
         cellXSize: xScale,
         cellYSize: yScale,
       }
-      let bandData: BandData = {};
+      let bandMap: Bands = {};
+      let min: number = Infinity;
+      let max: number = -Infinity;
+      let dataAcc: number = 0;
       //package data
       for(let band of bands) {
         let raster: geotiff.TypedArray = <geotiff.TypedArray>rasters[band];
         if(raster == undefined) {
-          throw new Error("Could not find band: " + band);
+          console.warn(`Could not find band: ${band}. Skipping...`);
+          continue;
         }
-        let values = [];
+        let values: [number, number][] = [];
         for(let valueIndex = 0; valueIndex < raster.length; valueIndex++) {
           let value = raster[valueIndex];
           //the nodata values are all kinds of messed up, these need to be fixed
           if(value != noData && value != customNoData && !isNaN(value)) {
-            let valuePair = [valueIndex, value];
+            let valuePair: [number, number] = [valueIndex, value];
             values.push(valuePair);
+            dataAcc += value;
+            if(value < min) {
+              min = value;
+            }
+            if(value > max) {
+              max = value;
+            }
           }
         }
-        bandData[band] = values;
+        let mean: number = NaN;
+        let stddev: number = NaN;
+        if(values.length > 0) {
+          mean = dataAcc / values.length;
+          for(let valuePair of values) {
+            let value = valuePair[0];
+            stddev += Math.pow(value - mean, 2)
+          }
+          stddev /= values.length;
+          stddev = Math.sqrt(stddev);
+        }
+        else {
+          min = NaN;
+          max = NaN;
+        }
+        
+        bandMap[band] = {
+          values,
+          stats: {
+            min,
+            max,
+            mean,
+            stddev
+          }
+        }
       }
-      imageData.push(bandData);
+      imageData.push({
+        header,
+        bands: bandMap
+      });
     }
     postMessage({
         id,
@@ -66,8 +136,7 @@ addEventListener("message", async ({ data }) => {
     console.error(`Error processing geotiff: ${e}`);
     postMessage({
       id,
-      header: null,
-      bandData: null
+      imageData: null
     });
   }
 });
