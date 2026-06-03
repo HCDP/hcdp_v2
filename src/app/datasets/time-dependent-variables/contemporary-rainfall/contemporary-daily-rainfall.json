@@ -1,0 +1,108 @@
+{
+  "id": "contemporary_daily_rainfall",
+  "label": "Contemporary Daily Rainfall",
+  "description": "Daily rainfall from January 1 1990 to Previous day. These maps represent the amount of rainfall from midnight on the target day to midnight at the end of the day. Station rainfall data are interpolated using an automated optimized climate aided ordinary kriging methodology",
+  "vis_layout": {
+    "schema": "timeseries_standard",
+    "data": {
+      "dataset_params": {
+        "location": "hawaii",
+        "datatype": "rainfall",
+        "production": "new",
+        "period": "day"
+      },
+      "data_groups": {
+        "values": {
+          "label": "Daily Rainfall",
+          "layers": [
+            {
+              "label": "Data Map",
+              "type": "raster",
+              "params": {
+                "type": "data_map"
+              }
+            },
+            {
+              "label": "Station Data",
+              "type": "stations"
+            }
+          ],
+          "units": {
+            "stored_as": "metric",
+            "convert_as": "compute",
+            "metric": "mm",
+            "si": "in"
+          },
+          "data_range": {
+            "standard": [0, 20],
+            "extreme": [0, 250],
+            "limits": [0, null]
+          },
+          "colors": ["viridis", "monochromatic", "nws_radar", "turbo", "usgs"],
+          "default_color": "viridis"
+        }
+      }
+
+      "raster_params": {
+        "type": "data_map",
+        "extent": "statewide"
+      },
+      "station_params": {
+        "fill": "partial"
+      },
+      ,
+    }
+    
+    "defaults": {
+      "fill": "partial"
+    }
+    "tabs": {
+      "options": {
+        
+      },
+      "locations": {
+
+      },
+      "timeseries": {
+
+      }
+    },
+
+    "timeseries": {
+      "unit": "day",
+      "period": 1,
+      "range": "query"
+    },
+    "data_layer_groups": {
+      "data": {
+        "label": "Daily Rainfall",
+        "description": "Daily Rainfall Values",
+        "data_range": {
+          "standard": [0, 20],
+          "extreme": [0, 250],
+          "limits": [0, null]
+        },
+        "units": {
+          "stored_as": "metric",
+          "convert_as": "compute",
+          "metric": "mm",
+          "si": "in"
+        },
+        "colors": ["viridis", "monochromatic", "nws_radar", "turbo", "usgs"],
+        "default_color": "viridis",
+        "layers": {
+          
+          "data_map": {
+            "label": "Data Map",
+            "type": "raster"
+            
+          },
+          "stations": {
+            "label": "Station Data",
+            "type": "points"
+          }
+        }
+      }
+    }
+  }
+}

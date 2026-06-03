@@ -1,4 +1,4 @@
-import { DateTime, DateTimeUnit, Duration, DurationLikeObject, DurationOptions } from "luxon";
+import { DateTime, DateTimeUnit, Duration, DurationOptions } from "luxon";
 import { TwoWayMap } from "../util/util";
 
 export type StandardDateTimeUnit = "minute" | "hour" | "day" | "month" | "year"

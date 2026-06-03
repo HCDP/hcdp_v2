@@ -1,0 +1,16 @@
+<div id="legend">
+  <div class="title-container">
+    <span>{{getHeader()}}</span>
+  </div>
+  <div class="scale-container">
+    <div class="label-buffer">
+      <div #colors class="colors" [style.background-image]="colorGradient"></div>
+    </div>
+    <div class="tick-marks">
+      <span *ngFor="let interval of intervalLabels">-</span>
+    </div>
+    <div class="numeric-markers">
+      <span *ngFor="let interval of intervalLabels">{{interval}}</span>
+    </div>
+  </div>
+</div>

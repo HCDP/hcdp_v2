@@ -46,7 +46,4 @@ Thumbs.db
 /e2e/*.map
 
 # API key
-/src/assets/APIToken.txt
-/src/assets/TestToken.txt
 /src/assets/config.json
-/src/assets/api_config.json
