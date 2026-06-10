@@ -1,4 +1,3 @@
-
 <div class="topbar-container">
   <button matMiniFab aria-label="Toggle dataset category selector" (click)="toggleSidenav()">
     <mat-icon>menu</mat-icon>
@@ -6,4 +5,23 @@
   <button matMiniFab aria-label="Open settings" (click)="openSettings()">
     <mat-icon>settings</mat-icon>
   </button>
+
+  @if(dataset) {
+    <mat-expansion-panel #descriptionPanel class="topbar-expansion">
+      
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          {{dataset.label}}
+        </mat-panel-title>
+        @if(!descriptionPanel.expanded) {
+          <mat-panel-description>
+            {{dataset.description}}
+          </mat-panel-description>
+        }
+      </mat-expansion-panel-header>
+      
+      <p class="expanded-description">{{dataset.description}}</p>
+      
+    </mat-expansion-panel>
+  }
 </div>

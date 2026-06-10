@@ -1,4 +1,5 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
+import { HCDPDatasetVisualization } from '../../../models/datasets/dataset';
 
 @Component({
   selector: 'app-tab-base',
@@ -7,5 +8,5 @@ import { Component, Input } from '@angular/core';
   styleUrl: './tab-base.scss',
 })
 export abstract class TabBase {
-  @Input() dataset: any;
+  dataset = input.required<HCDPDatasetVisualization>();
 }

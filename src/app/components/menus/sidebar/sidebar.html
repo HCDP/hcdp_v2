@@ -2,7 +2,7 @@
   <h2>Browse Datasets</h2>
   
   @if (hierarchyResource.isLoading()) {
-    <div class="loading-state">Loading datasets...</div>
+    <mat-spinner></mat-spinner>
   }
   @else if (hierarchyResource.error()) {
     <div class="error-state">Failed to load datasets.</div>

@@ -1,14 +1,27 @@
-<mat-tab-group class="tab-content" color="accent">
-  <mat-tab label="Dataset Options">
-    <div class="data-tab">
-      <app-dataset-options></app-dataset-options>
-    </div>
-  </mat-tab>
+
+@if(datasetResource.isLoading()) {
+  <mat-spinner></mat-spinner>
+}
+@else if(datasetResource.error(); as err) {
+  <div class="error-container">
+    <h3>Something went wrong!</h3>
+    <p>{{ err.message }}</p>
+    
+    <button matButton="filled"(click)="datasetResource.reload()">Reload</button>
+    <h4>
+      If this error persists please try a different dataset, try again later, or contact the site administrators at hcdp@hawaii.edu with a screenshot of this error.
+    </h4>
+  </div>
+}
+@else {
+  <mat-tab-group class="tab-content" color="accent">
   @for (tab of tabs; track tab) {
-    <mat-tab style="background-color:red;" [label]="tab.label">
+    <mat-tab [label]="tab.label">
       <div class="data-tab">
         <ng-container appDynamicTabTemplate [component]="tab.component"></ng-container>
       </div>
     </mat-tab>
   }
-</mat-tab-group>
+  </mat-tab-group>
+}
+  

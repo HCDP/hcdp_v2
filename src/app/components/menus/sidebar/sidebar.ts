@@ -7,11 +7,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { RouterModule } from '@angular/router';
 import { UrlStateManager } from '../../../services/state/url-state-manager';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [MatExpansionModule, MatSidenavModule, MatButtonModule, MatIconModule, MatListModule, RouterModule],
+  imports: [MatExpansionModule, MatSidenavModule, MatButtonModule, MatIconModule, MatListModule, RouterModule, MatProgressSpinnerModule],
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.scss',
 })

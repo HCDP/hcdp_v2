@@ -1,4 +1,4 @@
-import { effect, inject, Injectable, Injector, resource, runInInjectionContext } from '@angular/core';
+import { effect, inject, Injectable, Injector, resource, ResourceRef, runInInjectionContext } from '@angular/core';
 import { UrlStateManager } from '../state/url-state-manager';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
@@ -13,36 +13,39 @@ export class DatasetFactory {
   private injector = inject(Injector);
 
   // resource binds the signal state to an async loader
-  private datasetData = resource({
-    defaultValue: null,
+  private datasetData = resource<HCDPDataset, string>({
     // param triggers
     params: () => this.urlStateManager.pathSignal().dataset as string,
     
     // loader handles async loading of data
     loader: async ({ params: datasetId }) => {
-      let dsObject: HCDPDataset | null = null
-      if(datasetId) {
-        // Check the cache
-        if(this.datasetCache[datasetId] !== undefined) {
-          dsObject = this.datasetCache[datasetId];
-        }
-        // If not in cache, fetch the data
-        else {
-          let dsDefPath = this.DS_DEF_INDEX[datasetId];
-          if(dsDefPath) {
-            let dsDef = await this.loadDatasetDef(dsDefPath);
-            dsObject = this.generateDataset(dsDef);
-          }
-          // Update the cache
-          this.datasetCache[datasetId] = dsObject;
-        }
+      // no id, enter error state, router should prevent this
+      if(!datasetId) {
+        throw new Error("No dataset ID provided in URL");
       }
+
+      // Check if cached, return if it is
+      if(this.datasetCache[datasetId]) {
+        return this.datasetCache[datasetId];
+      }
+      // Otherwise validate path definition path exists (router should also ensure this is valid)
+      let dsDefPath = this.DS_DEF_INDEX[datasetId];
+      if (!dsDefPath) {
+        throw new Error(`Dataset definition path for '${datasetId}' not found.`);
+      }
+
+      // load the dataset definition and generate the dataset
+      let dsDef = await this.loadDatasetDef(dsDefPath);
+      let dsObject = this.generateDataset(dsDef);
+      
+      // add to the cache
+      this.datasetCache[datasetId] = dsObject;
       return dsObject;
     }
   });
 
 
-  public readonly dataset = this.datasetData;
+  public readonly dataset: ResourceRef<HCDPDataset | undefined> = this.datasetData;
 
   private datasetCache: Record<string, HCDPDataset | null> = {};
 

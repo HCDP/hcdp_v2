@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, signal, ViewChild, inject, effect, untracked } from '@angular/core';
+import { AfterViewInit, Component, signal, ViewChild, inject, effect } from '@angular/core';
 import { VisualizationContainer } from '../visualization-container/visualization-container.js';
 import { ExportContainer } from '../export-container/export-container.js';
 import { Sidebar } from "../menus/sidebar/sidebar.js";

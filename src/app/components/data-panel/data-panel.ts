@@ -1,33 +1,34 @@
-import { Component } from '@angular/core';
+import { Component, inject, effect, ResourceRef } from '@angular/core';
 import { MatTabsModule } from '@angular/material/tabs';
-import { Locations } from "../tabs/locations/locations.js";
-import { Timeseries } from "../tabs/timeseries/timeseries.js";
 import { DatasetOptions } from '../tabs/dataset-options/dataset-options.js';
 import { DynamicTabTemplate } from "../../directives/dynamic-tab-template.js"
 import { Tab } from '../../models/layout/tabs.js';
+import { DatasetFactory } from '../../services/datasets/dataset-factory.js';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { HCDPDataset } from '../../models/datasets/dataset.js';
+import { MatButtonModule } from '@angular/material/button';
 
 @Component({
   selector: 'app-data-panel',
-  imports: [ MatTabsModule, DynamicTabTemplate, DatasetOptions ],
+  imports: [ MatTabsModule, DynamicTabTemplate, DatasetOptions, MatProgressSpinnerModule, MatButtonModule ],
   templateUrl: './data-panel.html',
   styleUrl: './data-panel.scss',
 })
 export class DataPanel {
+  private dsFactory = inject(DatasetFactory);
   
-  tabs: Tab[];
+  datasetResource: ResourceRef<HCDPDataset | undefined>;
+  
+  tabs: Tab[] = [];
 
   constructor() {
-    //temp
-    this.tabs = [
-      {
-        label: "Locations",
-        component: Locations
-      },
-      {
-        label: "Timeseries",
-        component: Timeseries
+    this.datasetResource = this.dsFactory.dataset;
+    effect(() => {
+      let dataset = this.dsFactory.dataset.value();
+      if(dataset) {
+        this.tabs = dataset.visData.tabs;
       }
-    ]
+    });
   }
 }
 

@@ -1,4 +1,4 @@
-import { effect, inject, Injector, Resource, runInInjectionContext, signal, Signal, WritableSignal } from "@angular/core";
+import { effect, inject, Injector, Resource, ResourceRef, runInInjectionContext, signal, Signal, WritableSignal } from "@angular/core";
 import { Tab } from "../layout/tabs";
 import { HCDPTimeseriesData } from "./timeseries";
 import { Locations } from "../../components/tabs/locations/locations";
@@ -21,7 +21,7 @@ export class HCDPDataset {
   private _description: string;
   private _visData: HCDPDatasetVisualization;
   private _exportData: HCDPDatasetExport;
-  private _active: WritableSignal<boolean>;
+  private _active: WritableSignal<boolean> = signal<boolean>(false);
 
   constructor(definition: HCDPDatasetDefinition) {
     const { id, label, description, visLayout, exportLayout } = definition;
@@ -38,7 +38,6 @@ export class HCDPDataset {
       }
     }
     this._exportData = new HCDPDatasetExport(exportLayout);
-    this._active = signal<boolean>(false);
   }
 
   get id() {
@@ -93,7 +92,7 @@ class DataStreamManager {
   private urlStateManager = inject(UrlStateManager);
   private requestManager = inject(ApiHandler);
 
-  private _streamMap: Record<string, { type: DataStreamType, stream: Resource<any> }>;
+  private _streamMap: Record<string, { type: DataStreamType, stream: ResourceRef<any> }>;
   private _datasetParams: Record<string, string>;
 
   private _streamTriggers: {

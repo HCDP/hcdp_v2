@@ -14,3 +14,15 @@
 .tab-content ::ng-deep .mat-mdc-tab-body-wrapper {
   flex-grow: 1;
 }
+
+mat-spinner {
+  margin: 50px;
+}
+
+.error-container {
+  padding: 20px;
+
+  p {
+    color: #B00020;
+  }
+}

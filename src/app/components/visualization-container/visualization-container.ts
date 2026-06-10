@@ -10,6 +10,7 @@ import { DataPanel } from "../data-panel/data-panel";
   styleUrl: './visualization-container.scss',
 })
 export class VisualizationContainer {
+
   @ViewChild("dragbar", {static: false}) dragbar: ElementRef;
   @ViewChild("dataContainer", {static: false}) dataContainerRef: ElementRef;
   @ViewChild("map", {static: false}) map: Map;
