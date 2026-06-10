@@ -1,11 +1,12 @@
-import { Component, Input, OnInit, ViewChild, inject, signal, computed, WritableSignal } from '@angular/core';
+import { Component, OnInit, ViewChild, inject, signal, computed } from '@angular/core';
 import { httpResource } from '@angular/common/http';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatSidenavModule, MatSidenav } from '@angular/material/sidenav';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
-import { RouterModule, Router, ActivatedRoute } from '@angular/router';
+import { RouterModule } from '@angular/router';
+import { UrlStateManager } from '../../../services/state/url-state-manager';
 
 @Component({
   selector: 'app-sidebar',
@@ -15,14 +16,14 @@ import { RouterModule, Router, ActivatedRoute } from '@angular/router';
   styleUrl: './sidebar.scss',
 })
 export class Sidebar implements OnInit {
-  @Input({ required: true }) visualizationSelected!: WritableSignal<boolean>;
+  private urlStateManager = inject(UrlStateManager);
+
   @ViewChild("sidenav") sidenav!: MatSidenav;
 
   hierarchyResource = httpResource<DatasetSelectorNode[]>(() => '/assets/data/data-hierarchy.json');
 
   slideNext = signal<boolean>(false);
   navStack = signal<DatasetSelectorNode[][]>([]);
-  
   breadcrumbs = signal<string[]>([]);
 
   currentNodes = computed(() => {
@@ -35,15 +36,10 @@ export class Sidebar implements OnInit {
 
   parents = computed(() => this.navStack());
 
-  private router = inject(Router);
-  private route = inject(ActivatedRoute);
+  
 
   ngOnInit(): void {
-    this.route.url.subscribe(segments => {
-      for(let segment of segments) {
-        console.log(segment.path); 
-      }
-    });
+
   }
 
   nextMenu(node: DatasetSelectorCategoryNode) {
@@ -79,9 +75,8 @@ export class Sidebar implements OnInit {
   }
 
   selectViewComponent(node: DatasetSelectorDatasetNode, visualizationSelected: boolean) {
-    this.visualizationSelected.set(visualizationSelected);
     let view = visualizationSelected ? "visualize" : "export";
-    this.router.navigate([node.link, view]);
+    this.urlStateManager.navigate(node.link, view);
   }
 }
 

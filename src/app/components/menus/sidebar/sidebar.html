@@ -9,10 +9,12 @@
   }
   @else {
     <div class="nav-container">
-      @for(activeNodes of [currentNodes()]; track activeNodes) {
-        <div class="selector-container" [animate.enter]="slideNext() ? 'enter-next' : 'enter-previous'" [animate.exit]="slideNext() ? 'exit-next' : 'exit-previous'">
+      @for(state of [{ nodes: currentNodes(), crumbs: breadcrumbs(), parents: parents() }]; track state.crumbs.join('/')) {
+        <div class="selector-container" 
+            [animate.enter]="slideNext() ? 'enter-next' : 'enter-previous'" 
+            [animate.leave]="slideNext() ? 'exit-next' : 'exit-previous'">
           
-          @if(parents().length > 0) {
+          @if(state.parents.length > 0) {
             <div class="header-row">
               <button matIconButton class="back-button" aria-label="Back to previous category" (click)="previousMenu()">
                 <mat-icon>arrow_back</mat-icon>
@@ -21,7 +23,7 @@
               <div class="breadcrumbs">
                 <mat-icon class="crumb home-crumb" (click)="goHome()" aria-label="Go to Root Menu">home</mat-icon>
                 
-                @for(crumb of breadcrumbs(); track $index; let last = $last) {
+                @for(crumb of state.crumbs; track $index; let last = $last) {
                   <span class="separator">/</span>
                   <span class="crumb" [class.active-crumb]="last" (click)="!last && jumpToBreadcrumb($index)">
                     {{ crumb }}
@@ -32,7 +34,7 @@
           }
           
           <mat-nav-list>
-            @for(node of currentNodes(); track node.label) {
+            @for(node of state.nodes; track node.label) {
                 @if(node.type == "category") {
                   <mat-list-item (click)="nextMenu($any(node))">
                     <div matListItemTitle class="category-item">

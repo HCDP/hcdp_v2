@@ -1,16 +1,30 @@
 <div class="container">
-  <h1>
-    Global Settings
-  </h1>
-  <h3>
-    Preferred Units
-  </h3>
+  <div class="content">
+    <h1>
+      Global Settings
+    </h1>
+    <div class="options">
+      <section>
+        <h3>
+          Preferred Units
+        </h3>
+        <mat-button-toggle-group 
+          aria-label="Unit type"
+          [value]="preferredUnit()"
+          (valueChange)="preferredUnit.set($event)">
+          <mat-button-toggle value="metric">Metric</mat-button-toggle>
+          <mat-button-toggle value="usc">US Customary</mat-button-toggle>
+        </mat-button-toggle-group>
+      </section>
+    </div>
+  </div>
   
-  <section>
-    <mat-button-toggle-group aria-label="Unit type">
-      <mat-button-toggle value="green">Metric</mat-button-toggle>
-      <mat-button-toggle value="red">US Customary</mat-button-toggle>
-      
-    </mat-button-toggle-group>
-  </section>
+  <div class="button-container">
+    <button mat-flat-button aria-label="Save settings" (click)="saveSettings()">
+      Save
+    </button>
+    <button mat-button aria-label="Cancel and close" (click)="close()">
+      Cancel
+    </button>
+  </div>
 </div>

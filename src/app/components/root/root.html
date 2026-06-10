@@ -3,16 +3,18 @@
   <mat-sidenav-container class="sidenav-container">
     
     <mat-sidenav #sidenav class="sidenav">
-      <app-sidebar [visualizationSelected]="visualizationSelected"></app-sidebar>
+      <app-sidebar></app-sidebar>
     </mat-sidenav>
     
     <mat-sidenav-content>
-      @if(visualizationSelected()) {
-        <app-visualization-container></app-visualization-container>
-      }
-      @else {
-        <app-export-container></app-export-container>
-      }
+        @if(visualizationSelected()) {
+          <app-visualization-container></app-visualization-container>
+        }
+        @else {
+          <app-export-container></app-export-container>
+        }
+      
+      <!-- <app-visualization-container></app-visualization-container> -->
     </mat-sidenav-content>
   </mat-sidenav-container>
 </div>

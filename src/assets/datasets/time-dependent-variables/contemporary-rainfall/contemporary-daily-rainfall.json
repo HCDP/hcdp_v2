@@ -1,0 +1,150 @@
+{
+  "id": "contemporary_daily_rainfall",
+  "label": "Contemporary Daily Rainfall",
+  "description": "Daily rainfall from January 1 1990 to Previous day. These maps represent the amount of rainfall from midnight on the target day to midnight at the end of the day. Station rainfall data are interpolated using an automated optimized climate aided ordinary kriging methodology",
+  "visLayout": {
+    "schema": "timeseries",
+    "data": {
+      "warnings": {
+        "experimental": true
+      },
+      "datasetParams": {
+        "location": "hawaii",
+        "datatype": "rainfall",
+        "production": "new",
+        "period": "day"
+      },
+      "streams": [
+        {
+          "id": "stations",
+          "type": "stations",
+          "bind": ["date", "fill"],
+          "staticParams": {}
+        },
+        {
+          "id": "dataMap",
+          "type": "raster",
+          "bind": ["date"],
+          "staticParams": {
+            "type": "data_map"
+          }
+        },
+        {
+          "id": "anom",
+          "type": "raster",
+          "bind": ["date"],
+          "staticParams": {
+            "type": "anom"
+          }
+        }
+      ],
+
+      "options": {
+        "defaults": {
+          "date": "latest",
+          "fill": "partial",
+          "units": "mm",
+          "anomUnits": "percent"
+        },
+        "controls": [
+          {
+            "id": "date",
+            "label": "Date",
+            "description": "The date represented by the data.",
+            "type": "date"
+          },
+          {
+            "id": "fill",
+            "label": "Station Fill",
+            "description": "The type of processing the station data goes through. Data maps are generated using partially filled station data.",
+            "type": "list",
+            "values": [
+              {
+                "id": "partial",
+                "label": "Partial Filled",
+                "description": "This data has undergone QA/QC processing. Some missing/removed station values may be filled using statistical techniques to estimate the value for that station. These values are used to generate the gridded data maps."
+              },
+              {
+                "id": "raw",
+                "label": "Unfilled",
+                "description": "Raw station values reported by sensor stations before undergoing QA/QC processing or filling."
+              }
+            ]
+          },
+          {
+            "id": "units",
+            "label": "Units",
+            "description": "The units the data are represented in.",
+            "type": "units",
+            "values": [
+              {
+                "id": "mm",
+                "name": "Millimeters",
+                "shortName": "mm",
+                "system": "metric"
+              },
+              {
+                "id": "in",
+                "name": "Inches",
+                "shortName": "in",
+                "system": "usc"
+              }
+            ]
+          },
+          {
+            "id": "anomUnits",
+            "label": "Anomaly Units",
+            "description": "The units the rainfall anomaly data are represented in.",
+            "type": "units",
+            "values": {
+              "units": [
+                {
+                  "id": "percent",
+                  "name": "Percent",
+                  "shortName": "%",
+                  "system": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "timeseries": {
+        "period": {
+          "unit": "day",
+          "interval": 1
+        }
+      },
+      "dataGroups": [
+        {
+          "label": "Rainfall Data",
+          "description": "Rainfall values as measured or computed.",
+          "layers": ["stations", "dataMap"],
+          "range": {
+            "standard": [0, 20],
+            "extreme": [0, 250],
+            "limits": [0, null]
+          },
+          "colors": ["viridis", "monochromatic", "nws_radar", "turbo", "usgs"],
+          "defaultColor": "viridis",
+          "unitControl": "units",
+          "computeUnitConversionsFrom": "mm"
+        },
+        {
+          "label": "Rainfall Anomaly",
+          "description": "The amount or percent difference of the station rainfall data interpolated using an automated optimized climate aided ordinary kriging from the expected mean monthly rainfall map.",
+          "layers": ["anom"],
+          "range": {
+            "standard": [0, 20],
+            "limits": [0, null]
+          },
+          "colors": ["diverging"],
+          "defaultColor": "diverging",
+          "unitControl": "anomUnits",
+          "computeUnitConversionsFrom": null
+        }
+      ]
+    }
+  },
+  "exportLayout": {}
+}
