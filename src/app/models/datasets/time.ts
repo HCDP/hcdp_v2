@@ -104,6 +104,30 @@ export class Period {
     }
   }
 
+  formatDate(date: DateTime): string {
+    switch(this._unit) {
+      case "year":
+      case "quarter": {
+        return date.toFormat("yyyy");
+      }
+      case "month": {
+        return date.toFormat("yyyy-MM");
+      }
+      case "week":
+      case "day": {
+        return date.toFormat("yyyy-MM-dd");
+      }
+      case "hour":
+      case "minute":
+      case "second": {
+        return date.toFormat("yyyy-MM-ddThh:mm:ss");
+      }
+      case "millisecond": {
+        return date.toFormat("yyyy-MM-ddThh:mm:ss.SSS");
+      }
+    }
+  }
+
   getLabel(style: "data" | "interval") {
     return this._labels[style];
   }
@@ -257,10 +281,10 @@ export class Period {
     const normalizedValue = isOneBased ? numValue - 1 : numValue;
     
     // get offset from start of related
-    const preciseMathVal = normalizedValue + fraction;
+    const preciseValue = normalizedValue + fraction;
 
     // round to interval
-    const ratio = preciseMathVal / this.interval;
+    const ratio = preciseValue / this.interval;
     let roundedRatio: number;
     
     if(method === "down") {

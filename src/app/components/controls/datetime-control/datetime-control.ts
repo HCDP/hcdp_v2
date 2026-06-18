@@ -1,10 +1,10 @@
-import { Component, input } from '@angular/core';
+import { Component, inject, input, OnInit } from '@angular/core';
 import { DatetimeSelector } from '../datetime-selector/datetime-selector';
 import { AssetManager } from '../../../services/util/asset-manager';
-import { Period } from '../../../models/datasets/time';
 import { MatIconModule, MatIconRegistry } from "@angular/material/icon"; // Required for <mat-icon>
 import { MatButtonModule } from "@angular/material/button"; // Required for mat-mini-fab
 import { MatTooltipModule } from "@angular/material/tooltip"; // Required for [matTooltip]
+import { HCDPTimeseriesData } from '../../../models/datasets/timeseries';
 
 @Component({
   selector: 'app-datetime-control',
@@ -17,30 +17,35 @@ import { MatTooltipModule } from "@angular/material/tooltip"; // Required for [m
   templateUrl: './datetime-control.html',
   styleUrl: './datetime-control.scss',
 })
-export class DatetimeControl {
-  period = input(new Period("year", 1));
+export class DatetimeControl implements OnInit {
+  assetService = inject(AssetManager);
+  matIconRegistry = inject(MatIconRegistry)
+
+  timeseries = input.required<HCDPTimeseriesData>();
   dateMoveData: MoveButtonData;
 
-  constructor(private matIconRegistry: MatIconRegistry, private assetService: AssetManager) {
+  constructor() {
     // load button icons
-    let icon = assetService.getTrustedResourceURL("/icons/fl_m.svg");
+    let icon = this.assetService.getTrustedResourceURL("/icons/fl_m.svg");
     this.matIconRegistry.addSvgIcon("fl", icon);
-    icon = assetService.getTrustedResourceURL("/icons/ffl_m.svg");
+    icon = this.assetService.getTrustedResourceURL("/icons/ffl_m.svg");
     this.matIconRegistry.addSvgIcon("ffl", icon);
-    icon =  assetService.getTrustedResourceURL("/icons/el_m.svg");
+    icon = this.assetService.getTrustedResourceURL("/icons/el_m.svg");
     this.matIconRegistry.addSvgIcon("el", icon);
-    icon =  assetService.getTrustedResourceURL("/icons/fr_m.svg");
+    icon = this.assetService.getTrustedResourceURL("/icons/fr_m.svg");
     this.matIconRegistry.addSvgIcon("fr", icon);
-    icon =  assetService.getTrustedResourceURL("/icons/ffr_m.svg");
+    icon = this.assetService.getTrustedResourceURL("/icons/ffr_m.svg");
     this.matIconRegistry.addSvgIcon("ffr", icon);
-    icon =  assetService.getTrustedResourceURL("/icons/er_m.svg");
+    icon = this.assetService.getTrustedResourceURL("/icons/er_m.svg");
     this.matIconRegistry.addSvgIcon("er", icon);
+  }
 
+  ngOnInit(): void {
     this.constructDateMoveData();
   }
 
   constructDateMoveData() {
-    let period = this.period();
+    let period = this.timeseries().period;
     let unit = period.unit;
     let jumpPeriod = period.getHigherOrder();
     let jumpIntervalLabel = jumpPeriod?.getLabel("interval");
@@ -49,6 +54,7 @@ export class DatetimeControl {
       tooltip: `Skip to first ${unit}`,
       icon: "el",
       trigger: () => {
+        this.timeseries().setToStart();
       }
     }];
 
@@ -57,6 +63,7 @@ export class DatetimeControl {
         tooltip: `Move back ${jumpIntervalLabel}`,
         icon: "ffl",
         trigger: () => {
+          this.timeseries().jumpBackward();
         }
       });
     }
@@ -65,6 +72,7 @@ export class DatetimeControl {
       tooltip: `Previous`,
       icon: "fl",
       trigger: () => {
+        this.timeseries().previous();
       }
     });
 
@@ -72,6 +80,7 @@ export class DatetimeControl {
       tooltip: `Next`,
       icon: "fr",
       trigger: () => {
+        this.timeseries().next();
       }
     }];
 
@@ -80,6 +89,7 @@ export class DatetimeControl {
         tooltip: `Move forward ${jumpIntervalLabel}`,
         icon: "ffr",
         trigger: () => {
+          this.timeseries().jumpForward();
         }
       });
     }
@@ -88,16 +98,21 @@ export class DatetimeControl {
       tooltip: `Skip to most recent ${unit}`,
       icon: "er",
       trigger: () => {
+        this.timeseries().setToEnd();
       }
     });
 
     this.dateMoveData = {
       forward: {
-        disabled: false,
+        disabled: () => {
+          return this.timeseries().date.equals(this.timeseries().end);
+        },
         moveData: dateForward
       },
       back: {
-        disabled: true,
+        disabled: () => {
+          return this.timeseries().date.equals(this.timeseries().start);
+        },
         moveData: dateBack
       }
     }
@@ -110,7 +125,7 @@ interface MoveButtonData {
 }
 
 interface DirectionGroup {
-  disabled: boolean,
+  disabled: () => boolean,
   moveData: MoveData[]
 }
 

@@ -56,3 +56,9 @@ mat-button-toggle-group {
     --mat-pseudo-checkbox-minimal-selected-checkmark-color: white !important;
   }
 }
+
+html, body {
+  height: 100dvh;
+  margin: 0;
+  overflow: hidden;
+}

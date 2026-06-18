@@ -33,10 +33,6 @@ export class Topbar {
   }
 
   openSettings(): void {
-    const dialogRef = this.dialog.open(GlobalSettings, {});
-
-    dialogRef.afterClosed().subscribe(result => {
-      console.log('The dialog was closed');
-    });
+    this.dialog.open(GlobalSettings, {});
   }
 }

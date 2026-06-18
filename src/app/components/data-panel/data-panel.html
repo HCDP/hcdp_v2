@@ -13,12 +13,12 @@
     </h4>
   </div>
 }
-@else {
+@else if(dataset.visData) {
   <mat-tab-group class="tab-content" color="accent">
-  @for (tab of tabs; track tab) {
+  @for(tab of dataset.visData.tabs; track tab) {
     <mat-tab [label]="tab.label">
       <div class="data-tab">
-        <ng-container appDynamicTabTemplate [component]="tab.component"></ng-container>
+        <ng-container appDynamicTabTemplate [component]="tab.component" [dataset]="dataset"></ng-container>
       </div>
     </mat-tab>
   }

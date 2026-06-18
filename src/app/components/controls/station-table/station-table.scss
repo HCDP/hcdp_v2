@@ -1,0 +1,43 @@
+.table-container {
+  height: 350px;
+  overflow-y: auto;
+  
+  .mat-mdc-header-row {
+    background: white;
+    z-index: 100;
+  }
+}
+
+/* Interactive Row Styling */
+tr.mat-mdc-row {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+  }
+
+  &.selected {
+    background-color: rgba(63, 81, 181, 0.12);
+    
+    td {
+      font-weight: 500;
+    }
+  }
+}
+
+.mat-column-value {
+  text-align: right;
+  padding-right: 16px; 
+}
+
+.mat-column-name {
+  max-width: 150px; 
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mat-column-skn {
+  min-width: 100px;
+}

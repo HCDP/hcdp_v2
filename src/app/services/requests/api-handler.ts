@@ -1,8 +1,8 @@
-import { inject, Injectable, Signal, Injector } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { Configuration } from '../configuration/configuration';
-import { HttpHeaders, HttpClient } from '@angular/common/http';
-import { retry } from "rxjs";
-import { rxResource } from '@angular/core/rxjs-interop';
+import { HttpHeaders, HttpClient, HttpContext, HttpParams, HttpResponse, HttpEvent } from '@angular/common/http';
+import { Observable, of, retry, shareReplay, switchMap, tap } from "rxjs";
+import { Params } from '@angular/router';
 
 @Injectable({
   providedIn: 'root',
@@ -31,30 +31,40 @@ export class ApiHandler {
   }
 
 
-  public get<T>(endpoint: string, params?: RequestParams) {
-    return this.http.get<T>(`${this.buildUrl(endpoint)}`, { 
-      headers: this.header,
-      params
-    }).pipe(
+  public get<T>(endpoint: string, options: HttpOptions & { observe: 'events' }): Observable<HttpEvent<T>>;
+  public get<T>(endpoint: string, options: HttpOptions & { observe: 'response' }): Observable<HttpResponse<T>>;
+  public get<T>(endpoint: string, options?: HttpOptions): Observable<T>;
+  public get<T>(endpoint: string, options: HttpOptions = {}) {
+    // clone to prevent modifying callers options object
+    let updatedOptions = { ...options };
+    let mergedHeaders = this.header;
+    if(options.headers) {
+      for(let key of options.headers.keys()) {
+        let values = options.headers.getAll(key);
+        if(values) {
+          mergedHeaders = mergedHeaders.set(key, values);
+        }
+      }
+    }
+    updatedOptions.headers = mergedHeaders;
+
+    return this.http.get<T>(this.buildUrl(endpoint), updatedOptions as any).pipe(
       retry(3)
     );
-  }
-
-  // injector should be passed if calling outside of an injection context (e.g. outside a component constructor)
-  // will provide a resource for loading a data stream automatically handling cancellations and other caveats
-  public getAPIResource<T>(stream: Signal<APISource>, injector?: Injector) {
-    return rxResource<T, APISource>({
-      injector: injector,
-      params: () => stream(),
-      stream: ({ params: source }: { params: APISource }) => this.get<T>(source.endpoint, source.params)
-    });
   }
 }
 
 
-export type RequestParams = Record<string, string | number | boolean>;
-
 export interface APISource {
   endpoint: string,
-  params?: RequestParams
+  params?: Params
+  options?: HttpOptions
+}
+
+export interface HttpOptions {
+  params?: Params
+  headers?: HttpHeaders;
+  observe?: "body" | "events" | "response";
+  reportProgress?: boolean;
+  responseType?: "arraybuffer" | "blob" | "json" | "text";
 }

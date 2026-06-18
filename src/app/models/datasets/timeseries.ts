@@ -1,6 +1,6 @@
-import { signal, WritableSignal } from '@angular/core';
 import { DateTime } from "luxon";
 import { Period } from "./time";
+import { BehaviorSubject, Observable } from "rxjs";
 
 
 // dates should already have timezone built in
@@ -8,14 +8,14 @@ export class HCDPTimeseriesData {
   private readonly _period: Period
   private readonly _start: DateTime;
   private readonly _end: DateTime;
-  private readonly _dateSignal: WritableSignal<DateTime>;
+  private readonly _dateSubject: BehaviorSubject<DateTime>;
 
   constructor(period: Period, start: DateTime, end: DateTime, defaultDate?: DateTime) {
     this._period = period;
     this._start = start;
     this._end = end;
     let initialDate = defaultDate ?? end;
-    this._dateSignal = signal(initialDate);
+    this._dateSubject = new BehaviorSubject<DateTime>(initialDate);
   }
 
   get unit() {
@@ -39,33 +39,41 @@ export class HCDPTimeseriesData {
   }
 
   get date() {
-    return this._dateSignal();
+    return this._dateSubject.value;
   }
 
-  get dateSignal() {
-    return this._dateSignal.asReadonly();
+  get dateStream(): Observable<DateTime> {
+    return this._dateSubject.asObservable();
   }
 
   setDate(date: DateTime) {
     date = this.checkDate(date);
-    this._dateSignal.set(date); // Update signal
+    console.log(date.toISO());
+    this._dateSubject.next(date);
     return date;
   }
 
-  next(intervals?: number) {
+  next(intervals: number = 1) {
     let date = this.checkNext(intervals);
-    this._dateSignal.set(date); // Update signal
+    this._dateSubject.next(date);
     return date;
   }
 
-  previous(intervals: number) {
+  previous(intervals: number = 1) {
     let date = this.checkPrevious(intervals);
-    this._dateSignal.set(date); // Update signal
+    this._dateSubject.next(date);
     return date;
   }
 
   checkDate(date: DateTime) {
-    return this._period.round(date);
+    date = this._period.round(date);
+    if(date > this._end) {
+      date = this._end;
+    }
+    else if(date < this._start) {
+      date = this._start;
+    }
+    return date;
   }
 
   checkNext(intervals: number = 1) {
@@ -84,12 +92,12 @@ export class HCDPTimeseriesData {
     return date;
   }
 
-  setStart() {
-    this._dateSignal.set(this._start);
+  setToStart() {
+    this._dateSubject.next(this._start);
   }
 
-  setEnd() {
-    this._dateSignal.set(this._end);
+  setToEnd() {
+    this._dateSubject.next(this._end);
   }
 
 
@@ -118,7 +126,7 @@ export class HCDPTimeseriesData {
   jumpForward(magnitude: number = 1) {
     let date = this.checkJumpForward(magnitude);
     if(date) {
-      this._dateSignal.set(date);
+      this._dateSubject.next(date);
     }
     return date;
   }
@@ -126,7 +134,7 @@ export class HCDPTimeseriesData {
   jumpBackward(magnitude: number = 1) {
     let date = this.checkJumpBackward(magnitude);
     if(date) {
-      this._dateSignal.set(date);
+      this._dateSubject.next(date);
     }
     return date;
   }
@@ -143,7 +151,7 @@ export class HCDPTimeseriesData {
     let date = start;
     while(date <= end) {
       dates.push(date);
-      this._period.add(1, date);
+      date = this._period.add(1, date);
     }
     return dates;
   }

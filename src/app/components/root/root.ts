@@ -6,6 +6,8 @@ import { MatSidenavModule, MatSidenav } from '@angular/material/sidenav';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { Topbar } from "../menus/topbar/topbar.js";
 import { UrlStateManager } from '../../services/state/url-state-manager.js';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { Params } from '@angular/router';
 
 @Component({
   selector: 'app-root',
@@ -22,11 +24,14 @@ export class Root implements AfterViewInit {
 
   @ViewChild("sidenav") sidenav!: MatSidenav;
 
+  pathsSignal = toSignal(this.urlStateManager.paths, { initialValue: {} as Params });
+
   constructor() {
     effect(() => {
-      const currentView = this.urlStateManager.pathSignal()['view'];
-      console.log(currentView);
+      
 
+    // 2. Call the signal function pathsSignal() first, then access the property
+      let currentView = this.pathsSignal()["view"];
       this.visualizationSelected.set(currentView === "visualize");
 
     });

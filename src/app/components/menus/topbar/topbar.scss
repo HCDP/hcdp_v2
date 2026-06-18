@@ -1,8 +1,9 @@
 .topbar-container {
-  padding: 10px;
-  padding-top: 5px;
   display: flex;
   align-items: center;
+  padding: 10px;
+  padding-top: 5px;
+  padding-bottom: 5px;
   gap: 10px;
   width: 100%;
   box-sizing: border-box;
@@ -66,4 +67,14 @@
   margin: 0;
   padding: 0;
   line-height: 1.4;
+  max-height: 10vh;
+  overflow-y: auto;
 }
+
+
+// /* 3. THE SUSPECT: If your topbar is inside a <mat-toolbar>, you MUST override its default centering! */
+// mat-toolbar {
+//   align-items: flex-start !important;
+//   height: auto !important; /* Allows the toolbar to stretch downward instead of strictly centering its contents */
+//   min-height: 64px; /* Keeps the standard Material toolbar minimum height */
+// }

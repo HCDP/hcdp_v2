@@ -1,0 +1,39 @@
+<div class="table-container">
+  
+  <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z8">
+
+    <ng-container matColumnDef="skn">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header> {{manager().getLabel("skn")}} </th>
+      <td mat-cell *matCellDef="let element"> {{ manager().getFormattedValue("skn", element.skn) }} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="name">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header> {{manager().getLabel("name")}} </th>
+      <td mat-cell *matCellDef="let element" [matTooltip]="element.name"> {{ manager().getFormattedValue("name", element.name) || 'N/A' }} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="island">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header> {{manager().getLabel("island")}} </th>
+      <td mat-cell *matCellDef="let element"> {{ manager().getFormattedValue("island", element.island) || "Unknown" }} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="network">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header> {{manager().getLabel("network")}} </th>
+      <td mat-cell *matCellDef="let element"> {{ manager().getFormattedValue("network", element.network) || "Unknown" }} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="value">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header> {{manager().getLabel("value")}} </th>
+      <td mat-cell *matCellDef="let element"> {{ manager().getFormattedValue("value", element.value) }} </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+    
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+        (click)="selectStation(row.skn)"
+        [class.selected]="selectedSkn() === row.skn"
+        [attr.data-skn]="row.skn">
+    </tr>
+
+  </table>
+</div>

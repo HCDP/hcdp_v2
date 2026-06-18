@@ -2,7 +2,9 @@ import { effect, inject, Injectable, Injector, resource, ResourceRef, runInInjec
 import { UrlStateManager } from '../state/url-state-manager';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { HCDPDataset, HCDPDatasetDefinition } from '../../models/datasets/dataset';
+import { HCDPDataset } from '../../models/datasets/dataset';
+import { HCDPDatasetDefinition } from '../../models/datasets/recipe';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 @Injectable({
   providedIn: 'root',
@@ -11,11 +13,13 @@ export class DatasetFactory {
   private urlStateManager = inject(UrlStateManager)
   private http = inject(HttpClient);
   private injector = inject(Injector);
+  // get paths as signal to trigger dataset resource
+  private pathParams = toSignal(this.urlStateManager.paths, { requireSync: true });
 
   // resource binds the signal state to an async loader
   private datasetData = resource<HCDPDataset, string>({
     // param triggers
-    params: () => this.urlStateManager.pathSignal().dataset as string,
+    params: () => this.pathParams().dataset as string,
     
     // loader handles async loading of data
     loader: async ({ params: datasetId }) => {

@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { LocationSelector } from './location-selector';
+import { StationFilters } from './station-filters';
 
-describe('LocationSelector', () => {
-  let component: LocationSelector;
-  let fixture: ComponentFixture<LocationSelector>;
+describe('StationFilters', () => {
+  let component: StationFilters;
+  let fixture: ComponentFixture<StationFilters>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [LocationSelector]
+      imports: [StationFilters]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(LocationSelector);
+    fixture = TestBed.createComponent(StationFilters);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

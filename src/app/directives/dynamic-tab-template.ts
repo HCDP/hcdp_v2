@@ -1,22 +1,22 @@
-import { Directive, Input, OnChanges, Type, ViewContainerRef } from '@angular/core';
+import { Directive, effect, input, Type, ViewContainerRef, inject } from '@angular/core';
 import { TabBase } from "../components/tabs/tab-base/tab-base.js"
+import { HCDPDataset } from '../models/datasets/dataset.js';
 
 @Directive({
   selector: '[appDynamicTabTemplate]',
 })
-export class DynamicTabTemplate implements OnChanges {
-  @Input({ required: true }) component: Type<TabBase>;
-  @Input() dataset: any;
+export class DynamicTabTemplate {
+  component = input.required<Type<TabBase>>();
+  dataset = input.required<HCDPDataset>();
 
-  constructor(private container: ViewContainerRef) { }
+  private container = inject(ViewContainerRef);
 
-  ngOnChanges() {
-    this.render();
-  }
-
-  private render() {
-    this.container.clear();
-    this.container.createComponent(this.component);
+  constructor() {
+    effect(() => {
+      this.container.clear();
+      const componentRef = this.container.createComponent(this.component());
+      componentRef.setInput('dataset', this.dataset());
+    });
   }
 
 }

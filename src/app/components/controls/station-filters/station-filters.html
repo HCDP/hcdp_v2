@@ -1,0 +1,100 @@
+<mat-card appearance="outlined" class="filter-card">
+  <mat-card-header>
+    <mat-card-title>Station Filters</mat-card-title>
+  </mat-card-header>
+
+  <mat-card-content>
+    <div class="filter-form-grid">
+      
+      <mat-form-field appearance="outline">
+        <mat-label>Field to filter</mat-label>
+        <mat-select [(ngModel)]="selectedField" (selectionChange)="onFieldChange()">
+          @for (field of availableFields(); track field.value) {
+            <mat-option [value]="field.value">{{ field.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      @if (fieldMetadata(); as meta) {
+        
+        @if (meta.type === 'string') {
+          <mat-form-field appearance="outline" class="wide-input">
+            <mat-label>Select Values</mat-label>
+            <mat-select [(ngModel)]="selectedStringValues" multiple (openedChange)="!$event ? dropdownSearch.set('') : null">
+              
+              <div class="dropdown-search-container" (keydown)="$event.stopPropagation()">
+                <mat-icon class="search-icon">search</mat-icon>
+                <input 
+                  type="text" 
+                  [(ngModel)]="dropdownSearch" 
+                  placeholder="Search values..." 
+                  class="dropdown-search-input">
+              </div>
+
+              @for (val of filteredDropdownValues(); track val.raw) {
+                <mat-option [value]="val.raw">{{ val.formatted }}</mat-option>
+              }
+
+              @if (filteredDropdownValues().length === 0) {
+                <mat-option disabled>No matching values found</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        }
+
+        @if (meta.type === 'number') {
+          <mat-form-field appearance="outline" class="narrow-input">
+            <mat-label>Min</mat-label>
+            <input matInput type="number" 
+                   [(ngModel)]="rangeMin"
+                   (change)="validateNumericRange('min')"
+                   [min]="meta.absMin"
+                   [max]="rangeMax() ?? meta.absMax">
+            <mat-hint>Min value: {{ meta.absMin }}</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="narrow-input">
+            <mat-label>Max</mat-label>
+            <input matInput type="number" 
+                   [(ngModel)]="rangeMax"
+                   (change)="validateNumericRange('max')"
+                   [min]="rangeMin() ?? meta.absMin"
+                   [max]="meta.absMax">
+            <mat-hint>Max value: {{ meta.absMax }}</mat-hint>
+          </mat-form-field>
+        }
+
+        <div class="toggle-container">
+          <mat-slide-toggle [(ngModel)]="negateInput" color="warn">
+            Exclude (NOT)
+          </mat-slide-toggle>
+        </div>
+
+        <div class="button-container">
+          <button mat-flat-button color="primary" [disabled]="!isFormValid()" (click)="addFilter()">
+            <mat-icon>add</mat-icon>
+            Add
+          </button>
+        </div>
+
+      }
+    </div>
+  </mat-card-content>
+
+  @if (manager().stationFilters.length > 0) {
+    <mat-divider></mat-divider>
+    <mat-card-actions class="active-filters-container">
+      <span class="active-label">Active:</span>
+      <mat-chip-set aria-label="Active filters">
+        @for (filter of manager().stationFilters; track filter) {
+          <mat-chip (removed)="removeFilter(filter)" [color]="$any(filter).negate ? 'warn' : 'accent'">
+            {{ getFilterDisplayText(filter) }}
+            <button matChipRemove>
+              <mat-icon>cancel</mat-icon>
+            </button>
+          </mat-chip>
+        }
+      </mat-chip-set>
+    </mat-card-actions>
+  }
+</mat-card>

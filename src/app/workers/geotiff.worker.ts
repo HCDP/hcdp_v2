@@ -1,5 +1,6 @@
 /// <reference lib="webworker" />
 
+import * as Comlink from 'comlink';
 import * as geotiff from "geotiff";
 
 type Images = ImageData[];
@@ -32,8 +33,7 @@ type BandStats = {
   stddev: number
 };
 
-addEventListener("message", async ({ data }) => {
-  let { buffer, customNoData, bands, images, id } = data;
+async function processArrayBufferGeotiffData(buffer: ArrayBuffer, customNoData?: number, bands?: number[], images?: number[]): Promise<Images | null> {
   let imageData: Images = [];
 
   try {
@@ -70,11 +70,12 @@ addEventListener("message", async ({ data }) => {
         cellYSize: yScale,
       }
       let bandMap: Bands = {};
-      let min: number = Infinity;
-      let max: number = -Infinity;
-      let dataAcc: number = 0;
+      
       //package data
       for(let band of bands) {
+        let min: number = Infinity;
+        let max: number = -Infinity;
+        let dataAcc: number = 0;
         let raster: geotiff.TypedArray = <geotiff.TypedArray>rasters[band];
         if(raster == undefined) {
           console.warn(`Could not find band: ${band}. Skipping...`);
@@ -100,8 +101,9 @@ addEventListener("message", async ({ data }) => {
         let stddev: number = NaN;
         if(values.length > 0) {
           mean = dataAcc / values.length;
+          stddev = 0;
           for(let valuePair of values) {
-            let value = valuePair[0];
+            let value = valuePair[1];
             stddev += Math.pow(value - mean, 2)
           }
           stddev /= values.length;
@@ -127,16 +129,18 @@ addEventListener("message", async ({ data }) => {
         bands: bandMap
       });
     }
-    postMessage({
-        id,
-        imageData
-      });
+    return imageData
   }
   catch(e) {
     console.error(`Error processing geotiff: ${e}`);
-    postMessage({
-      id,
-      imageData: null
-    });
+    return null
   }
-});
+};
+
+
+const workerApi = {
+  processArrayBufferGeotiffData
+};
+Comlink.expose(workerApi)
+
+export type GeoTiffWorkerApi = typeof workerApi;

@@ -1,39 +1,18 @@
-<div class="table-container mat-elevation-z8">
-  <app-location-selector></app-location-selector>
+@if(stationData(); as stationResource) {
+  @if(stationResource.isLoading()) {
+    <mat-spinner></mat-spinner>
+  }
+  @if(stationResource.value(); as stations) {
+    <app-station-filters
+      [manager]="stations">
+    </app-station-filters>
+    <app-station-table 
+      [manager]="stations"
+      [(selectedSkn)]="activeStationId">
+    </app-station-table>
+  }
+}
+@else if(streamData.isLoading()) {
+  <div class="loader">Loading stream definitions...</div>
+}
 
-  <table mat-table [dataSource]="dataSource" matSort>
-
-    <ng-container matColumnDef="id">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header> ID </th>
-      <td mat-cell *matCellDef="let element"> {{element.id}} </td>
-    </ng-container>
-
-    <ng-container matColumnDef="name">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header> Location Name </th>
-      <td mat-cell *matCellDef="let element"> {{element.name}} </td>
-    </ng-container>
-
-    <ng-container matColumnDef="city">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header> City </th>
-      <td mat-cell *matCellDef="let element"> {{element.city}} </td>
-    </ng-container>
-
-    <ng-container matColumnDef="state">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header> State </th>
-      <td mat-cell *matCellDef="let element"> {{element.state}} </td>
-    </ng-container>
-
-    <ng-container matColumnDef="status">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header> Status </th>
-      <td mat-cell *matCellDef="let element"> 
-        <span class="status-badge" [class.active]="element.status === 'Active'">
-          {{element.status}}
-        </span>
-      </td>
-    </ng-container>
-
-    <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
-    
-    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-  </table>
-</div>

@@ -34,6 +34,7 @@
     "@angular/router": "^21.2.12",
     "apexcharts": "^5.12.0",
     "chroma-js": "^3.2.0",
+    "comlink": "^4.4.2",
     "echarts": "^6.0.0",
     "geotiff": "^3.0.5",
     "leaflet": "^1.9.4",

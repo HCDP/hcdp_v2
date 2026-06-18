@@ -1,32 +1,25 @@
 <div>
-  <mat-form-field class="control">
-    <mat-label>Select Date</mat-label>
-
-    <input matInput
-      [formControl]="dateControl"
-      [matDatepicker]="datePicker"
-     
-      (blur)="setDate()">
-
-    <mat-datepicker-toggle matSuffix [for]="datePicker"></mat-datepicker-toggle>
-    <mat-datepicker #datePicker
-      (yearSelected)="viewManager('year', $event)"
-      (monthSelected)="viewManager('month', $event)"
-      [startView]="getDefaultView()"
-      (closed)="setDate()">
-    </mat-datepicker>
-    <mat-error>Invalid Date</mat-error>
-  </mat-form-field>
+  <mat-form-field>
+  <mat-label>Select Date</mat-label>
   
+  <input matInput 
+         [matDatepicker]="datePicker" 
+         [formControl]="dateControl"
+         [min]="timeseries().start" 
+         [max]="timeseries().end">
+         
+  <mat-datepicker-toggle matIconSuffix [for]="datePicker"></mat-datepicker-toggle>
   
-  @if(checkShowTime()) {
-    <!-- <mat-form-field class="control">
-      <mat-label>Pick a time</mat-label>
-      <input matInput [matTimepicker]="picker">
-      <mat-timepicker-toggle matIconSuffix [for]="picker"/>
-      <mat-timepicker #picker interval="1s"/>
-    </mat-form-field> -->
-    <app-time-selector></app-time-selector>
-  }
+  <mat-datepicker #datePicker
+        [startView]="getDefaultView()"
+        (yearSelected)="viewManager('year', $event)"
+        (monthSelected)="viewManager('month', $event)"
+        (closed)="setDate()">
+  </mat-datepicker>
+</mat-form-field>
+
+@if (showTime()) {
+  <app-time-selector></app-time-selector>
+}
   
 </div>

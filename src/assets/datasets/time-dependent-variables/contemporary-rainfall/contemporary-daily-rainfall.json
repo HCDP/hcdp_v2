@@ -41,7 +41,6 @@
 
       "options": {
         "defaults": {
-          "date": "latest",
           "fill": "partial",
           "units": "mm",
           "anomUnits": "percent"
@@ -96,16 +95,14 @@
             "label": "Anomaly Units",
             "description": "The units the rainfall anomaly data are represented in.",
             "type": "units",
-            "values": {
-              "units": [
-                {
-                  "id": "percent",
-                  "name": "Percent",
-                  "shortName": "%",
-                  "system": null
-                }
-              ]
-            }
+            "values": [
+              {
+                "id": "percent",
+                "name": "Percent",
+                "shortName": "%",
+                "system": null
+              }
+            ]
           }
         ]
       },

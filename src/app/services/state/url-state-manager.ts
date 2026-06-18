@@ -1,8 +1,6 @@
-import { computed, inject, Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { Router, ActivatedRoute, Params, NavigationEnd, Event } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { GlobalPreferenceManager } from './global-preference-manager';
-import { filter, map, pairwise } from 'rxjs';
+import { distinctUntilChanged, filter, map, Observable, pairwise, shareReplay, startWith } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -10,66 +8,47 @@ import { filter, map, pairwise } from 'rxjs';
 export class UrlStateManager {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
-  private globalPrefs = inject(GlobalPreferenceManager);
 
-  // signal for getting query parameters
-  // ActivatedRoute queryParams are global, so this will handle detecting changes
-  public paramSignal = toSignal(this.route.queryParams, { initialValue: {} as Params });
-  public paramDeltaSignal = toSignal(
-    this.route.queryParams.pipe(
-      pairwise(),
-      map(([prev, curr]) => {
-        const delta: Params = {};
-        for(const key in curr) {
-          if(curr[key] !== prev[key]) {
-            delta[key] = curr[key];
-          }
-        }
-        return delta;
-      })
-    ),
-    { initialValue: {} as Params }
-  );
-  
-  // query for getting path params
-  // construct from router events
-  // ActivatedRoute path params are component based and will not update unless URL changes are made upstream from the provider (provided in root, so will never update)
-  public pathSignal = toSignal(
-    this.router.events.pipe(
-      filter((event: Event) => {
-        return event instanceof NavigationEnd;
-      }), map(() => {
-        let currentRoute = this.route.root;
-        while (currentRoute.firstChild) {
-          currentRoute = currentRoute.firstChild;
-        }
-        return currentRoute.snapshot.params;
-      })
-    ), { initialValue: {} as Params }
+  public params: Observable<Params> = this.route.queryParams;
+
+  public paths: Observable<Params> = this.router.events.pipe(
+    filter((event: Event): event is NavigationEnd => {
+      return event instanceof NavigationEnd;
+    }),
+    // Force an immediate emission on subscription so late subscribers get the data
+    startWith(null),
+    distinctUntilChanged((prevEvent, currentEvent) => {
+      if (!prevEvent || !currentEvent) return false;
+      const getBasePath = (url: string) => url.split('?')[0].split('#')[0];
+      const prevPath = getBasePath(prevEvent.urlAfterRedirects);
+      const currentPath = getBasePath(currentEvent.urlAfterRedirects);
+      return prevPath === currentPath; 
+    }),
+    map(() => this.currentPaths),
+    // Replay the latest path state to any new components that subscribe later
+    shareReplay(1) 
   );
 
   constructor() {}
     
+  public get currentParams(): Params {
+    return this.router.parseUrl(this.router.url).queryParams;
+  }
+
+  public get currentPaths(): Params {
+    let currentRoute = this.router.routerState.root.snapshot;
+    while(currentRoute.firstChild) {
+      currentRoute = currentRoute.firstChild;
+    }
+    return currentRoute.params;
+  }
+    
 
   updateParams(params: Params) {
     this.router.navigate([], {
-      relativeTo: this.route, // Note: Be careful here, this is still relative to the ROOT route
+      relativeTo: this.route,
       queryParams: params,
       queryParamsHandling: "merge" 
-    });
-  }
-
-  loadDefaultParams(params: Params) {
-    const globalParams = this.globalPrefs.preferences();
-    
-    const mergedParams = {
-      ...params,
-      ...globalParams
-    };
-    
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: mergedParams
     });
   }
 
@@ -82,7 +61,13 @@ export class UrlStateManager {
 
   // navigate to dataset view
   navigate(dataset: string, view: string) {
-    console.log('Navigating to:', dataset, view);
-    this.router.navigate([dataset, view]);
+    // clean slashes off of path variables
+    dataset = dataset.replace(/^\/+|\/+$/g, '');
+    view = view.replace(/^\/+|\/+$/g, '');
+    let currentDataset = this.currentPaths;
+    // only navigate if actually changing the path
+    if(currentDataset.dataset !== dataset || currentDataset.view !== view) {
+      this.router.navigate([dataset, view]);
+    }
   }
 }
