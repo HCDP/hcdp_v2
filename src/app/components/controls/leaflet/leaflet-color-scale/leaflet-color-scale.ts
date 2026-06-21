@@ -1,103 +1,95 @@
-import { Component, input } from '@angular/core';
+import { Component, effect, inject, input, output, ElementRef, viewChild, signal } from '@angular/core';
+import { MapState } from '../../../../models/datasets/mapState';
+import { ColorStore } from '../../../../services/colors/color-store';
+import { Control, ControlPosition, Map } from 'leaflet';
+import { ColorScale } from '../../../../models/leaflet/colors';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule}  from '@angular/material/icon';
+import { MatDialog } from '@angular/material/dialog';
+import { MapScaleConfig } from "../../../../dialogs/map-scale-config/map-scale-config";
+import { firstValueFrom } from 'rxjs';
+import { ColorScaleDisplay } from '../color-scale-display/color-scale-display';
 
 @Component({
   selector: 'app-leaflet-color-scale',
-  imports: [],
+  imports: [MatButtonModule, MatIconModule, ColorScaleDisplay],
   templateUrl: './leaflet-color-scale.html',
   styleUrl: './leaflet-color-scale.scss',
 })
 export class LeafletColorScale {
+  readonly colorStore = inject(ColorStore);
+  readonly dialog = inject(MatDialog);
 
-  // @ViewChild("colors", {static: false}) colors;
+  map = input.required<Map>();
+  mapState = input.required<MapState>();
+  dynamicRange = input<[number, number] | undefined>(undefined);
+  position = input<ControlPosition>("bottomright");
 
-  // _map: Map;
-  // control: Control;
-  // intervalLabelsRaw: string[];
-  // intervalLabels: string[];
-  // colorGradient = "";
+  colorScale = output<ColorScale>();
 
-  // @Input() intervals: number = 5;
-  // @Input() datatype: string = "";
-  // @Input() units: string = "";
-  // private _rangeAbsolute: [boolean, boolean];
-  // @Input() set rangeAbsolute(rangeAbsolute: [boolean, boolean]) {
-  //   this._rangeAbsolute = rangeAbsolute;
-  //   this.updateLabels();
-  // }
+  legendContainer = viewChild.required<ElementRef<HTMLDivElement>>('legendContainer');
+  activeScaleObj = signal<ColorScale | null>(null);
 
-  // private __colorScale;
-  // @Input() set colorScale(colorScale: ColorScale) {
-  //   this.__colorScale = colorScale
-  //   if(colorScale) {
-  //     let range = colorScale.getScaledRange();
-  //     let parts = this.intervals - 1;
-  //     let span = range[1] - range[0];
-  //     let intervalSize = span / parts;
-  //     //populate in reverse since drawing top down
-  //     this.intervalLabelsRaw = [];
-  //     let i: number;
-  //     for(i = 0; i < parts; i++) {
-  //       let interval = range[1] - intervalSize * i;
-  //       //round to at most 2 decimals
-  //       interval = Math.round(interval * 100) / 100;
-  //       let intervalStr = (interval > 0 ? "+" : "") + interval.toLocaleString();
-  //       this.intervalLabelsRaw.push(intervalStr);
-  //     }
-  //     //add range[0] directly to avoid rounding errors
-  //     let intervalStr = (range[0] > 0 ? "+" : "") + range[0].toLocaleString();
-  //     this.intervalLabelsRaw.push(intervalStr);
-  //     this.updateLabels();
-  //     this.getColorGradient();
-  //   }
-  // }
+  constructor() {
+    effect((onCleanup) => {
+      const mapInstance = this.map();
+      const position = this.position();
+      const el = this.legendContainer().nativeElement;
 
-  // @Input() position: ControlPosition = "bottomright";
-  // @Input() set map(map: Map) {
-  //   if(map) {
-  //     this._map = map;
-  //     let Legend = Control.extend({
-  //       onAdd: function () {
-  //         let control = DomUtil.get("legend");
-  //         return control;
-  //       }
-  //     });
-  //     this.control = new Legend({position: this.position}).addTo(map);
-  //   }
-  // }
+      const LegendControl = Control.extend({
+        onAdd: () => el
+      });
 
-  // constructor(private paramService: EventParamRegistrarService) {
-  //   this.intervalLabelsRaw = [];
-  // }
+      const control = new LegendControl({ position });
+      control.addTo(mapInstance);
 
+      onCleanup(() => {
+        mapInstance.removeControl(control);
+      });
+    });
 
-  // ngOnInit() {
-  //   // Extremely hacky unit injection fix
-  //   (window as any).leafletScale = this; 
-  // }
+    effect(() => {
+      let scheme = this.mapState().colorScheme;
+      let dynRange = this.dynamicRange();
+      let stateRange = this.mapState().range;
 
-  // updateLabels() {
-  //   this.intervalLabels = [...this.intervalLabelsRaw];
-  //   if(this._rangeAbsolute && this.intervalLabels.length > 1) {
-  //     if(!this._rangeAbsolute[0]) {
-  //       this.intervalLabels[this.intervalLabels.length - 1] += "-";
-  //     }
-  //     if(!this._rangeAbsolute[1]) {
-  //       this.intervalLabels[0] += "+";
-  //     }
-  //   }
-  // }
+      if (!stateRange && !dynRange) return;
 
-  // getColorGradient() {
-  //   let colors = this.__colorScale.getColorsHex().reverse();
-  //   let colorListString = colors.join(",");
-  //   let gradient = `linear-gradient(${colorListString})`;
-  //   this.colorGradient = gradient;
-  // }
+      let range: [number, number] = [
+        stateRange?.[0] ?? dynRange![0],
+        stateRange?.[1] ?? dynRange![1]
+      ];
 
-  // getHeader() {
-  //   let unit: string = this.units ? `(${this.units})` : "";
-  //   let text: string = this.datatype;
-  //   let header = `${text} ${unit}`;
-  //   return header;
-  // }
+      // Generate Scale
+      let colorScale = this.colorStore.getColorScale(
+        scheme, 
+        range, 
+        this.mapState().reverseColorScale, 
+        this.mapState().domainScale
+      );
+      this.setColorScale(colorScale);
+      
+    });
+  }
+
+  async openConfig() {
+    console.log(this.mapState());
+    let dialogRef = this.dialog.open(MapScaleConfig, {
+      data: {
+        state: this.mapState(),
+        mapRange: this.dynamicRange()
+      }
+    });
+
+    const result: ColorScale | undefined = await firstValueFrom(dialogRef.afterClosed());
+
+    if(result) {
+      this.setColorScale(result);
+    }
+  }
+
+  setColorScale(colorScale: ColorScale) {
+    this.colorScale.emit(colorScale);
+    this.activeScaleObj.set(colorScale);
+  }
 }

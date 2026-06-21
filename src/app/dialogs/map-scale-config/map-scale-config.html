@@ -1,0 +1,84 @@
+<h2 mat-dialog-title>Scale Configuration</h2>
+
+<mat-dialog-content>
+  <div class="dialog-content-wrapper">
+    <div class="controls-form">
+      
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Color Palette</mat-label>
+        <mat-select [value]="selectedScheme()" (selectionChange)="selectedScheme.set($event.value)">
+          @for(scheme of availableSchemes; track scheme) {
+            <mat-option [value]="scheme">{{ colorStore.getColorSchemeLabel(scheme) }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <div class="radio-section">
+        <span class="section-label">Scale Extents</span>
+        <mat-radio-group class="vertical-radio-group" [value]="activePreset()" (change)="setPreset($event.value)">
+          <mat-radio-button value="standard">Use Default Scale</mat-radio-button>
+          
+          @if(mapState.extremeRange) {
+            <mat-radio-button value="extreme">Use Extreme Color Scale</mat-radio-button>
+          }
+          
+          <mat-radio-button value="custom">Custom Range Bounds</mat-radio-button>
+        </mat-radio-group>
+      </div>
+
+      <div class="custom-inputs-container" [class.disabled]="activePreset() !== 'custom'">
+        
+        <div class="bound-group">
+          <mat-checkbox [checked]="lockMin()" 
+                        (change)="lockMin.set($event.checked)" 
+                        [disabled]="activePreset() !== 'custom'">
+            Lock Min to Map
+          </mat-checkbox>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>Low Value</mat-label>
+            <input matInput type="number" 
+                   [disabled]="activePreset() !== 'custom' || lockMin()"
+                   [value]="customLow()"
+                   (blur)="updateCustomLow($event)">
+          </mat-form-field>
+        </div>
+
+        <div class="bound-group">
+          <mat-checkbox [checked]="lockMax()" 
+                        (change)="lockMax.set($event.checked)" 
+                        [disabled]="activePreset() !== 'custom'">
+            Lock Max to Map
+          </mat-checkbox>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>High Value</mat-label>
+            <input matInput type="number" 
+                   [disabled]="activePreset() !== 'custom' || lockMax()"
+                   [value]="lockMax() ? mapRange[1] : (customHigh())"
+                   (blur)="updateCustomHigh($event)">
+          </mat-form-field>
+        </div>
+
+      </div>
+
+      <div class="checkbox-section">
+        <mat-checkbox [checked]="usePseudoLog()" (change)="usePseudoLog.set($event.checked)" color="primary">
+          Use Pseudo-log Scaling
+        </mat-checkbox>
+      </div>
+
+    </div>
+
+    <div class="preview-panel mat-elevation-z2">
+      <div class="scale-preview-body">
+        @if(colorScale()) {
+          <app-color-scale-display [colorScale]="colorScale()"></app-color-scale-display>
+        }
+      </div>
+    </div>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions>
+  <button mat-button aria-label="Save config" (click)="cancel()">Cancel</button>
+  <button mat-flat-button aria-label="Cancel and close" color="primary" (click)="saveAndClose()">Save</button>
+</mat-dialog-actions>

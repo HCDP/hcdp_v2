@@ -1,4 +1,5 @@
-@if(stationData(); as stationResource) {
+
+  @if(stationData(); as stationResource) {
   @if(stationResource.isLoading()) {
     <mat-spinner></mat-spinner>
   }
@@ -6,13 +7,17 @@
     <app-station-filters
       [manager]="stations">
     </app-station-filters>
-    <app-station-table 
-      [manager]="stations"
-      [(selectedSkn)]="activeStationId">
-    </app-station-table>
+    <div class="table-buffer">
+      <app-station-table 
+        [manager]="stations"
+        [(selectedSkn)]="activeStationId">
+      </app-station-table>
+    </div>
   }
 }
 @else if(streamData.isLoading()) {
-  <div class="loader">Loading stream definitions...</div>
+  <mat-spinner></mat-spinner>
 }
+
+
 

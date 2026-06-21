@@ -9,6 +9,7 @@ export interface RasterLayer extends L.GridLayer {
   setColorScale(colorScale: ColorScale): void;
   getCellBoundsFromGeoPos(pos: LatLng, getNoValue?: boolean): LatLngBounds | null;
   getGeoJSONCellFromGeoPos(pos: LatLng, getNoValue?: boolean): GeoJsonObject | null;
+  geoPosToGridValue(lat: number, lng: number): number;
 }
 
 const RasterLayerImpl = L.GridLayer.extend({
@@ -29,58 +30,6 @@ const RasterLayerImpl = L.GridLayer.extend({
     this.options.colorScale = colorScale;
     this.redraw();
   },
-
-  // createTile: function(coords: any) {
-  //   let coordString = JSON.stringify(coords);
-  //   let tile: HTMLCanvasElement = <HTMLCanvasElement>L.DomUtil.create('canvas', 'leaflet-tile');
-
-  //   if(!this.options.cacheEmpty || !this.options.cache.has(coordString)) {
-  //     let ctx = tile.getContext("2d");
-  //     if(ctx) {
-  //       let tileSize = this.getTileSize();
-  //       tile.width = tileSize.x;
-  //       tile.height = tileSize.y;
-  //       let imgData = ctx.getImageData(0, 0, tileSize.x, tileSize.y);
-
-  //       //get the coordinates of the tile corner, tile coords times scale
-  //       let xMin = coords.x * tileSize.x;
-  //       let yMin = coords.y * tileSize.y;
-  //       let xMax = xMin + tileSize.x;
-  //       let yMax = yMin + tileSize.y;
-
-  //       let x = 0;
-  //       let y = 0;
-  //       let colorOff = 0;
-
-  //       let hasValue = false;
-
-  //       for(y = yMin; y < yMax; y++) {
-  //         for(x = xMin; x < xMax; x++) {
-  //           //unproject fast enough that unnecessary to decouple
-  //           let latlng: L.LatLng = this._map.unproject([x, y], coords.z);
-
-  //           let color = this.geoPosToColor(latlng);
-  //           if(color !== null) {
-  //             hasValue = true;
-  //             const [r, g, b, a] = color.rgba();
-  //             imgData.data[colorOff] = r;
-  //             imgData.data[colorOff + 1] = g;
-  //             imgData.data[colorOff + 2] = b;
-  //             imgData.data[colorOff + 3] = a * 255;
-  //           }
-  //           colorOff += 4;
-  //         }
-  //       }
-
-  //       //if caching empty tiles and tile had no values in it, add to empty tile cache
-  //       if(this.options.cacheEmpty && !hasValue) {
-  //         this.options.cache.add(coordString);
-  //       }
-  //       ctx.putImageData(imgData, 0, 0);
-  //     }
-  //   }
-  //   return tile;
-  // },
 
   createTile: function(coords: Coords) {
     let coordString = JSON.stringify(coords);
@@ -274,6 +223,7 @@ export interface RasterOptions {
   cacheEmpty?: boolean,
   colorScale: ColorScale,
   data: RasterData
+  zIndex?: number
 }
 
 interface RasterOptionsInternal extends RasterOptions {

@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, effect, ElementRef, input, Input, viewChild } from '@angular/core';
 import { Control, DomUtil, Map, ControlOptions } from "leaflet";
 
 @Component({
@@ -8,38 +8,43 @@ import { Control, DomUtil, Map, ControlOptions } from "leaflet";
   styleUrl: './leaflet-compass-rose.scss',
 })
 export class LeafletCompassRose {
-  @Input() options: RoseControlOptions;
+  map = input.required<Map>();
+  options = input.required<RoseControlOptions>();
 
-  @Input() set map(map: Map) {
-    if(map) {
-      let Rose = Control.extend({
-        options: {} as RoseControlOptions,
-        initialize: function(options: RoseControlOptions) {
-         
-          if(!options.style) {
-            options.style = {};
-          }
-          this.options = options;
-        },
-        onAdd: function () {
-          let control = DomUtil.get("rose-container");
-          if(control && this.options.style) {
-            Object.assign(control.style, this.options.style);
-          }
-          let img = DomUtil.get("rose");
-          if(img) {
-            img.setAttribute("src", this.options.image);
-          }
+  container = viewChild.required<ElementRef<HTMLDivElement>>('roseContainer');
+  roseImage = viewChild.required<ElementRef<HTMLImageElement>>('roseImg');
 
-          return control;
-        }
+  constructor() {
+    effect((onCleanup) => {
+      const mapInstance = this.map();
+      const opts = this.options();
+      
+      const el = this.container().nativeElement;
+      const imgEl = this.roseImage().nativeElement;
+
+      // Apply styles dynamically
+      if (opts.style) {
+        Object.assign(el.style, opts.style);
+      }
+      
+      // Apply the image source safely
+      imgEl.src = opts.image;
+
+      // Create the custom Leaflet Control
+      const RoseControl = Control.extend({
+        onAdd: () => el
       });
-      new Rose(this.options).addTo(map);
-    }
+
+      // Pass Leaflet-specific options (like 'position') into the control
+      const control = new RoseControl({ position: opts.position });
+      control.addTo(mapInstance);
+
+      // Cleanup if the map changes
+      onCleanup(() => {
+        mapInstance.removeControl(control);
+      });
+    });
   }
-
-  constructor() { }
-
 }
 
 export interface RoseControlOptions extends ControlOptions {

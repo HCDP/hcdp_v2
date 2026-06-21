@@ -55,7 +55,7 @@ export class RasterData {
   }
 
   valueAtIndex(index: number) {
-    return this.data.get(index) || NaN;
+    return this.data.get(index) ?? NaN;
   }
 
   valueAtGrid(x: number, y: number) {

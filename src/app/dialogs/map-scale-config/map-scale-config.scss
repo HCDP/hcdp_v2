@@ -1,0 +1,116 @@
+.dialog-content-wrapper {
+  display: flex;
+  gap: 32px;
+  min-width: 450px;
+  padding-top: 8px;
+
+  .controls-form {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    .full-width {
+      width: 100%;
+    }
+
+    .section-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: rgba(0, 0, 0, 0.6);
+      margin-bottom: 8px;
+    }
+
+    .vertical-radio-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .custom-inputs-row {
+      display: flex;
+      gap: 16px;
+      transition: opacity 0.2s ease;
+      margin-top: -4px; // Pulls it closer to the radio buttons
+      margin-bottom: 8px;
+
+      &.disabled {
+        opacity: 0.5;
+        pointer-events: none;
+      }
+      
+      mat-form-field {
+        width: 120px;
+      }
+    }
+
+    .checkbox-section {
+      margin-top: auto; // Pushes it neatly to the bottom of the form column
+    }
+  }
+
+  .preview-panel {
+    width: 140px;
+    background: #fafafa;
+    padding: 16px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+
+    .preview-header {
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      color: rgba(0, 0, 0, 0.6);
+      margin-bottom: 16px;
+      text-align: center;
+      letter-spacing: 0.5px;
+    }
+
+    .scale-preview-body {
+      display: flex;
+      justify-content: center; // Centers the component if needed
+      flex: 1;
+      height: 220px;
+    }
+  }
+}
+
+
+
+.vertical-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.custom-inputs-container {
+      display: flex;
+      flex-direction: row; /* Flips them side-by-side */
+      gap: 24px; /* Space between the Min and Max columns */
+      transition: opacity 0.2s ease;
+      margin-top: 4px;
+      margin-bottom: 8px;
+
+      &.disabled {
+        opacity: 0.5;
+        pointer-events: none;
+      }
+
+      .bound-group {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        
+        mat-form-field {
+          width: 130px; /* Keeps the inputs compact */
+          margin-left: 28px; /* Aligns the input text perfectly under the checkbox label */
+        }
+      }
+    }
+
+.checkbox-section {
+  margin-top: auto; 
+}

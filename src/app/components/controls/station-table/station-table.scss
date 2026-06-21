@@ -1,7 +1,8 @@
 .table-container {
   height: 350px;
   overflow-y: auto;
-  
+
+
   .mat-mdc-header-row {
     background: white;
     z-index: 100;
@@ -40,4 +41,24 @@ tr.mat-mdc-row {
 
 .mat-column-skn {
   min-width: 100px;
+}
+
+
+/* Make the data rows shorter (Default is 52px) */
+.mat-mdc-row {
+  height: 36px !important; 
+}
+
+/* Make the header row shorter (Default is 56px) */
+.mat-mdc-header-row {
+  height: 40px !important; 
+}
+
+/* Tighten the padding and optionally reduce the font size */
+.mat-mdc-cell, 
+.mat-mdc-header-cell {
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+  
+
 }

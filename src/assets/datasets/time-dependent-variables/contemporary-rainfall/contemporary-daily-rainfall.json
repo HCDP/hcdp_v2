@@ -8,6 +8,7 @@
       "warnings": {
         "experimental": true
       },
+      "computeUnitConversionsFrom": "mm",
       "datasetParams": {
         "location": "hawaii",
         "datatype": "rainfall",
@@ -27,14 +28,6 @@
           "bind": ["date"],
           "staticParams": {
             "type": "data_map"
-          }
-        },
-        {
-          "id": "anom",
-          "type": "raster",
-          "bind": ["date"],
-          "staticParams": {
-            "type": "anom"
           }
         }
       ],
@@ -89,20 +82,6 @@
                 "system": "usc"
               }
             ]
-          },
-          {
-            "id": "anomUnits",
-            "label": "Anomaly Units",
-            "description": "The units the rainfall anomaly data are represented in.",
-            "type": "units",
-            "values": [
-              {
-                "id": "percent",
-                "name": "Percent",
-                "shortName": "%",
-                "system": null
-              }
-            ]
           }
         ]
       },
@@ -112,35 +91,22 @@
           "interval": 1
         }
       },
-      "dataGroups": [
-        {
-          "label": "Rainfall Data",
-          "description": "Rainfall values as measured or computed.",
-          "layers": ["stations", "dataMap"],
-          "range": {
-            "standard": [0, 20],
-            "extreme": [0, 250],
-            "limits": [0, null]
-          },
-          "colors": ["viridis", "monochromatic", "nws_radar", "turbo", "usgs"],
-          "defaultColor": "viridis",
-          "unitControl": "units",
-          "computeUnitConversionsFrom": "mm"
+      "mapLayers": {
+        "layers": [{
+          "stream": "stations",
+          "label": "Station Data"
+        }, {
+          "stream": "dataMap",
+          "label": "Data Map"
+        }],
+        "range": {
+          "standard": [0, 20],
+          "extreme": [0, 250],
+          "limits": [0, null]
         },
-        {
-          "label": "Rainfall Anomaly",
-          "description": "The amount or percent difference of the station rainfall data interpolated using an automated optimized climate aided ordinary kriging from the expected mean monthly rainfall map.",
-          "layers": ["anom"],
-          "range": {
-            "standard": [0, 20],
-            "limits": [0, null]
-          },
-          "colors": ["diverging"],
-          "defaultColor": "diverging",
-          "unitControl": "anomUnits",
-          "computeUnitConversionsFrom": null
-        }
-      ]
+        "colors": ["viridis", "monochromatic", "nwsRadar", "turbo"],
+        "defaultColor": "viridis"
+      }
     }
   },
   "exportLayout": {}

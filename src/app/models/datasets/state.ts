@@ -189,7 +189,8 @@ export class TimeseriesDataStateController extends DataStateController {
       let currentDate = this.timeseriesData.date; 
 
       if(currentUrlParams[id]) {
-        let initialDate = DateTime.fromISO(currentUrlParams[id]).setZone(this.configService.timezone);
+        let initialDate = DateTime.fromISO(currentUrlParams[id], { zone: "UTC" });
+        console.log(initialDate.toISO());
         if(initialDate.isValid) {
           this.timeseriesData.setDate(initialDate);
           currentDate = initialDate; 
@@ -212,7 +213,6 @@ export class TimeseriesDataStateController extends DataStateController {
         }
       });
       
-      // ✅ FIX 1: Register a shell state in _controlData so getters don't fail
       this._controlData[id] = {
         ...control,
         value: new BehaviorSubject<string>(this.timeseriesData.period.formatDate(currentDate))
@@ -234,10 +234,9 @@ export class TimeseriesDataStateController extends DataStateController {
         return;
       }
 
-      let newDate = DateTime.fromISO(paramValue).setZone(this.configService.timezone);
+      let newDate = DateTime.fromISO(paramValue);
       
       if (newDate.isValid) {
-        // ✅ FIX 2: Standardize the check using your string formatter!
         const currentFormatted = this.timeseriesData.period.formatDate(currentDate);
         const incomingFormatted = this.timeseriesData.period.formatDate(newDate);
 

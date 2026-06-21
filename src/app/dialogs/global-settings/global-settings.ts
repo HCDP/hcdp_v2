@@ -1,14 +1,15 @@
 import { Component, inject, signal } from '@angular/core';
 import { GlobalPreferenceManager } from '../../services/state/global-preference-manager';
 import { MatButtonModule } from '@angular/material/button';
-import { MatDialogRef } from '@angular/material/dialog';
-import {MatButtonToggleModule} from '@angular/material/button-toggle';
+import { MatDialogRef, MatDialogModule } from '@angular/material/dialog';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 
 @Component({
   selector: 'app-global-settings',
   imports: [
     MatButtonToggleModule,
-    MatButtonModule
+    MatButtonModule,
+    MatDialogModule
   ],
   templateUrl: './global-settings.html',
   styleUrl: './global-settings.scss',

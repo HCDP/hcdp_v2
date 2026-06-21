@@ -5,27 +5,3 @@
   margin: 16px;
   border-radius: 8px;
 }
-
-table {
-  width: 100%;
-}
-
-// Optional: Background color for the sticky header so text doesn't bleed through while scrolling
-.mat-mdc-header-row {
-  background-color: var(--mat-app-background-color, #ffffff); 
-}
-
-// Optional: Basic styling for the status badges
-.status-badge {
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 500;
-  background-color: #ffebee;
-  color: #c62828;
-
-  &.active {
-    background-color: #e8f5e9;
-    color: #2e7d32;
-  }
-}

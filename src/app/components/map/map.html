@@ -1,17 +1,40 @@
 
 <div class="map-container">
-  <div id="map">
+  <div #mapElement id="map">
   </div>
 </div>
-<app-leaflet-compass-rose
-  [map]="map"
-  [options]="roseOptions">
-</app-leaflet-compass-rose>
-<app-leaflet-image-export
-  [map]="map"
-  [imageContainer]="imageContainer"
-  [hiddenControls]="imageHiddenControls">
-</app-leaflet-image-export>
+
+@if(map(); as readyMap) {
+  <app-leaflet-compass-rose
+    [map]="readyMap"
+    [options]="roseOptions">
+  </app-leaflet-compass-rose>
+
+  <app-leaflet-image-export
+    [map]="readyMap"
+    [imageContainer]="imageContainer()"
+    [hiddenControls]="imageHiddenControls">
+  </app-leaflet-image-export>
+
+  <app-leaflet-color-scale
+    [map]="readyMap"
+    [mapState]="mapState()"
+    [dynamicRange]="mapRange()" 
+    (colorScale)="setColorScale($any($event))">
+  </app-leaflet-color-scale>
+}
 
 
 
+<!-- opacity slider for layer injection -->
+
+<div style="display: none;">
+  <div id="opacity-control" class="custom-opacity-control">
+    <div style="font-size: 12px; margin-bottom: 8px;">Map Opacity</div>
+    <mat-slider min="0" max="100" step="1" discrete>
+      <input matSliderThumb 
+             [value]="mapOpacity()" 
+             (input)="updateOpacity($event)">
+    </mat-slider>
+  </div>
+</div>

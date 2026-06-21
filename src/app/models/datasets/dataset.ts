@@ -9,9 +9,10 @@ import { DateTime } from "luxon";
 import { Configuration } from "../../services/configuration/configuration";
 import { BehaviorSubject, firstValueFrom, map, Observable } from "rxjs";
 import { Period } from "./time";
-import { DataOptions, DataStreamRecipe, HCDPDatasetDefinition, HCDPExportLayout, TimeseriesData, TimeseriesSchemaData } from "./recipe";
+import { DataOptions, DataStreamRecipe, HCDPDatasetDefinition, HCDPExportLayout, MapLayers, TimeseriesData, TimeseriesSchemaData } from "./recipe";
 import { DataStreamManager } from "./data";
 import { TimeseriesDataStateController } from "./state";
+import { MapState } from "./mapState";
 
 
 
@@ -103,6 +104,7 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
   private _timeseriesData: Promise<HCDPTimeseriesData>;
   private _dataState: Promise<TimeseriesDataStateController>;
   private _dataStreamManager: Promise<DataStreamManager>;
+  private _mapState: MapState;
   
 
   constructor(layout: TimeseriesSchemaData, active: Observable<boolean>) {
@@ -118,11 +120,12 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
     }];
     super(tabs, active);
     
-    let { datasetParams, streams, timeseries, options } = layout;
+    let { datasetParams, streams, timeseries, options, mapLayers } = layout;
     
     this._timeseriesData = this.setupTimeseries(timeseries, datasetParams);
     this._dataState = this.setupState(active, options);
     this._dataStreamManager = this.setupDataStreams(active, datasetParams, streams);
+    this._mapState = new MapState(mapLayers);
   }
 
   private async setupTimeseries(timeseries: TimeseriesData, datasetParams: Record<string, string>) {
@@ -132,7 +135,7 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
     // if range override provided on both ends resolve directly with these values
     if(rangeOverride && rangeOverride[0] && rangeOverride[1]) {
       dateRange = (rangeOverride as [string, string]).map((isoDate: string) => {
-        return DateTime.fromISO(isoDate, { zone: this.configManager.timezone });
+        return DateTime.fromISO(isoDate, { zone: "UTC"});
       }) as [DateTime, DateTime];
     }
     // otherwise get range from API
@@ -149,7 +152,7 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
                 dates[1] = rangeOverride[1];
               }
               return dates.map((isoDate: string) => {
-                return DateTime.fromISO(isoDate, { zone: this.configManager.timezone });
+                return DateTime.fromISO(isoDate);
               }) as [DateTime, DateTime];
             }
           )
@@ -158,7 +161,7 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
     }
     let defaultDate: DateTime | undefined;
     if(timeseries.defaultDate) {
-      defaultDate = DateTime.fromISO(timeseries.defaultDate, { zone: this.configManager.timezone });
+      defaultDate = DateTime.fromISO(timeseries.defaultDate);
     }
       
     return new HCDPTimeseriesData(periodData, dateRange[0], dateRange[1], defaultDate);
@@ -181,6 +184,7 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
     })
   }
 
+
   get timeseriesData() {
     return this._timeseriesData;
   }
@@ -192,6 +196,10 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
   get dataState() {
     return this._dataState;
   }
+
+  get mapState() {
+    return this._mapState;
+  }
 }
 
 export class HCDPDatasetExport {
@@ -199,3 +207,7 @@ export class HCDPDatasetExport {
 
   }
 };
+
+
+
+export type HCDPVisSubtypes = HCDPDatasetTimeseriesVisualization;

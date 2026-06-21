@@ -1,24 +1,10 @@
 
-@if(datasetResource.isLoading()) {
-  <mat-spinner></mat-spinner>
-}
-@else if(datasetResource.error(); as err) {
-  <div class="error-container">
-    <h3>Something went wrong!</h3>
-    <p>{{ err.message }}</p>
-    
-    <button matButton="filled"(click)="datasetResource.reload()">Reload</button>
-    <h4>
-      If this error persists please try a different dataset, try again later, or contact the site administrators at hcdp@hawaii.edu with a screenshot of this error.
-    </h4>
-  </div>
-}
-@else if(dataset.visData) {
+@if(dataset().visData) {
   <mat-tab-group class="tab-content" color="accent">
-  @for(tab of dataset.visData.tabs; track tab) {
+  @for(tab of dataset().visData.tabs; track tab) {
     <mat-tab [label]="tab.label">
       <div class="data-tab">
-        <ng-container appDynamicTabTemplate [component]="tab.component" [dataset]="dataset"></ng-container>
+        <ng-container appDynamicTabTemplate [component]="tab.component" [dataset]="dataset()"></ng-container>
       </div>
     </mat-tab>
   }

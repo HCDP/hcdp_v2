@@ -1,4 +1,4 @@
-import { Component, inject, effect, ResourceRef } from '@angular/core';
+import { Component, inject, effect, ResourceRef, input } from '@angular/core';
 import { MatTabsModule } from '@angular/material/tabs';
 import { DynamicTabTemplate } from "../../directives/dynamic-tab-template.js"
 import { DatasetFactory } from '../../services/datasets/dataset-factory.js';
@@ -13,20 +13,6 @@ import { MatButtonModule } from '@angular/material/button';
   styleUrl: './data-panel.scss',
 })
 export class DataPanel {
-  private dsFactory = inject(DatasetFactory);
-  
-  datasetResource: ResourceRef<HCDPDataset | undefined>;
-
-  dataset: HCDPDataset;
-
-  constructor() {
-    this.datasetResource = this.dsFactory.dataset;
-    effect(() => {
-      let dataset = this.dsFactory.dataset.value();
-      if(dataset) {
-        this.dataset = dataset;
-      }
-    });
-  }
+  dataset = input.required<HCDPDataset>();
 }
 

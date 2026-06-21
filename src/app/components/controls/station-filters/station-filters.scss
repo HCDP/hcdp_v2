@@ -94,3 +94,74 @@
 ::ng-deep .mat-mdc-select-panel {
   padding-top: 0 !important;
 }
+
+
+
+
+
+
+
+
+
+
+.filter-card {
+  margin: 8px 0; /* Was 16px */
+  
+  mat-card-header {
+    margin-bottom: 8px; /* Was 16px */
+    padding-top: 12px;
+  }
+}
+
+/* Shrink the gaps between form inputs */
+.filter-form-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px; /* Tighter spacing (Vertical Horizontal) */
+  align-items: flex-start;
+
+  mat-form-field {
+    flex: 1 1 180px;
+  }
+
+  .wide-input {
+    flex: 2 1 250px;
+  }
+
+  .narrow-input {
+    flex: 1 1 100px;
+  }
+
+  /* Shrink the height of the toggle and button containers to match the tighter inputs */
+  .toggle-container {
+    display: flex;
+    align-items: center;
+    height: 48px; /* Was 56px */
+    padding: 0 8px;
+  }
+
+  .button-container {
+    display: flex;
+    align-items: center;
+    height: 48px; /* Was 56px */
+    
+    button {
+      height: 36px; /* Slightly shorter button */
+    }
+  }
+}
+
+/* Shrink the padding around the active filter chips */
+.active-filters-container {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px; /* Was 12px */
+  padding: 8px 16px; /* Was 16px */
+
+  .active-label {
+    font-size: 13px; /* Slightly smaller text */
+    font-weight: 500;
+    color: var(--mat-sys-on-surface-variant, #666);
+  }
+}

@@ -1,4 +1,5 @@
 import { DateTimeUnit } from "luxon";
+import { ColorScheme } from "../../services/colors/color-store";
 
 export interface HCDPDatasetDefinition {
   id: string,
@@ -72,18 +73,18 @@ export interface DataRange {
   limits: [number | null, number | null]
 }
 
-export type ColorScheme = "viridis" | "monochromatic" | "nws_radar" | "turbo" | "usgs";
 export type UnitBase = "mm" | "c"
 
-export interface DataLayerGroup {
-  label: string,
-  description: string,
-  layers: string[],
+export interface MapLayers { 
+  layers: LayerData[],
   range: DataRange,
   colors: ColorScheme[],
-  defaultColor: ColorScheme,
-  unitControl: string,
-  computeUnitConversionsFrom: UnitBase
+  defaultColor: ColorScheme
+}
+
+export interface LayerData {
+  stream: string,
+  label: string
 }
 
 export interface TimeseriesSchemaData {
@@ -92,12 +93,13 @@ export interface TimeseriesSchemaData {
     experimental: boolean,
     usage: string
   },
+  computeUnitConversionsFrom: UnitBase | null,
   datasetParams: Record<string, string>,
   streams: DataStreamRecipe[],
   // dataset option controls
   options: DataOptions,
   timeseries: TimeseriesData,
-  dataGroups: DataLayerGroup[]
+  mapLayers: MapLayers
 }
 
 
