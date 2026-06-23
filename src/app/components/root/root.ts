@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ViewChild, inject, computed, ResourceRef, resource } from '@angular/core';
+import { AfterViewInit, Component, ViewChild, inject, computed, ResourceRef, resource, viewChild } from '@angular/core';
 import { VisualizationContainer } from '../visualization-container/visualization-container.js';
 import { ExportContainer } from '../export-container/export-container.js';
 import { Sidebar } from "../menus/sidebar/sidebar.js";
@@ -22,6 +22,8 @@ export class Root implements AfterViewInit {
   private breakpointObserver = inject(BreakpointObserver);
   private urlStateManager = inject(UrlStateManager);
   private dsFactory = inject(DatasetFactory);
+
+  sidenav = viewChild.required<MatSidenav>("sidenav");
   
   datasetResource: ResourceRef<HCDPDataset | undefined> = this.dsFactory.dataset;
 
@@ -58,7 +60,7 @@ export class Root implements AfterViewInit {
   });
   //  signal<boolean>(true);
 
-  @ViewChild("sidenav") sidenav!: MatSidenav;
+  
 
   pathsSignal = toSignal(this.urlStateManager.paths, { initialValue: {} as Params });
 
@@ -76,12 +78,12 @@ export class Root implements AfterViewInit {
     .subscribe(result => {
       let isHandset = result.matches;
       if(isHandset) {
-        this.sidenav.mode = "over";
-        this.sidenav.close(); // close on mobile by default
+        this.sidenav().mode = "over";
+        this.sidenav().close(); // close on mobile by default
       } 
       else {
-        this.sidenav.mode = "side";
-        this.sidenav.open(); // open and pin to side on desktop
+        this.sidenav().mode = "side";
+        this.sidenav().open(); // open and pin to side on desktop
       }
     });
   }

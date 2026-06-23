@@ -27,7 +27,7 @@ export type ChartOptions = {
   styleUrl: './timeseries.scss',
 })
 export class Timeseries extends TabBase {
-  @ViewChild('chartContainer') chartContainer!: ElementRef;
+
   private uplotInst?: uPlot;
   
   // Track the current active interaction mode
@@ -338,8 +338,7 @@ setMode(mode: 'zoom' | 'pan') {
       }
     };
   }
-  // @ViewChild("chartWrapper", { static: false }) chartWrapper!: ElementRef;
-  // @ViewChild("chart") chart: ChartComponent;
+
   // public chartOptions: any;
 
   // private period: DateTimeUnit = "day"

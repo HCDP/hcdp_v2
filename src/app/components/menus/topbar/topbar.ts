@@ -1,4 +1,4 @@
-import { Component, Input, effect, inject } from '@angular/core';
+import { Component, Input, effect, inject, input } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule}  from '@angular/material/icon';
 import { MatSidenav } from '@angular/material/sidenav';
@@ -15,9 +15,10 @@ import { MatExpansionModule } from '@angular/material/expansion';
   styleUrl: './topbar.scss',
 })
 export class Topbar {
-  @Input() sidenav: MatSidenav;
   readonly dialog = inject(MatDialog);
   readonly dsFactory = inject(DatasetFactory);
+
+  sidenav = input.required<MatSidenav>();
 
   dataset: HCDPDatasetVisualization | undefined;
 
@@ -44,8 +45,8 @@ export class Topbar {
   }
 
   toggleSidenav(): boolean {
-    this.sidenav.toggle();
-    return this.sidenav.opened;
+    this.sidenav().toggle();
+    return this.sidenav().opened;
   }
 
   openSettings(): void {

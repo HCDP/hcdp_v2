@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, ViewChild, inject, signal, computed, viewChild } from '@angular/core';
 import { httpResource } from '@angular/common/http';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatSidenavModule, MatSidenav } from '@angular/material/sidenav';
@@ -18,8 +18,6 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 })
 export class Sidebar implements OnInit {
   private urlStateManager = inject(UrlStateManager);
-
-  @ViewChild("sidenav") sidenav!: MatSidenav;
 
   hierarchyResource = httpResource<DatasetSelectorNode[]>(() => '/assets/data/data-hierarchy.json');
 

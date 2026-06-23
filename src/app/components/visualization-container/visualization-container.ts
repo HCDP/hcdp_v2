@@ -23,12 +23,6 @@ export class VisualizationContainer {
 
   dataContainerWidth: string = "calc(50% - 10px)";
 
-
-  @HostListener("window:resize")
-  checkMoveInfo() {
-    this.map().invalidateSize();
-  }
-
   startResize(touch: boolean): boolean {
     let moveHandler = (event: MouseEvent | TouchEvent) => {
       let clientY = touch ? (<TouchEvent>event).touches[0].clientY : (<MouseEvent>event).clientY;
@@ -52,8 +46,6 @@ export class VisualizationContainer {
         document.removeEventListener("mousemove", moveHandler);
         document.removeEventListener("mouseup", stopResize);
       }
-
-      this.checkMoveInfo();
 
       return false;
     }

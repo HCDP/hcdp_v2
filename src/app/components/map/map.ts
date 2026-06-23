@@ -130,6 +130,24 @@ export class Map {
         childEffects.forEach(eRef => eRef?.destroy());
       });
     });
+
+    // listen for image container resizing and invalidate map size
+    effect((onCleanup) => {
+      const element = this.imageContainer().nativeElement;
+      let invalidateSizeThrottle: number;
+      const resizeObserver = new ResizeObserver(() => {
+        // clear throttle to prevent refires
+        clearTimeout(invalidateSizeThrottle);
+        // throttle map size invalidation against rapid triggers
+        invalidateSizeThrottle = setTimeout(() => {
+          this.invalidateSize();
+        }, 100);
+      });
+      resizeObserver.observe(element);
+      onCleanup(() => {
+        resizeObserver.disconnect();
+      });
+    });
   }
 
   updateOpacity(event: Event) {

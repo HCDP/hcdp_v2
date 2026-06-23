@@ -1,4 +1,4 @@
-import { Component, Input, ElementRef, ViewChild } from '@angular/core';
+import { Component, ElementRef, ViewChild, input, effect, viewChild } from '@angular/core';
 import {Map as LMap, Control, DomUtil, ControlPosition} from 'leaflet';
 import * as rasterizeHTML from 'rasterizehtml';
 
@@ -9,38 +9,37 @@ import * as rasterizeHTML from 'rasterizehtml';
   styleUrl: './leaflet-image-export.scss',
 })
 export class LeafletImageExport {
-@ViewChild("exportControl", {static: false}) exportControl: ElementRef;
+  datePicker = viewChild.required<ElementRef>("exportControl");
 
-  @Input() position: ControlPosition = "topleft";
-  private _map: LMap;
-  @Input() set map(map: LMap) {
-    this._map = map;
-    if(map) {
+  map = input.required<LMap>();
+  imageContainer = input.required<ElementRef>();
+
+  position = input<ControlPosition>("topleft");
+  hiddenControls = input<string[]>([]);
+
+  constructor() {
+    effect(() => {
       let ExportControl = Control.extend({
         onAdd: function () {
           let control = DomUtil.get("export-control");
           return control;
         }
       });
-      new ExportControl({position: this.position}).addTo(map);
-    }
+      new ExportControl({position: this.position()}).addTo(this.map());
+    });
   }
-  @Input() imageContainer: ElementRef;
-  @Input() hiddenControls: string[] = [];
-
-  constructor() { }
 
   async exportImage(e: PointerEvent) {
     e.stopPropagation();
     
-    const mapContainer = this._map.getContainer();
+    const mapContainer = this.map().getContainer();
     const pointerEvents = mapContainer.style.pointerEvents;
     mapContainer.style.pointerEvents = "none";
-    this._map.keyboard.disable();
+    this.map().keyboard.disable();
 
 
     let canvas = document.createElement("canvas");
-    let containerEl: HTMLElement = this.imageContainer.nativeElement;
+    let containerEl: HTMLElement = this.imageContainer().nativeElement;
     let nodeReplacements: HTMLNodeReplaceData[] = await this.prepareDOMForExport(containerEl);
 
     try {
@@ -52,7 +51,7 @@ export class LeafletImageExport {
         let defaultDisplays = new Map<HTMLElement, string>();
 
 
-        for(let className of this.hiddenControls) {
+        for(let className of this.hiddenControls()) {
           for(let element of <any>document.getElementsByClassName(className)) {
             defaultDisplays.set(element, element.style.display);
             element.style.display = "none";
@@ -89,7 +88,7 @@ export class LeafletImageExport {
       //revert converted image nodes to canvas
       this.revertNodeReplacments(nodeReplacements);
       mapContainer.style.pointerEvents = pointerEvents;
-      this._map.keyboard.enable();
+      this.map().keyboard.enable();
     }
   }
 
@@ -138,14 +137,6 @@ export class LeafletImageExport {
             }      
             sourceClone.addEventListener("load", drawImageToContext);
           });
-  
-          // canvasNode.className = imageNode.className;
-          // for(let style in imageNode.style) {
-          //   try {
-          //     canvasNode.style[style] = imageNode.style[style];
-          //   }
-          //   catch {}
-          // }
   
           //set html props
           imageEl.className = imageNode.className;
