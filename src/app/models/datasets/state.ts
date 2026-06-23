@@ -1,4 +1,4 @@
-import { computed, DestroyRef, effect, inject, signal, Signal, untracked, WritableSignal } from "@angular/core";
+import { computed, DestroyRef, effect, inject, Injector, signal, Signal, untracked, WritableSignal } from "@angular/core";
 import { ControlType, DataOptions, ListControlValue, UnitValue } from "./recipe";
 import { DateTime } from "luxon";
 import { Configuration } from "../../services/configuration/configuration";
@@ -6,9 +6,7 @@ import { UrlStateManager } from "../../services/state/url-state-manager";
 import { GlobalPreferenceManager } from "../../services/state/global-preference-manager";
 import { HCDPTimeseriesData } from "./timeseries";
 import { auditTime, BehaviorSubject, combineLatest, distinctUntilChanged, filter, map, Observable, withLatestFrom } from "rxjs";
-import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-
-
+import { takeUntilDestroyed, toObservable } from "@angular/core/rxjs-interop";
 
 
 export class DataStateController {
@@ -16,13 +14,20 @@ export class DataStateController {
   urlState = inject(UrlStateManager);
   configService = inject(Configuration);
   destroyRef: DestroyRef = inject(DestroyRef); 
+  injector: Injector = inject(Injector);
 
   protected _controlData: Record<string, OptionControlState> = {};
   
   // The final settled state stream
   public state: Observable<Record<string, string> | undefined>;
 
-  constructor(protected active: Observable<boolean>, protected definition: DataOptions) {}
+  // Converted active stream for RxJS interop
+  protected active$: Observable<boolean>;
+
+  constructor(protected active: Signal<boolean>, protected definition: DataOptions) {
+    // Convert the signal back to an observable to use in combineLatest and withLatestFrom
+    this.active$ = toObservable(this.active, { injector: this.injector });
+  }
 
   public initOptions() {
     let { defaults, controls } = this.definition;
@@ -42,10 +47,10 @@ export class DataStateController {
     }
 
     // 2. SIMPLIFICATION: Native Derived State
-    // combineLatest natively acts as a "settle guard", emitting a beautifully synchronized object
     const controlObservables = controls.map(c => this.getControlObservable(c.id, c.type));
     
-    this.state = combineLatest([this.active, ...controlObservables]).pipe(
+    // Replace this.active with this.active$
+    this.state = combineLatest([this.active$, ...controlObservables]).pipe(
       map(([isActive, ...values]) => {
         if (!isActive || values.some(v => v === undefined || v === null)) {
           return undefined;
@@ -63,7 +68,7 @@ export class DataStateController {
 
     // 3. Direction 2: External URL Changes -> Controls
     this.urlState.params.pipe(
-      withLatestFrom(this.active),
+      withLatestFrom(this.active$), // Replaced with this.active$
       filter(([_, isActive]) => isActive),
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(([urlParams]) => {
@@ -113,10 +118,9 @@ export class DataStateController {
     let subject = new BehaviorSubject<string>(initialValue);
 
     // SIMPLIFICATION: Direction 1 (Controls -> URL)
-    // distinctUntilChanged prevents identical values from firing, natively breaking echo loops!
     subject.pipe(
       distinctUntilChanged(),
-      withLatestFrom(this.active),
+      withLatestFrom(this.active$), // Replaced with this.active$
       filter(([_, isActive]): boolean => isActive),
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(([value]) => {
@@ -154,7 +158,6 @@ export class DataStateController {
 
       if (!isValid) restoreParams[id] = newValueToSet;
 
-      // BehaviorSubject.next() naturally feeds into distinctUntilChanged()
       controlState.value.next(newValueToSet); 
     }
   }
@@ -173,7 +176,7 @@ export class DataStateController {
 export class TimeseriesDataStateController extends DataStateController {
 
   constructor(
-    active: Observable<boolean>, 
+    active: Signal<boolean>, 
     definition: DataOptions, 
     private timeseriesData: HCDPTimeseriesData
   ) {
@@ -203,7 +206,7 @@ export class TimeseriesDataStateController extends DataStateController {
       this.timeseriesData.dateStream.pipe(
         map(date => this.timeseriesData.period.formatDate(date)),
         distinctUntilChanged(),
-        withLatestFrom(this.active),
+        withLatestFrom(this.active$), // Replaced with this.active$
         filter(([_, isActive]) => isActive),
         takeUntilDestroyed(this.destroyRef)
       ).subscribe(([valueString]) => {
@@ -240,7 +243,6 @@ export class TimeseriesDataStateController extends DataStateController {
         const currentFormatted = this.timeseriesData.period.formatDate(currentDate);
         const incomingFormatted = this.timeseriesData.period.formatDate(newDate);
 
-        // Explicitly block if the calendar strings are identical
         if (currentFormatted !== incomingFormatted) {
           this.timeseriesData.setDate(newDate);
         }
@@ -255,7 +257,6 @@ export class TimeseriesDataStateController extends DataStateController {
 
   protected override getControlObservable(id: string, type: string): Observable<any> {
     if (type === "date") {
-      // Connects the dateStream directly into the base class's state pipeline
       return this.timeseriesData.dateStream.pipe(
         map(date => this.timeseriesData.period.formatDate(date)),
         distinctUntilChanged()
@@ -264,9 +265,6 @@ export class TimeseriesDataStateController extends DataStateController {
     return super.getControlObservable(id, type);
   }
 }
-
-
-
 
 export interface OptionControlState {
   id: string,

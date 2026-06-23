@@ -5,13 +5,12 @@ export interface HCDPDatasetDefinition {
   id: string,
   label: string,
   description: string,
-  visLayout: HCDPVisLayout,
-  exportLayout: HCDPExportLayout
+  layout: HCDPLayout
 };
 
 export type HCDPVisSchema = "timeseries" | "static";
 
-export interface HCDPVisLayout {
+export interface HCDPLayout {
   schema: HCDPVisSchema,
   data: TimeseriesSchemaData | StaticSchemaData
 };
@@ -99,14 +98,52 @@ export interface TimeseriesSchemaData {
   // dataset option controls
   options: DataOptions,
   timeseries: TimeseriesData,
-  mapLayers: MapLayers
+  mapLayers: MapLayers,
+  exportData: ExportData
 }
 
 
-// UPDATE
-export interface HCDPExportLayout {
-  
-};
+export interface ExportData {
+  fileTypes: Record<string, FileTypeData>,
+  files: FileGroup[]
+}
+
+export interface FileTypeData {
+  label: string,
+  ext: string,
+  description: string
+}
+
+export interface FileGroup {
+  properties: FileProperty[],
+  files: FileDetails[]
+}
+
+export interface FileProperty {
+  id: string,
+  fieldTag: string,
+  label: string,
+  description: string,
+  defaults: string[],
+  values: FilePropertyValue[]
+}
+
+export interface FilePropertyValue {
+  id: string,
+  label: string,
+  description: string
+}
+
+export interface FileDetails {
+  id: string,
+  fileTag: string,
+  label: string,
+  description: string,
+  fileType: string,
+  requires: string[],
+  fileParams: Record<string, string>
+}
+
 
 export interface StaticSchemaData {
   

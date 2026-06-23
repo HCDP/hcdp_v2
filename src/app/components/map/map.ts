@@ -3,13 +3,16 @@ import * as L from "leaflet";
 import { LeafletCompassRose, RoseControlOptions } from "../controls/leaflet/leaflet-compass-rose/leaflet-compass-rose";
 import { LeafletImageExport } from '../controls/leaflet/leaflet-image-export/leaflet-image-export';
 import { AssetManager } from '../../services/util/asset-manager';
-import { HCDPDataset, HCDPDatasetTimeseriesVisualization, HCDPVisSubtypes } from '../../models/datasets/dataset';
+import { HCDPDataset, HCDPDatasetTimeseriesVisualization, HCDPDatasetVisualization, HCDPVisSubtypes } from '../../models/datasets/dataset';
 import { LeafletColorScale } from '../controls/leaflet/leaflet-color-scale/leaflet-color-scale';
 import { RasterData } from '../../models/leaflet/rasterData';
 import { ColorScale } from '../../models/leaflet/colors';
 import { HCDPStationDataManager, StationData } from '../../models/datasets/stations';
 import { rasterLayer, RasterLayer } from '../../models/leaflet/rasterLayer';
 import { MatSliderModule } from '@angular/material/slider';
+import { Spinner } from 'spin.js';
+import { LayerData } from '../../models/datasets/recipe';
+
 
 @Component({
   selector: 'app-map',
@@ -22,13 +25,34 @@ export class Map {
   private assetService = inject(AssetManager);
 
   imageContainer = input.required<ElementRef>();
-  dataset = input.required<HCDPDataset>();
-  mapState = computed(() => {
-    const visData = this.dataset().visData as HCDPVisSubtypes;
-    return visData.mapState;
+  dataset = input.required<HCDPDatasetVisualization>();
+  typedDataset = computed(() => {
+    return this.dataset() as HCDPVisSubtypes;
+  });
+
+  readonly isSpinning = computed(() => {
+    const dataset = this.typedDataset();
+    if (!dataset || !dataset.dataStreams) return false;
+
+    const manager = dataset.dataStreams;
+    const layers = dataset.mapState?.layers || [];
+
+    return layers.some((layer: LayerData) => {
+      const resource = manager.getStream(layer.stream);
+      return resource?.isLoading?.() ?? false;
+    });
   });
 
   readonly mapOpacity = signal<number>(100);
+
+  private mapSpinner = new Spinner({
+    lines: 12, 
+    length: 10, 
+    width: 4, 
+    radius: 12, 
+    color: '#fff',
+    zIndex: 1000
+  });
 
   mapElement = viewChild.required<ElementRef<HTMLDivElement>>('mapElement');
 
@@ -77,30 +101,44 @@ export class Map {
       this.initMap();
     });
 
-    effect((onDatasetCleanup) => {
-      const currentDataset = this.dataset();
-      if(!currentDataset || !this.map()) return;
-      let map = this.map()!;
+    effect(() => {
+      const map = this.map();
+      const spinning = this.isSpinning();
 
+      if(map) {
+        if(spinning) {
+          this.mapSpinner.spin(map.getContainer());
+        }
+        else {
+          this.mapSpinner.stop();
+        }
+      }
+    });
+
+    effect((onDatasetCleanup) => {
+      if(!this.map()) return;
+
+      let map = this.map()!;
       const datasetLayerGroup = L.layerGroup().addTo(map);
       let isCancelled = false;
 
-      this.handleDatasetStreams(currentDataset, map, datasetLayerGroup, () => isCancelled);
+      const childEffects = this.handleDatasetStreams(map, datasetLayerGroup, () => isCancelled);
 
       onDatasetCleanup(() => {
         isCancelled = true;
         map.removeLayer(datasetLayerGroup);
+        childEffects.forEach(eRef => eRef?.destroy());
       });
     });
   }
 
- updateOpacity(event: Event) {
-  const input = event.target as HTMLInputElement;
-  const value = parseInt(input.value, 10);
-  
-  this.mapOpacity.set(value);
-  this.mapState().opacity = value;
-}
+  updateOpacity(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const value = parseInt(input.value, 10);
+    
+    this.mapOpacity.set(value);
+    this.typedDataset().mapState.opacity = value;
+  }
 
   private initMap(): void {
     const map = L.map(this.mapElement().nativeElement, {
@@ -155,156 +193,149 @@ export class Map {
     this.activeColorScale.set(colorScale);
   }
 
-  private async handleDatasetStreams(dataset: HCDPDataset, mapInstance: L.Map, datasetLayerGroup: L.LayerGroup, isCancelled: () => boolean) {
-    const visData = dataset.visData as HCDPVisSubtypes;
-    if(!visData) return;
+  private handleDatasetStreams(mapInstance: L.Map, datasetLayerGroup: L.LayerGroup, isCancelled: () => boolean): EffectRef[] {
+    const dataStreamsManager = this.typedDataset().dataStreams;
+    if (isCancelled()) return [];
 
-    const dataStreamsManager = await visData.dataStreams;
-    if (isCancelled()) return;
+    const { layers } = this.typedDataset().mapState;
+    this.mapOpacity.set(this.typedDataset().mapState.opacity);
 
-    const { layers } = visData.mapState;
-    this.mapOpacity.set(visData.mapState.opacity);
+    const createdEffects: EffectRef[] = [];
 
     for (let layer of layers) {
       let { stream, label } = layer;
       let type = dataStreamsManager.getStreamType(stream);
       let dataStream = dataStreamsManager.getStream(stream);
 
-      effect((onLayerCleanup) => {
-        const data = dataStream.value();
-        const colorScale = this.activeColorScale();
+      let layerEffectRef: EffectRef;
 
-        if(!data) return;
-        if(type === "raster" && !colorScale) return;
+      // Step outside the reactive context to create the inner effect safely
+      untracked(() => {
+        layerEffectRef = effect((onLayerCleanup) => {
+          const data = dataStream.value();
+          const colorScale = this.activeColorScale();
 
-        let leafletLayer: L.Layer | undefined;
-        let cleanupEvent = () => {};
+          if(!data || !colorScale) return;
 
-        switch(type) {
-          case "stations": {
-            const dataManager = data as HCDPStationDataManager;
-            const stations: StationData[] = dataManager.filteredStations();
-            const stationGroup = L.featureGroup();
+          let leafletLayer: L.Layer | undefined;
+          let cleanupEvent = () => {};
 
-            const pivotZoom = 10;
-            const weightToRadiusFactor = 0.4;
-            const pivotRadius = 7;
+          switch(type) {
+            case "stations": {
+              const dataManager = data as HCDPStationDataManager;
+              const stations: StationData[] = dataManager.filteredStations();
+              const stationGroup = L.featureGroup();
 
-            const computeMarkerSizing = () => {
-              let radius = pivotRadius;
-              let zoom = mapInstance.getZoom();
-              //scaled
-              if(zoom < pivotZoom) {
-                let scale = mapInstance.getZoomScale(zoom, pivotZoom);
-                radius = pivotRadius * scale;
+              const pivotZoom = 10;
+              const weightToRadiusFactor = 0.4;
+              const pivotRadius = 7;
+
+              const computeMarkerSizing = () => {
+                let radius = pivotRadius;
+                let zoom = mapInstance.getZoom();
+                if(zoom < pivotZoom) {
+                  let scale = mapInstance.getZoomScale(zoom, pivotZoom);
+                  radius = pivotRadius * scale;
+                }
+                let weight = radius * weightToRadiusFactor;
+                return { radius, weight };
               }
-              let weight = radius * weightToRadiusFactor;
-              return {
-                radius,
-                weight
-              }
+
+              stations.forEach((station: StationData) => {
+                const markerColor = colorScale!.getColor(station.value).hex(); 
+                const { radius, weight } = computeMarkerSizing();
+                const circle = L.circleMarker([station.lat, station.lng], {
+                  radius,
+                  fillColor: markerColor,
+                  color: '#000',
+                  weight,
+                  opacity: 1,
+                  fillOpacity: 1
+                });
+
+                stationGroup.addLayer(circle);
+              });
+
+              leafletLayer = stationGroup;
+
+              const onZoomEnd = () => {
+                const { radius, weight } = computeMarkerSizing();
+                stationGroup.eachLayer((layer: any) => {
+                  if(layer.setRadius) {
+                    layer.setRadius(radius);
+                    layer.setStyle({ weight });
+                  }
+                });
+              };
+
+              mapInstance.on("zoomend", onZoomEnd);
+
+              cleanupEvent = () => {
+                mapInstance.off("zoomend", onZoomEnd);
+              };
+
+              break;
             }
 
-            stations.forEach((station: StationData) => {
-              const markerColor = colorScale!.getColor(station.value).hex(); 
-              const { radius, weight } = computeMarkerSizing();
-              const circle = L.circleMarker([station.lat, station.lng], {
-                radius,
-                fillColor: markerColor,
-                color: '#000',
-                weight,
-                opacity: 1,
-                fillOpacity: 1
+            case "raster": {
+              const rasterData = data as RasterData;
+              this.mapRange.set([rasterData.min, rasterData.max]);
+
+              const raster = this.createRasterLayer(rasterData, colorScale!);
+              leafletLayer = raster as unknown as L.Layer;
+
+              let opacityEffect: EffectRef;
+
+              // This untracked was already correct!
+              untracked(() => {
+                opacityEffect = effect(() => {
+                  const opacity = this.mapOpacity();
+                  if((raster as any).setOpacity) {
+                    (raster as any).setOpacity(opacity / 100); 
+                  }
+                }, { injector: this.injector });
               });
 
-              stationGroup.addLayer(circle);
-            });
-
-            leafletLayer = stationGroup;
-
-            ///////////////////////////
-            ////// zoom pivot /////////
-            ///////////////////////////
-            
-
-            const onZoomEnd = () => {
-              const { radius, weight } = computeMarkerSizing();
-              stationGroup.eachLayer((layer: any) => {
-                if(layer.setRadius) {
-                  layer.setRadius(radius);
-                  layer.setStyle({ weight });
+              const onMapClick = (e: L.LeafletMouseEvent) => {
+                if (!mapInstance.hasLayer(datasetLayerGroup)) return;
+                const value = raster.geoPosToGridValue(e.latlng.lat, e.latlng.lng);
+                if(!isNaN(value)) {
+                  const displayValue = Number.isInteger(value) ? value : value.toFixed(2);
+                  L.popup().setLatLng(e.latlng).setContent(`<b>Value:</b> ${displayValue}`).openOn(mapInstance);
                 }
-              });
-            };
+              };
 
-            mapInstance.on("zoomend", onZoomEnd);
-
-            cleanupEvent = () => {
-              mapInstance.off("zoomend", onZoomEnd);
-            };
-
-            ///////////////////////////
-            ///////////////////////////
-            ///////////////////////////
-
-
-            break;
+              mapInstance.on('click', onMapClick);
+              
+              cleanupEvent = () => {
+                mapInstance.off('click', onMapClick);
+                if(opacityEffect) {
+                  opacityEffect.destroy();
+                }
+              };
+              
+              break;
+            }
           }
 
-          case "raster": {
-            const rasterData = data as RasterData;
-            this.mapRange.set([rasterData.min, rasterData.max]);
+          if(leafletLayer) {
+            datasetLayerGroup.addLayer(leafletLayer);
+            this.layerControl.addOverlay(leafletLayer, label);
 
-            const raster = this.createRasterLayer(rasterData, colorScale!);
-            leafletLayer = raster as unknown as L.Layer;
-
-            let opacityEffect: EffectRef;
-
-            // untrack so can create effect for opacity slider
-            untracked(() => {
-              opacityEffect = effect(() => {
-                const opacity = this.mapOpacity();
-                if((raster as any).setOpacity) {
-                  (raster as any).setOpacity(opacity / 100); 
-                }
-              }, { injector: this.injector });
+            onLayerCleanup(() => {
+              cleanupEvent();
+              datasetLayerGroup.removeLayer(leafletLayer!);
+              this.layerControl.removeLayer(leafletLayer!);
             });
-
-            const onMapClick = (e: L.LeafletMouseEvent) => {
-              if (!mapInstance.hasLayer(datasetLayerGroup)) return;
-              const value = raster.geoPosToGridValue(e.latlng.lat, e.latlng.lng);
-              if(!isNaN(value)) {
-                const displayValue = Number.isInteger(value) ? value : value.toFixed(2);
-                L.popup().setLatLng(e.latlng).setContent(`<b>Value:</b> ${displayValue}`).openOn(mapInstance);
-              }
-            };
-
-            mapInstance.on('click', onMapClick);
-            
-            cleanupEvent = () => {
-              mapInstance.off('click', onMapClick);
-              // remove opacity effect
-              if(opacityEffect) {
-                opacityEffect.destroy();
-              }
-            };
-            
-            break;
           }
-        }
+        }, { injector: this.injector });
+      });
 
-        if(leafletLayer) {
-          datasetLayerGroup.addLayer(leafletLayer);
-          this.layerControl.addOverlay(leafletLayer, label);
-
-          onLayerCleanup(() => {
-            cleanupEvent();
-            datasetLayerGroup.removeLayer(leafletLayer!);
-            this.layerControl.removeLayer(leafletLayer!);
-          });
-        }
-      }, { injector: this.injector });
+      // Store the created effect so the outer loop can eventually destroy it
+      createdEffects.push(layerEffectRef!);
     }
+
+    return createdEffects;
   }
 
   createRasterLayer(rasterData: RasterData, colorScale: ColorScale): RasterLayer {

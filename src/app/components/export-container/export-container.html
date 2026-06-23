@@ -1,1 +1,158 @@
-<p>export-container works!</p>
+<div class="export-container">
+  @if (hasDateControl()) {
+    <mat-card class="file-group-card" appearance="outlined">
+      <mat-card-content>
+        <div class="section date-section">
+          <h3 class="section-title">Date Range</h3>
+          
+          <div class="date-controls-row">
+            <mat-form-field>
+              <mat-label>Start Date</mat-label>
+              <input matInput [matDatepicker]="startPicker"
+                     [min]="tsHandler?.startDate"
+                     [max]="tsHandler?.checkEndDateState()"
+                     [value]="tsHandler?.checkStartDateState()"
+                     (dateChange)="onStartDateChange($event)">
+              <mat-datepicker-toggle matIconSuffix [for]="startPicker"></mat-datepicker-toggle>
+              <mat-datepicker #startPicker
+              [startView]="getDefaultView()"
+              (yearSelected)="viewManager('year', $event, startPicker, 'start')"
+              (monthSelected)="viewManager('month', $event, startPicker, 'start')"></mat-datepicker>
+            </mat-form-field>
+
+            <mat-form-field>
+              <mat-label>End Date</mat-label>
+              <input matInput [matDatepicker]="endPicker"
+                     [min]="tsHandler?.checkStartDateState()"
+                     [max]="tsHandler?.endDate"
+                     [value]="tsHandler?.checkEndDateState()"
+                     (dateChange)="onEndDateChange($event)">
+              <mat-datepicker-toggle matIconSuffix [for]="endPicker"></mat-datepicker-toggle>
+              <mat-datepicker #endPicker
+              [startView]="getDefaultView()"
+              (yearSelected)="viewManager('year', $event, endPicker, 'end')"
+              (monthSelected)="viewManager('month', $event, endPicker, 'end')"></mat-datepicker>
+            </mat-form-field>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  }
+
+  @for (group of exportDataConfig().files; track $index) {
+    <mat-card class="file-group-card" appearance="outlined">
+      <mat-card-content>
+        <div class="section properties-section">
+          <h3 class="section-title">Options</h3>
+          @for (property of group.properties; track property.id) {
+            <div class="property-row">
+              <div class="property-info">
+                <span class="property-label">{{ property.label }}</span>
+                <span class="property-desc">{{ property.description }}</span>
+              </div>
+              
+              <mat-button-toggle-group multiple>
+                @for (val of property.values; track val.id) {
+                  <mat-button-toggle 
+                    [checked]="exportDataHandler().checkPropertyState(property.id, val.id)"
+                    (change)="onPropertyToggle(property.id, val.id, $event.source, property.values)"
+                    [matTooltip]="val.description">
+                    {{ val.label }}
+                  </mat-button-toggle>
+                }
+              </mat-button-toggle-group>
+            </div>
+          }
+        </div>
+
+        <mat-divider></mat-divider>
+
+        <div class="section files-section">
+          <h3 class="section-title">Available Files</h3>
+          
+          <div class="file-list">
+            @for (file of group.files; track file.id) {
+              <mat-checkbox 
+                [checked]="exportDataHandler().checkFileSelected(file.id)"
+                [disabled]="isFileRequired(file.id)"
+                (change)="onFileToggle(file, $event.checked)"
+                matTooltipPosition="right">
+                <div class="file-item-content">
+                  <div class="file-header">
+                    <span class="file-label">{{ file.label }}</span>
+                    <span class="file-badge"
+                      [matTooltip]="exportDataConfig().fileTypes[file.fileType]?.description">
+                      {{ exportDataConfig().fileTypes[file.fileType]?.ext }}
+                    </span>
+                  </div>
+                  <div class="file-desc">{{ file.description }}</div>
+                </div>
+              </mat-checkbox>
+            }
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  }
+
+  <div class="email-section">
+    <mat-checkbox
+      [checked]="exportDataHandler().sendToEmail"
+      [disabled]="exportDataHandler().requireEmailExport()"
+      (change)="exportDataHandler().sendToEmail = $event.checked"
+      matTooltip="The download package is too large to be downloaded directly. A download link will be sent to the provided email address when ready.">
+      Send download package to email
+    </mat-checkbox>
+    <mat-icon
+      class="help-icon"
+      matTooltip="Package the requested items and email a download link to you. This is required if requesting a large amount of data.">
+      help
+    </mat-icon>
+  </div>
+
+  <div class="email-input">
+    <mat-form-field class="example-full-width">
+      <mat-label>Email Address</mat-label>
+      <input matInput [formControl]="emailControl" type="email" placeholder="name@example.com">
+      
+      @if(emailControl.hasError('email') && !emailControl.hasError('required')) {
+        <mat-error>Please enter a valid email address</mat-error>
+      }
+      @if(emailControl.hasError('required')) {
+        <mat-error>Email is required</mat-error>
+      }
+    </mat-form-field>
+    <mat-icon
+      class="help-icon"
+      matTooltip="Please enter your email address. This will be used for logging purposes and to send you your data if the above box is selected.">
+      help
+    </mat-icon>
+  </div>
+
+  <div class="disclaimer-container">
+    <mat-checkbox
+      [checked]="exportDataHandler().licenseAck"
+      (change)="exportDataHandler().licenseAck = $event.checked">
+    </mat-checkbox>
+    <p>
+      All data is covered under the <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank">Attribution-NonCommercial-NoDerivatives 4.0 International</a> licensing agreement. By checking this box, I acknowledge and agree to adhere to the terms of this license in my use of any data provided by this application.
+    </p>
+  </div>
+
+  <div class="citation-container">
+    <h4>How to Cite</h4>
+    <p>
+      This work is supported by the <a href="https://www.nsf.gov/awardsearch/showAward?AWD_ID=2149133" target="_blank">National Science Foundation OIA #2149133</a> and Hawaii EPSCoR- RII Track-1: Change Hawaii: Harnessing the Data Revolution for Island Resilience.
+    </p>
+  </div>
+
+  @if(isGenerating()) {
+    <div class="gen-spinner">
+      <mat-spinner></mat-spinner>
+    </div>
+  }
+  <button matButton="filled" color="primary" [disabled]="!exportDataHandler().canExport() || isGenerating()" (click)="export()">
+    Export Items
+  </button>
+  
+</div>

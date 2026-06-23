@@ -4,20 +4,18 @@
     <mat-spinner></mat-spinner>
   }
   @if(stationResource.value(); as stations) {
-    <app-station-filters
-      [manager]="stations">
-    </app-station-filters>
-    <div class="table-buffer">
-      <app-station-table 
-        [manager]="stations"
-        [(selectedSkn)]="activeStationId">
-      </app-station-table>
+    <div class="container">
+      <app-station-filters
+        [manager]="stations">
+      </app-station-filters>
+      <div class="table-buffer">
+        <app-station-table 
+          [manager]="stations"
+          [(selectedSkn)]="activeStationId">
+        </app-station-table>
+      </div>
     </div>
   }
 }
-@else if(streamData.isLoading()) {
-  <mat-spinner></mat-spinner>
-}
-
 
 

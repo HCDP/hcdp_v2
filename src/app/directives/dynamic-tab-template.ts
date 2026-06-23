@@ -1,13 +1,13 @@
 import { Directive, effect, input, Type, ViewContainerRef, inject } from '@angular/core';
 import { TabBase } from "../components/tabs/tab-base/tab-base.js"
-import { HCDPDataset } from '../models/datasets/dataset.js';
+import { HCDPDatasetVisualization } from '../models/datasets/dataset.js';
 
 @Directive({
   selector: '[appDynamicTabTemplate]',
 })
 export class DynamicTabTemplate {
   component = input.required<Type<TabBase>>();
-  dataset = input.required<HCDPDataset>();
+  dataset = input.required<HCDPDatasetVisualization>();
 
   private container = inject(ViewContainerRef);
 

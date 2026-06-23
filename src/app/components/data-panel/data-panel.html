@@ -1,7 +1,7 @@
 
-@if(dataset().visData) {
+@if(dataset().tabs) {
   <mat-tab-group class="tab-content" color="accent">
-  @for(tab of dataset().visData.tabs; track tab) {
+  @for(tab of dataset().tabs; track tab) {
     <mat-tab [label]="tab.label">
       <div class="data-tab">
         <ng-container appDynamicTabTemplate [component]="tab.component" [dataset]="dataset()"></ng-container>

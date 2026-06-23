@@ -1,67 +1,54 @@
-@if (stateData.isLoading()) {
-  <div class="loading-container">
-    <mat-spinner></mat-spinner>
-  </div>
-} 
-@else if (stateData.error()) {
-  <div class="error-container">
-    <mat-icon color="warn">error</mat-icon>
-    <p>Failed to load controls.</p>
-  </div>
-} 
-@else {
-  <div class="controls-container">
-    @for(control of controls(); track control.id) {
-      
-      <div class="control-wrapper">
-        <h3>
-          {{ control.label }}
-          <mat-icon
-            aria-hidden="false"
-            aria-label="Tooltip"
-            matTooltipPosition="below"
-            [matTooltip]="control.description"
-            inline="true">
-            help
-          </mat-icon>
-        </h3>
-        
-        @switch(control.type) {
-          @case("date") {
-            @if(timeseriesResource.value(); as data) {
-    
-              <app-datetime-control [timeseries]="data">
-              </app-datetime-control>
-              
-            }
-          }
-          @case("list") {
-            <mat-button-toggle-group 
-              [value]="control.value | async"
-              (change)="controlChange(control, $event.value)">
-              
-              @for(option of $any(control.values); track option.id) {
-                <mat-button-toggle [value]="option.id" [matTooltip]="option.description">
-                  {{ option.label }}
-                </mat-button-toggle>
-              }
-            </mat-button-toggle-group>
-          }
 
-          @case("units") {
-            <mat-button-toggle-group 
-              [value]="control.value | async"
-              (change)="controlChange(control, $event.value)">
-              
-              @for(option of $any(control.values); track option.id) {
-                <mat-button-toggle [value]="option.id">
-                  {{ option.name }} ({{ option.shortName }})
-                </mat-button-toggle>
-              }
-            </mat-button-toggle-group>
+<div class="controls-container">
+  @for(control of controls(); track control.id) {
+    
+    <div class="control-wrapper">
+      <h3>
+        {{ control.label }}
+        <mat-icon
+          aria-hidden="false"
+          aria-label="Tooltip"
+          matTooltipPosition="below"
+          [matTooltip]="control.description"
+          inline="true">
+          help
+        </mat-icon>
+      </h3>
+      
+      @switch(control.type) {
+        @case("date") {
+          @if(timeseriesData(); as data) {
+            <app-datetime-control [timeseries]="data">
+            </app-datetime-control>
+            
           }
         }
-      </div>
-    }
-  </div>
-}
+        @case("list") {
+          <mat-button-toggle-group 
+            [value]="control.value | async"
+            (change)="controlChange(control, $event.value)">
+            
+            @for(option of $any(control.values); track option.id) {
+              <mat-button-toggle [value]="option.id" [matTooltip]="option.description">
+                {{ option.label }}
+              </mat-button-toggle>
+            }
+          </mat-button-toggle-group>
+        }
+
+        @case("units") {
+          <mat-button-toggle-group 
+            [value]="control.value | async"
+            (change)="controlChange(control, $event.value)">
+            
+            @for(option of $any(control.values); track option.id) {
+              <mat-button-toggle [value]="option.id">
+                {{ option.name }} ({{ option.shortName }})
+              </mat-button-toggle>
+            }
+          </mat-button-toggle-group>
+        }
+      }
+    </div>
+  }
+</div>

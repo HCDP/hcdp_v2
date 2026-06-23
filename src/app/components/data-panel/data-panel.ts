@@ -1,9 +1,8 @@
-import { Component, inject, effect, ResourceRef, input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { MatTabsModule } from '@angular/material/tabs';
 import { DynamicTabTemplate } from "../../directives/dynamic-tab-template.js"
-import { DatasetFactory } from '../../services/datasets/dataset-factory.js';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { HCDPDataset } from '../../models/datasets/dataset.js';
+import {  HCDPDatasetVisualization } from '../../models/datasets/dataset.js';
 import { MatButtonModule } from '@angular/material/button';
 
 @Component({
@@ -13,6 +12,6 @@ import { MatButtonModule } from '@angular/material/button';
   styleUrl: './data-panel.scss',
 })
 export class DataPanel {
-  dataset = input.required<HCDPDataset>();
+  dataset = input.required<HCDPDatasetVisualization>();
 }
 

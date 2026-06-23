@@ -1,30 +1,15 @@
 <div class="vis-container">
-  @if(datasetResource.isLoading()) {
-    <mat-spinner></mat-spinner>
-  }
-  @else if(datasetResource.error(); as err) {
-    <div class="error-container">
-      <h3>Something went wrong!</h3>
-      <p>{{ err.message }}</p>
-      
-      <button matButton="filled"(click)="datasetResource.reload()">Reload</button>
-      <h4>
-        If this error persists please try a different dataset, try again later, or contact the site administrators at hcdp@hawaii.edu with a screenshot of this error.
-      </h4>
-    </div>
-  }
-  @else if(datasetResource.value()) {
-    <div #dataContainer class="data-container" [ngStyle]="{'height': dataContainerWidth}">
-      <app-data-panel [dataset]="dataset"></app-data-panel> 
-    </div>
-    <div #dragbar (touchstart)="startResize(true)" (mousedown)="startResize(false)" class="resize-bar">
-      <div class="line"></div>
-    </div>
-    <div #mapContainer class="map-container">
-      <app-map #map
-        [dataset]="dataset"
-        [imageContainer]="mapContainerRef()">
-      </app-map>
-    </div>
-  }
+  <div #dataContainer class="data-container" [ngStyle]="{'height': dataContainerWidth}">
+    <app-data-panel [dataset]="dataset()"></app-data-panel> 
+  </div>
+  
+  <div #dragbar (touchstart)="startResize(true)" (mousedown)="startResize(false)" class="resize-bar">
+    <div class="line"></div>
+  </div>
+  
+  <div #mapContainer class="map-container">
+    <app-map #map
+      [dataset]="dataset()"
+      [imageContainer]="mapContainerRef()"> </app-map>
+  </div>
 </div>

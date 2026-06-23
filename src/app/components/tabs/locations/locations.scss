@@ -1,7 +1,9 @@
-.table-container {
+.table-buffer {
   // Define a height constraint so the container becomes scrollable
-  max-height: 300px; 
-  overflow: auto;
-  margin: 16px;
-  border-radius: 8px;
+  padding-top: 20px;
+}
+
+.container {
+  padding-left: 30px;
+  padding-right: 30px;
 }

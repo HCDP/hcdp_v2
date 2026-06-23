@@ -2,7 +2,7 @@ import { Component, resource, computed, signal } from '@angular/core';
 import { MatTableModule } from '@angular/material/table';
 import { MatSortModule } from '@angular/material/sort';
 import { TabBase } from "../tab-base/tab-base";
-import { HCDPDatasetTimeseriesVisualization } from '../../../models/datasets/dataset';
+import { HCDPDatasetTimeseriesVisualization, HCDPVisSubtypes } from '../../../models/datasets/dataset';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { StationTable } from '../../controls/station-table/station-table';
 import { StationFilters } from '../../controls/station-filters/station-filters';
@@ -16,26 +16,19 @@ import { StationFilters } from '../../controls/station-filters/station-filters';
 export class Locations extends TabBase {
   activeStationId = signal<string | undefined>(undefined);
 
-  streamData = resource({
-    params: () => this.dataset(),
-    loader: async ({ params: dataset }) => {
-      return await (dataset.visData as HCDPVisSubtypes).dataStreams;
-    }
+  typedDataset = computed(() => {
+    return this.dataset() as HCDPVisSubtypes;
   });
 
   stationData = computed(() => {
-    let streamData = this.streamData.value();
-    if(streamData) {
-      let streams = streamData.getStreamsOfType("stations");
-      let streamIds = Object.keys(streams);
-      if(streamIds.length > 0) {
-        // assume only one for now
-        let stream = streams[streamIds[0]];
-        return stream;
-      }
+    let streamData = this.typedDataset().dataStreams;
+    let streams = streamData.getStreamsOfType("stations");
+    let streamIds = Object.keys(streams);
+    if(streamIds.length > 0) {
+      // assume only one for now
+      let stream = streams[streamIds[0]];
+      return stream;
     }
     return undefined;
   });
 }
-
-type HCDPVisSubtypes = HCDPDatasetTimeseriesVisualization;

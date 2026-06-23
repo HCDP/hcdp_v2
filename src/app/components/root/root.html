@@ -7,12 +7,28 @@
     </mat-sidenav>
     
     <mat-sidenav-content>
-        @if(visualizationSelected()) {
-          <app-visualization-container></app-visualization-container>
+      @if(isLoading()) {
+        <mat-spinner></mat-spinner>
+      }
+      @else if(error(); as err) {
+        <div class="error-container">
+          <h3>Something went wrong!</h3>
+          <p>{{ err.message || err }}</p>
+          
+          <button matButton="filled" (click)="reloadResources()">Reload</button>
+          <h4>
+            If this error persists please try a different dataset, try again later, or contact the site administrators at hcdp@hawaii.edu with a screenshot of this error.
+          </h4>
+        </div>
+      }
+      @else if(dataset(); as dataset) {
+        @if(visualizationSelected() == "visualize") {
+          <app-visualization-container [dataset]="dataset"></app-visualization-container>
         }
-        @else {
-          <app-export-container></app-export-container>
+        @else if(visualizationSelected() == "export") {
+          <app-export-container [dataset]="dataset"></app-export-container>
         }
-        </mat-sidenav-content>
+      }
+    </mat-sidenav-content>
   </mat-sidenav-container>
 </div>

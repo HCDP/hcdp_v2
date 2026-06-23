@@ -21,14 +21,12 @@ export class DataStreamManager {
   // The bridged signal that rxResource will watch natively
   private _sourceState: Signal<Record<string, string> | undefined>;
 
-  constructor(datasetParams: Record<string, string>, streams: DataStreamRecipe[], active: Observable<boolean>, state: Observable<Record<string, string> | undefined>) {
+  constructor(datasetParams: Record<string, string>, streams: DataStreamRecipe[], state: Observable<Record<string, string> | undefined>) {
     this._datasetParams = datasetParams;
 
     // if inactive resolve to undefined to pause resource, otherwise provide state to signal for conversion to resource
     this._sourceState = toSignal(
-      combineLatest([active, state]).pipe(
-        map(([isActive, state]) => isActive ? state : undefined)
-      ),
+      state,
       { initialValue: undefined } 
     );
 

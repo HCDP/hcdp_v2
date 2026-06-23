@@ -5,7 +5,7 @@ import { MatSidenav } from '@angular/material/sidenav';
 import { MatDialog } from '@angular/material/dialog';
 import { GlobalSettings } from "../../../dialogs/global-settings/global-settings.js"
 import { DatasetFactory } from '../../../services/datasets/dataset-factory.js';
-import { HCDPDataset } from '../../../models/datasets/dataset.js';
+import { HCDPDatasetVisualization } from '../../../models/datasets/dataset.js';
 import { MatExpansionModule } from '@angular/material/expansion';
 
 @Component({
@@ -19,11 +19,27 @@ export class Topbar {
   readonly dialog = inject(MatDialog);
   readonly dsFactory = inject(DatasetFactory);
 
-  dataset: HCDPDataset | undefined;
+  dataset: HCDPDatasetVisualization | undefined;
 
   constructor() {
-    effect(() => {
-      this.dataset = this.dsFactory.dataset.value();
+    effect((onCleanup) => {
+      const ds = this.dsFactory.dataset.value();
+      
+      let isCancelled = false;
+      onCleanup(() => {
+        isCancelled = true;
+      });
+
+      if(ds && ds.data) {
+        ds.data.then((visualizationData) => {
+          if (!isCancelled) {
+            this.dataset = visualizationData;
+          }
+        });
+      }
+      else {
+        this.dataset = undefined;
+      }
     });
   }
 
