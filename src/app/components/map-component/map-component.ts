@@ -12,15 +12,15 @@ import { rasterLayer, RasterLayer } from '../../models/leaflet/rasterLayer';
 import { MatSliderModule } from '@angular/material/slider';
 import { Spinner } from 'spin.js';
 import { LayerData } from '../../models/datasets/recipe';
-
+import { MapLocation } from '../../models/datasets/locationManager';
 
 @Component({
-  selector: 'app-map',
+  selector: 'app-map-component',
   imports: [LeafletCompassRose, LeafletImageExport, LeafletColorScale, MatSliderModule],
-  templateUrl: './map.html',
-  styleUrl: './map.scss',
+  templateUrl: './map-component.html',
+  styleUrl: './map-component.scss',
 })
-export class Map {
+export class MapComponent {
   private injector = inject(Injector);
   private assetService = inject(AssetManager);
 
@@ -75,7 +75,7 @@ export class Map {
   };
 
   private baseLayers: {[label: string]: L.TileLayer};
-  private layerControl!: L.Control.Layers; // <-- Store the control reference
+  private layerControl!: L.Control.Layers;
 
   map = signal<L.Map | undefined>(undefined);
   roseOptions: RoseControlOptions;
@@ -131,14 +131,11 @@ export class Map {
       });
     });
 
-    // listen for image container resizing and invalidate map size
     effect((onCleanup) => {
       const element = this.imageContainer().nativeElement;
       let invalidateSizeThrottle: number;
       const resizeObserver = new ResizeObserver(() => {
-        // clear throttle to prevent refires
         clearTimeout(invalidateSizeThrottle);
-        // throttle map size invalidation against rapid triggers
         invalidateSizeThrottle = setTimeout(() => {
           this.invalidateSize();
         }, 100);
@@ -196,7 +193,6 @@ export class Map {
       }
     }) as any;
 
-    // Instantiate properly using 'new' and save the reference
     this.layerControl = new CustomLayerControl(this.baseLayers, undefined, {
       position: 'topright',
       collapsed: true
@@ -227,7 +223,6 @@ export class Map {
 
       let layerEffectRef: EffectRef;
 
-      // Step outside the reactive context to create the inner effect safely
       untracked(() => {
         layerEffectRef = effect((onLayerCleanup) => {
           const data = dataStream.value();
@@ -243,6 +238,8 @@ export class Map {
               const dataManager = data as HCDPStationDataManager;
               const stations: StationData[] = dataManager.filteredStations();
               const stationGroup = L.featureGroup();
+              
+              const markerMap = new Map<string, L.CircleMarker>();
 
               const pivotZoom = 10;
               const weightToRadiusFactor = 0.4;
@@ -271,6 +268,18 @@ export class Map {
                   fillOpacity: 1
                 });
 
+                // Set up the popup content
+                const popupContent = `<b>${station.name || 'Station ' + station.skn}</b><br/>SKN: ${station.skn}<br/>Value: ${station.value}`;
+                
+                // Disable autoPan so the popup opening doesn't interrupt flyTo
+                circle.bindPopup(popupContent, { autoPan: false });
+
+                // Map -> App synchronization
+                circle.on('click', () => {
+                  this.typedDataset().locationManager.selectLocation("station", station);
+                });
+
+                markerMap.set(station.skn, circle);
                 stationGroup.addLayer(circle);
               });
 
@@ -288,8 +297,39 @@ export class Map {
 
               mapInstance.on("zoomend", onZoomEnd);
 
+              // App -> Map synchronization
+              let selectionEffect: EffectRef;
+              untracked(() => {
+                selectionEffect = effect(() => {
+                  const selectedLoc = this.typedDataset().locationManager.location();
+                  
+                  if(selectedLoc?.type === "station") {
+                    const stationData = selectedLoc.location as StationData;
+                    const marker = markerMap.get(stationData.skn);
+                    
+                    if (marker) {
+                      // flyTo prevents snapping and guarantees smooth animation.
+                      mapInstance.flyTo(
+                        [stationData.lat, stationData.lng], 
+                        mapInstance.getZoom(), 
+                        {
+                          animate: true,
+                          duration: 0.75 
+                        }
+                      );
+                      marker.openPopup();
+                    }
+                  } else {
+                    mapInstance.closePopup();
+                  }
+                }, { injector: this.injector });
+              });
+
               cleanupEvent = () => {
                 mapInstance.off("zoomend", onZoomEnd);
+                if (selectionEffect) {
+                  selectionEffect.destroy();
+                }
               };
 
               break;
@@ -304,7 +344,6 @@ export class Map {
 
               let opacityEffect: EffectRef;
 
-              // This untracked was already correct!
               untracked(() => {
                 opacityEffect = effect(() => {
                   const opacity = this.mapOpacity();
@@ -314,22 +353,58 @@ export class Map {
                 }, { injector: this.injector });
               });
 
-              const onMapClick = (e: L.LeafletMouseEvent) => {
+              // 1. Map -> App Synchronization
+              const onMapClick = (e: L.LeafletMouseEvent | any) => {
                 if (!mapInstance.hasLayer(datasetLayerGroup)) return;
+                
+                // Check if data exists at the clicked location BEFORE selecting it
                 const value = raster.geoPosToGridValue(e.latlng.lat, e.latlng.lng);
-                if(!isNaN(value)) {
-                  const displayValue = Number.isInteger(value) ? value : value.toFixed(2);
-                  L.popup().setLatLng(e.latlng).setContent(`<b>Value:</b> ${displayValue}`).openOn(mapInstance);
+                if (isNaN(value)) {
+                  return; // Ignore clicks on areas with no data
                 }
+                
+                this.typedDataset().locationManager.selectLocation("map", { lat: e.latlng.lat, lng: e.latlng.lng });
               };
 
               mapInstance.on('click', onMapClick);
               
+              // 2. App -> Map Synchronization
+              let selectionEffect: EffectRef;
+              untracked(() => {
+                selectionEffect = effect(() => {
+                  const selectedLoc = this.typedDataset().locationManager.location();
+                  
+                  if (selectedLoc?.type === "map") {
+                    const mapLocation = selectedLoc.location as MapLocation;
+                    const { lat, lng } = mapLocation;
+                    
+                    const value = raster.geoPosToGridValue(lat, lng);
+                    
+                    // Only fly and open popup if data exists
+                    if (!isNaN(value)) {
+                      mapInstance.flyTo([lat, lng], mapInstance.getZoom(), {
+                        animate: true,
+                        duration: 0.75
+                      });
+
+                      const displayValue = Number.isInteger(value) ? value : value.toFixed(2);
+                      
+                      L.popup({ autoPan: false })
+                        .setLatLng([lat, lng])
+                        .setContent(`<b>Value:</b> ${displayValue}`)
+                        .openOn(mapInstance);
+                    } else {
+                      // If a location without data was selected externally, just close the popup
+                      mapInstance.closePopup();
+                    }
+                  }
+                }, { injector: this.injector });
+              });
+              
               cleanupEvent = () => {
                 mapInstance.off('click', onMapClick);
-                if(opacityEffect) {
-                  opacityEffect.destroy();
-                }
+                if(opacityEffect) opacityEffect.destroy();
+                if(selectionEffect) selectionEffect.destroy();
               };
               
               break;
@@ -349,7 +424,6 @@ export class Map {
         }, { injector: this.injector });
       });
 
-      // Store the created effect so the outer loop can eventually destroy it
       createdEffects.push(layerEffectRef!);
     }
 

@@ -1,0 +1,146 @@
+{
+  "id": "legacy_daily_rainfall",
+  "label": "Legacy Daily Rainfall",
+  "description": "Monthly rainfall from January 1920 to December 2012. Station rainfall data were interpolated using ordinary kriging.",
+  "layout": {
+    "schema": "timeseries",
+    "data": {
+      "warnings": {
+      },
+      "computeUnitConversionsFrom": "mm",
+      "datasetParams": {
+        "location": "hawaii",
+        "datatype": "rainfall",
+        "production": "legacy",
+        "period": "month"
+      },
+      "streams": [
+        {
+          "id": "dataMap",
+          "type": "raster",
+          "bind": ["date"],
+          "staticParams": {
+            "type": "data_map"
+          }
+        }
+      ],
+
+      "options": {
+        "defaults": {
+          "units": "mm"
+        },
+        "controls": [
+          {
+            "id": "date",
+            "label": "Date",
+            "description": "The date represented by the data.",
+            "type": "date"
+          },
+          {
+            "id": "units",
+            "label": "Units",
+            "description": "The units the data are represented in.",
+            "type": "units",
+            "values": [
+              {
+                "id": "mm",
+                "name": "Millimeters",
+                "shortName": "mm",
+                "system": "metric"
+              },
+              {
+                "id": "in",
+                "name": "Inches",
+                "shortName": "in",
+                "system": "usc"
+              }
+            ]
+          }
+        ]
+      },
+      "timeseries": {
+        "period": {
+          "unit": "month",
+          "interval": 1
+        }
+      },
+      "mapLayers": {
+        "layers": [{
+          "stream": "dataMap",
+          "label": "Data Map"
+        }],
+        "range": {
+          "standard": [0, 650],
+          "extreme": [0, 3000],
+          "limits": [0, null]
+        },
+        "colors": ["viridis", "monochromatic", "nwsRadar", "turbo"],
+        "defaultColor": "viridis"
+      },
+      "exportData": {
+        "fileTypes": {
+          "tif": {
+            "label": "GeoTIFF",
+            "ext": ".tif",
+            "description": "GeoTIFF files are a variant of the TIFF file format which is used to store raster based data/graphics including georeferencing information."
+          },
+          "txt": {
+            "label": "Text",
+            "ext": ".txt",
+            "description": "A plaintext file."
+          },
+          "csv": {
+            "label": "Comma Separated Values",
+            "ext": ".csv",
+            "description": "A text based file with data separated by commas."
+          }
+        },
+        "files": [
+          {
+            "properties": [
+              {
+                "id": "extent_rasters",
+                "fieldTag": "extent",
+                "label": "Spatial Extent",
+                "description": "The area of coverage for the data",
+                "defaults": ["statewide"],
+                "values": [
+                  {
+                    "id": "statewide",
+                    "label": "Statewide",
+                    "description": "Data covering the entire state of Hawaiʻi"
+                  }
+                ]
+              },
+              {
+                "id": "units_rasters",
+                "fieldTag": "units",
+                "label": "Units",
+                "description": "The units the data are represented in",
+                "defaults": ["mm"],
+                "values": [
+                  {
+                    "id": "mm",
+                    "label": "mm",
+                    "description": "Values in millimeters"
+                  }
+                ]
+              }
+            ],
+            "files": [
+              {
+                "id": "data_map",
+                "fileTag": "data_map",
+                "label": "Rainfall Map",
+                "description": "A gridded rainfall map representing estimated rainfall values over the state of Hawaiʻi.",
+                "fileType": "tif",
+                "requires": [],
+                "fileParams": {}
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

@@ -14,7 +14,7 @@ export class StationTable {
   private el = inject(ElementRef);
   manager = input.required<HCDPStationDataManager>();
   
-  selectedSkn = model<string | undefined>(); 
+  selectedStation = model<StationData | undefined>(); 
   sort = viewChild.required(MatSort);
 
   // MatTableDataSource handles sorting
@@ -32,8 +32,7 @@ export class StationTable {
     });
 
     effect(() => {
-      const activeId = this.selectedSkn();
-      console.log(activeId);
+      const activeId = this.selectedStation()?.skn;
       
       if(activeId) {
         // short pause for sorting and other effects
@@ -52,7 +51,7 @@ export class StationTable {
     });
   }
 
-  selectStation(skn: string) {
-    this.selectedSkn.set(skn);
+  selectStation(station: StationData) {
+    this.selectedStation.set(station);
   }
 }

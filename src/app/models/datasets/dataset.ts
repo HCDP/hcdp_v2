@@ -13,6 +13,7 @@ import { DataStreamManager } from "./data";
 import { TimeseriesDataStateController } from "./state";
 import { MapState } from "./mapState";
 import { ExportDataHandler, ExportTimeseriesDataHandler } from "./export";
+import { LocationManager } from "./locationManager";
 
 
 
@@ -145,6 +146,7 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
   private _dataStreamManager: DataStreamManager;
   private _mapState: MapState;
   private _exportData: ExportTimeseriesDataHandler;
+  private _locationManager: LocationManager;
   
 
   constructor(id: string, label: string, description: string, layout: TimeseriesSchemaData, initData: {range: [DateTime, DateTime]}, active: Signal<boolean>) {
@@ -178,6 +180,7 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
     });
     this._mapState = new MapState(mapLayers);
     this._exportData = new ExportTimeseriesDataHandler(exportData, datasetParams, this.timeseriesData);
+    this._locationManager = new LocationManager();
   }
 
   get exportData() {
@@ -198,6 +201,10 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
 
   get mapState() {
     return this._mapState;
+  }
+
+  get locationManager() {
+    return this._locationManager;
   }
 }
 

@@ -8,7 +8,9 @@
     
     <mat-sidenav-content>
       @if(isLoading()) {
-        <mat-spinner></mat-spinner>
+        <div class="loading-pad">
+          <mat-spinner></mat-spinner>
+        </div>
       }
       @else if(error(); as err) {
         <div class="error-container">

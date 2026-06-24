@@ -1,18 +1,17 @@
 {
-  "id": "contemporary_daily_rainfall",
-  "label": "Contemporary Daily Rainfall",
-  "description": "Daily rainfall from January 1 1990 to Previous day. These maps represent the amount of rainfall from midnight on the target day to midnight at the end of the day. Station rainfall data are interpolated using an automated optimized climate aided ordinary kriging methodology",
+  "id": "tmin_daily",
+  "label": "Minimum Daily Temperature (Tmin)",
+  "description": "Daily minimum temperature from January 1, 1990 to the previous day. These maps represent the minimum temperature over the 24-hour period starting from midnight (00:00) on the target day to midnight at the end of day. The minimum temperature observations from all available weather stations on the target day are regressed against elevation to produce a linear model, which is used to estimate the minimum temperature at each location.",
   "layout": {
     "schema": "timeseries",
     "data": {
       "warnings": {
-        "experimental": true
       },
-      "computeUnitConversionsFrom": "mm",
+      "computeUnitConversionsFrom": "c",
       "datasetParams": {
         "location": "hawaii",
-        "datatype": "rainfall",
-        "production": "new",
+        "datatype": "temperature",
+        "aggregation": "min",
         "period": "day"
       },
       "streams": [
@@ -35,8 +34,7 @@
       "options": {
         "defaults": {
           "fill": "partial",
-          "units": "mm",
-          "anomUnits": "percent"
+          "units": "mm"
         },
         "controls": [
           {
@@ -168,12 +166,12 @@
                 "fieldTag": "units",
                 "label": "Units",
                 "description": "The units the data are represented in",
-                "defaults": ["mm"],
+                "defaults": ["c"],
                 "values": [
                   {
-                    "id": "mm",
-                    "label": "mm",
-                    "description": "Values in millimeters"
+                    "id": "c",
+                    "label": "°C",
+                    "description": "Values in degrees celcius"
                   }
                 ]
               }
@@ -183,7 +181,7 @@
                 "id": "data_map",
                 "fileTag": "data_map",
                 "label": "Rainfall Map",
-                "description": "A gridded rainfall map representing estimated rainfall values over the state of Hawaiʻi.",
+                "description": "A gridded temperature map representing estimated temperature values over the state of Hawaiʻi.",
                 "fileType": "tif",
                 "requires": ["metadata"],
                 "fileParams": {}
@@ -267,17 +265,6 @@
                 "requires": [],
                 "fileParams": {
                   "fill": "partial"
-                }
-              },
-              {
-                "id": "station_data_raw",
-                "fileTag": "station_data",
-                "label": "Unfilled Station Data",
-                "description": "Unprocessed station data including each station's metadata and values over a period of time",
-                "fileType": "csv",
-                "requires": [],
-                "fileParams": {
-                  "fill": "raw"
                 }
               }
             ]

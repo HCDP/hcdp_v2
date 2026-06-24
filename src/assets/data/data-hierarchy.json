@@ -1,146 +1,27 @@
 [
   {
     "type": "category",
-    "label": "Climate Averages",
-    "nodes": [
-      {
-        "type": "category",
-        "label": "Rainfall (RF)",
-        "nodes": [
-          {
-            "type": "dataset",
-            "label": "Legacy Annual Average RF",
-            "description": "30-year average rainfall 1978-2008",
-            "link": "/legacy-annual-average-rf"
-          },
-          {
-            "type": "dataset",
-            "label": "Contemporary Annual Average RF",
-            "description": "30-yr average rainfall 1991-2020",
-            "link": "/contemporary-annual-average-rf"
-          },
-          {
-            "type": "dataset",
-            "label": "Decadal Average RF",
-            "description": "10-yr average rainfall 1991-2020",
-            "link": "/decadal-average-rf"
-          },
-          {
-            "type": "dataset",
-            "label": "Legacy Monthly RF",
-            "description": "30-mo. Avg.; 1978-2008",
-            "link": "/legacy-monthly-rf"
-          },
-          {
-            "type": "dataset",
-            "label": "Contemporary Monthly RF",
-            "description": "30-mo. Avg.; 1991-2020",
-            "link": "/contemporary-monthly-rf"
-          },
-          {
-            "type": "dataset",
-            "label": "Contemporary Seasonal RF",
-            "description": "Average rainfall for the dry season (April to October) and wet season (November to May), based on the 30-year contemporary climatological period from 1991 to 2020.",
-            "link": "/contemporary-seasonal-rf"
-          }
-        ]
-      },
-      {
-        "type": "category",
-        "label": "Maximum Air Temperature (Tmax)",
-        "nodes": [
-          {
-            "type": "dataset",
-            "label": "Contemporary Tmax",
-            "description": "30-yr Avg.; 1991-2020",
-            "link": "/contemporary-tmax"
-          },
-          {
-            "type": "dataset",
-            "label": "Seasonal Tmax",
-            "description": "Average maximum temperature for the dry season (April to October) and wet season (November to May), based on the 30-year contemporary climatological period from 1991 to 2020.",
-            "link": "/seasonal-tmax"
-          },
-          {
-            "type": "dataset",
-            "label": "Monthly Tmax",
-            "description": "Monthly Maximum Air Temperature.",
-            "link": "/monthly-tmax"
-          },
-          {
-            "type": "dataset",
-            "label": "Decadal (10-yr)",
-            "description": "Decadal Maximum Air Temperature.",
-            "link": "/decadal-tmax"
-          }
-        ]
-      },
-      {
-        "type": "category",
-        "label": "Minimum Air Temperature (Tmin)",
-        "nodes": [
-          {
-            "type": "dataset",
-            "label": "30-year Mean (1990-2019)",
-            "description": "30-year Mean (1990-2019)",
-            "link": "/30-year-mean-tmin"
-          },
-          {
-            "type": "dataset",
-            "label": "Seasonal Tmin",
-            "description": "Average minimum temperature for the dry season (April to October) and wet season (November to May), based on the 30-year contemporary climatological period from 1991 to 2020.",
-            "link": "/seasonal-tmin"
-          },
-          {
-            "type": "dataset",
-            "label": "Monthly Tmin",
-            "description": "Monthly Minimum Air Temperature.",
-            "link": "/monthly-tmin"
-          },
-          {
-            "type": "dataset",
-            "label": "Decadal (10-yr) )",
-            "description": "Decadal Minimum Air Temperature.",
-            "link": "/decadal-tmin"
-          }
-        ]
-      },
-      {
-        "type": "category",
-        "label": "Average Air Temperature (Tavg)",
-        "nodes": [
-          {
-            "type": "dataset",
-            "label": "30-year Mean (1990-2019)",
-            "description": "30-year Mean (1990-2019)",
-            "link": "/30-year-mean-tavg"
-          },
-          {
-            "type": "dataset",
-            "label": "Seasonal Tmean",
-            "description": "Average mean temperature for the dry season (April to October) and wet season (November to May), based on the 30-year contemporary climatological period from 1991 to 2020.",
-            "link": "/seasonal-tmean"
-          },
-          {
-            "type": "dataset",
-            "label": "Monthly TA",
-            "description": "Monthly Average Air Temperature.",
-            "link": "/monthly-ta"
-          },
-          {
-            "type": "dataset",
-            "label": "Decadal (10-yr) )TA",
-            "description": "Decadal Average Air Temperature.",
-            "link": "/decadal-ta"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "type": "category",
     "label": "Time dependent Variables",
     "nodes": [
+      
+      {
+        "type": "category",
+        "label": "Contemporary Rainfall (RF)",
+        "nodes": [
+          {
+            "type": "dataset",
+            "label": "Daily",
+            "description": "Daily rainfall from January 1 1990 to Previous day. These maps represent the amount of rainfall from midnight on the target day to midnight at the end of the day. Station rainfall data are interpolated using an automated optimized climate aided ordinary kriging methodology",
+            "link": "/contemporary-rainfall-daily"
+          },
+          {
+            "type": "dataset",
+            "label": "Monthly Value",
+            "description": "Monthly rainfall from January 1990 to Previous month. These maps represent the amount of rainfall from midnight on the first of the target month to midnight on the last day of the month. Station rainfall data are interpolated using an automated optimized climate aided ordinary kriging methodology see Lucas etal 2022.",
+            "link": "/contemporary-rainfall-monthly"
+          }
+        ]
+      },
       {
         "type": "category",
         "label": "Legacy Rainfall RF",
@@ -155,50 +36,8 @@
       },
       {
         "type": "category",
-        "label": "Contemporary Rainfall (RF)",
-        "nodes": [
-          {
-            "type": "dataset",
-            "label": "Annual (Calendar Year)",
-            "description": "Total rainfall accumulated over a calendar year (January to December), from 1990 to last (or previous?) year.",
-            "link": "/contemporary-rainfall-annual-calendar"
-          },
-          {
-            "type": "dataset",
-            "label": "Annual (Water Year)",
-            "description": "Total rainfall accumulated over a water year (October to September), from 1991 to last (or previous?) year.",
-            "link": "/contemporary-rainfall-annual-water"
-          },
-          {
-            "type": "dataset",
-            "label": "Monthly Value",
-            "description": "Monthly rainfall from January 1990 to Previous month. These maps represent the amount of rainfall from midnight on the first of the target month to midnight on the last day of the month. Station rainfall data are interpolated using an automated optimized climate aided ordinary kriging methodology see Lucas etal 2022.",
-            "link": "/contemporary-rainfall-monthly"
-          },
-          {
-            "type": "dataset",
-            "label": "Monthly Anom",
-            "description": "Monthly rainfall anomaly from January 1990 to previous month. These maps represent the amount or percent difference of the station rainfall data interpolated using an automated optimized climate aided ordinary kriging from the expected mean monthly rainfall map as defined by Giambelluca etal XX.",
-            "link": "/contemporary-rainfall-monthly-anom"
-          },
-          {
-            "type": "dataset",
-            "label": "Daily",
-            "description": "Dailyrainfall from January 1 1990 to Previous day. These maps represent the amount of rainfall from midnight on the target day to midnight at the end of the day. Station rainfall data are interpolated using an automated optimized climate aided ordinary kriging methodology",
-            "link": "/contemporary-rainfall-daily"
-          }
-        ]
-      },
-      {
-        "type": "category",
         "label": "Minimum Temperature (Tmin)",
         "nodes": [
-          {
-            "type": "dataset",
-            "label": "Annual",
-            "description": "Year-averaged minimum daily temperature from 1990 to the previous year. These maps represent the average minimum temperature in a day during each year in the record. The monthly minimum temperature maps are averaged over each year to produce the Annual Minimum Temperature.",
-            "link": "/tmin-annual"
-          },
           {
             "type": "dataset",
             "label": "Monthly",
@@ -219,12 +58,6 @@
         "nodes": [
           {
             "type": "dataset",
-            "label": "Annual",
-            "description": "Year-averaged maximum daily temperature from 1990 to the previous year. These maps represent the average maximum temperature in a day during each year in the record. The monthly maximum temperature maps are averaged over each year to produce the Annual Maximum Temperature.",
-            "link": "/tmax-annual"
-          },
-          {
-            "type": "dataset",
             "label": "Monthly",
             "description": "Monthly-averaged maximum daily temperature from January 1990 to the previous month. These maps represent the average maximum temperature in a day during each month in the record. The daily maximum temperature maps are averaged over each month to produce the Monthly Maximum Temperature.",
             "link": "/tmax-monthly"
@@ -241,12 +74,6 @@
         "type": "category",
         "label": "Average Air Temperature (Tavg)",
         "nodes": [
-          {
-            "type": "dataset",
-            "label": "Annual",
-            "description": "Year-averaged daily temperature from 1990 to the previous year. These maps represent the average temperature in a day during each year in the record. The monthly average temperature maps are averaged over each year to produce the Annual Average Temperature.",
-            "link": "/tavg-annual"
-          },
           {
             "type": "dataset",
             "label": "Monthly",
@@ -270,66 +97,6 @@
             "label": "2:00 PM Avg.",
             "description": "These maps represent the relative humidity averaged from 1:00PM to 1:59PM each day from January 2002 to the previous day. Relative humidity is estimated using a regression spline model of station observations of dew point temperature predicted by elevation and gridded maximum daily temperature.",
             "link": "/rh-2pm-avg"
-          }
-        ]
-      },
-      {
-        "type": "category",
-        "label": "Wind Speed (WS)",
-        "nodes": [
-          {
-            "type": "dataset",
-            "label": "Daily",
-            "description": "Daily wind speed.",
-            "link": "/wind-speed-daily"
-          }
-        ]
-      },
-      {
-        "type": "category",
-        "label": "Wind Direction (WD)",
-        "nodes": [
-          {
-            "type": "dataset",
-            "label": "Daily",
-            "description": "Daily wind direction.",
-            "link": "/wind-direction-daily"
-          }
-        ]
-      },
-      {
-        "type": "category",
-        "label": "Incoming Solar Radiation (SWD)",
-        "nodes": [
-          {
-            "type": "dataset",
-            "label": "Daily (2019-2021)",
-            "description": "Daily incoming solar radiation.",
-            "link": "/swd-daily"
-          }
-        ]
-      },
-      {
-        "type": "category",
-        "label": "Outgoing Shortwave (SWU)",
-        "nodes": [
-          {
-            "type": "dataset",
-            "label": "Daily (2019-2021)",
-            "description": "Daily outgoing shortwave radiation.",
-            "link": "/swu-daily"
-          }
-        ]
-      },
-      {
-        "type": "category",
-        "label": "Incoming Log Wave Radiation (LWD)",
-        "nodes": [
-          {
-            "type": "dataset",
-            "label": "Daily (2019-2021)",
-            "description": "Daily incoming long wave radiation.",
-            "link": "/lwd-daily"
           }
         ]
       },
@@ -405,27 +172,9 @@
         "nodes": [
           {
             "type": "dataset",
-            "label": "Dali",
-            "description": "Dali Ignition Probability data.",
-            "link": "/ignition-probability-dali"
-          },
-          {
-            "type": "dataset",
-            "label": "Monthly",
-            "description": "Monthly Ignition Probability data.",
-            "link": "/ignition-probability-monthly"
-          }
-        ]
-      },
-      {
-        "type": "category",
-        "label": "Fractional Land Cover",
-        "nodes": [
-          {
-            "type": "dataset",
-            "label": "Annual",
-            "description": "Annual Fractional Land Cover data.",
-            "link": "/fractional-land-cover-annual"
+            "label": "Daily",
+            "description": "Daily Ignition Probability data.",
+            "link": "/ignition-probability-daily"
           }
         ]
       }
@@ -433,56 +182,16 @@
   },
   {
     "type": "category",
+    "label": "Climate Averages",
+    "nodes": [
+      
+    ]
+  },
+  {
+    "type": "category",
     "label": "Future Climate Projections",
     "nodes": [
-      {
-        "type": "category",
-        "label": "Future Rainfall",
-        "nodes": [
-          {
-            "type": "dataset",
-            "label": "Annual",
-            "description": "Future Annual Rainfall Projection.",
-            "link": "/future-rainfall-annual"
-          },
-          {
-            "type": "dataset",
-            "label": "Wet Season",
-            "description": "Future Wet Season Rainfall Projection.",
-            "link": "/future-rainfall-wet"
-          },
-          {
-            "type": "dataset",
-            "label": "Dry Season",
-            "description": "Future Dry Season Rainfall Projection.",
-            "link": "/future-rainfall-dry"
-          }
-        ]
-      },
-      {
-        "type": "category",
-        "label": "Future Temperature",
-        "nodes": [
-          {
-            "type": "dataset",
-            "label": "Annual",
-            "description": "Future Annual Temperature Projection.",
-            "link": "/future-temperature-annual"
-          },
-          {
-            "type": "dataset",
-            "label": "Wet Season",
-            "description": "Future Wet Season Temperature Projection.",
-            "link": "/future-temperature-wet"
-          },
-          {
-            "type": "dataset",
-            "label": "Dry Season",
-            "description": "Future Dry Season Temperature Projection.",
-            "link": "/future-temperature-dry"
-          }
-        ]
-      }
+      
     ]
   }
 ]

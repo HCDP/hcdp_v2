@@ -30,8 +30,8 @@
     <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
     
     <tr mat-row *matRowDef="let row; columns: displayedColumns;"
-        (click)="selectStation(row.skn)"
-        [class.selected]="selectedSkn() === row.skn"
+        (click)="selectStation(row)"
+        [class.selected]="selectedStation() === row"
         [attr.data-skn]="row.skn">
     </tr>
 

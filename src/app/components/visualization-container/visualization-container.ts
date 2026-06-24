@@ -1,13 +1,13 @@
 import { Component, ElementRef, HostListener, viewChild, input } from '@angular/core';
 import { CommonModule } from "@angular/common"
-import { Map } from "../map/map";
 import { DataPanel } from "../data-panel/data-panel";
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { HCDPDatasetVisualization } from '../../models/datasets/dataset';
+import { MapComponent } from '../map-component/map-component';
 
 @Component({
   selector: 'app-visualization-container',
-  imports: [ Map, DataPanel, CommonModule, MatProgressSpinnerModule ],
+  imports: [ DataPanel, CommonModule, MatProgressSpinnerModule, MapComponent ],
   templateUrl: './visualization-container.html',
   styleUrl: './visualization-container.scss',
 })
@@ -16,9 +16,7 @@ export class VisualizationContainer {
 
   dragbar = viewChild.required<ElementRef>('dragbar');
   dataContainerRef = viewChild.required<ElementRef>('dataContainer');
-  map = viewChild.required<Map>('map');
   mapContainerRef = viewChild.required<ElementRef>('mapContainer');
-
 
 
   dataContainerWidth: string = "calc(50% - 10px)";

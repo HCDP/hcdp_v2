@@ -5,13 +5,20 @@
   }
   @if(stationResource.value(); as stations) {
     <div class="container">
+      <app-location-selector
+      (selectedLocation)="selectMapLocation($event)">
+      </app-location-selector>
       <app-station-filters
         [manager]="stations">
       </app-station-filters>
+
       <div class="table-buffer">
+        <h3>
+          Stations
+        </h3>
         <app-station-table 
           [manager]="stations"
-          [(selectedSkn)]="activeStationId">
+          [(selectedStation)]="selectedStation">
         </app-station-table>
       </div>
     </div>

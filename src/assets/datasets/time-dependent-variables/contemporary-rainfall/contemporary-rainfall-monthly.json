@@ -1,0 +1,282 @@
+{
+  "id": "contemporary_monthly_rainfall",
+  "label": "Contemporary Monthly Rainfall",
+  "description": "Monthly rainfall from January 1990 to Previous month. These maps represent the amount of rainfall from midnight on the first of the target month to midnight on the last day of the month. Station rainfall data are interpolated using an automated optimized climate aided ordinary kriging methodology see Lucas etal 2022.",
+  "layout": {
+    "schema": "timeseries",
+    "data": {
+      "warnings": {
+      },
+      "computeUnitConversionsFrom": "mm",
+      "datasetParams": {
+        "location": "hawaii",
+        "datatype": "rainfall",
+        "production": "new",
+        "period": "month"
+      },
+      "streams": [
+        {
+          "id": "stations",
+          "type": "stations",
+          "bind": ["date", "fill"],
+          "staticParams": {}
+        },
+        {
+          "id": "dataMap",
+          "type": "raster",
+          "bind": ["date"],
+          "staticParams": {
+            "type": "data_map"
+          }
+        }
+      ],
+
+      "options": {
+        "defaults": {
+          "fill": "partial",
+          "units": "mm"
+        },
+        "controls": [
+          {
+            "id": "date",
+            "label": "Date",
+            "description": "The date represented by the data.",
+            "type": "date"
+          },
+          {
+            "id": "fill",
+            "label": "Station Fill",
+            "description": "The type of processing the station data goes through. Data maps are generated using partially filled station data.",
+            "type": "list",
+            "values": [
+              {
+                "id": "partial",
+                "label": "Partial Filled",
+                "description": "This data has undergone QA/QC processing. Some missing/removed station values may be filled using statistical techniques to estimate the value for that station. These values are used to generate the gridded data maps."
+              }
+            ]
+          },
+          {
+            "id": "units",
+            "label": "Units",
+            "description": "The units the data are represented in.",
+            "type": "units",
+            "values": [
+              {
+                "id": "mm",
+                "name": "Millimeters",
+                "shortName": "mm",
+                "system": "metric"
+              },
+              {
+                "id": "in",
+                "name": "Inches",
+                "shortName": "in",
+                "system": "usc"
+              }
+            ]
+          }
+        ]
+      },
+      "timeseries": {
+        "period": {
+          "unit": "month",
+          "interval": 1
+        }
+      },
+      "mapLayers": {
+        "layers": [{
+          "stream": "stations",
+          "label": "Station Data"
+        }, {
+          "stream": "dataMap",
+          "label": "Data Map"
+        }],
+        "range": {
+          "standard": [0, 650],
+          "extreme": [0, 3000],
+          "limits": [0, null]
+        },
+        "colors": ["viridis", "monochromatic", "nwsRadar", "turbo"],
+        "defaultColor": "viridis"
+      },
+      "exportData": {
+        "fileTypes": {
+          "tif": {
+            "label": "GeoTIFF",
+            "ext": ".tif",
+            "description": "GeoTIFF files are a variant of the TIFF file format which is used to store raster based data/graphics including georeferencing information."
+          },
+          "txt": {
+            "label": "Text",
+            "ext": ".txt",
+            "description": "A plaintext file."
+          },
+          "csv": {
+            "label": "Comma Separated Values",
+            "ext": ".csv",
+            "description": "A text based file with data separated by commas."
+          }
+        },
+        "files": [
+          {
+            "properties": [
+              {
+                "id": "extent_rasters",
+                "fieldTag": "extent",
+                "label": "Spatial Extent",
+                "description": "The area of coverage for the data",
+                "defaults": ["statewide"],
+                "values": [
+                  {
+                    "id": "statewide",
+                    "label": "Statewide",
+                    "description": "Data covering the entire state of Hawaiʻi"
+                  },
+
+                  {
+                    "id": "bi",
+                    "label": "Hawaiʻi",
+                    "description": "Data covering Hawaiʻi county"
+                  },
+                  {
+                    "id": "mn",
+                    "label": "Maui",
+                    "description": "Data covering Maui county"
+                  },
+                  {
+                    "id": "oa",
+                    "label": "Honolulu",
+                    "description": "Data covering Honolulu county"
+                  },
+                  {
+                    "id": "ka",
+                    "label": "Kauaʻi",
+                    "description": "Data covering Kauaʻi county"
+                  }
+                ]
+              },
+              {
+                "id": "units_rasters",
+                "fieldTag": "units",
+                "label": "Units",
+                "description": "The units the data are represented in",
+                "defaults": ["mm"],
+                "values": [
+                  {
+                    "id": "mm",
+                    "label": "mm",
+                    "description": "Values in millimeters"
+                  }
+                ]
+              }
+            ],
+            "files": [
+              {
+                "id": "data_map",
+                "fileTag": "data_map",
+                "label": "Rainfall Map",
+                "description": "A gridded rainfall map representing estimated rainfall values over the state of Hawaiʻi.",
+                "fileType": "tif",
+                "requires": ["metadata"],
+                "fileParams": {}
+              },
+              {
+                "id": "se",
+                "fileTag": "se",
+                "label": "Standard Error Map",
+                "description": "The standard error values for the gridded map data.",
+                "fileType": "tif",
+                "requires": ["metadata"],
+                "fileParams": {}
+              },
+              {
+                "id": "anom",
+                "fileTag": "anom",
+                "label": "Anomaly Map",
+                "description": "The anomaly values for the gridded map.",
+                "fileType": "tif",
+                "requires": ["metadata"],
+                "fileParams": {}
+              },
+              {
+                "id": "anom_se",
+                "fileTag": "anom_se",
+                "label": "Anomaly Standard Error",
+                "description": "The standard error values for the gridded map's anomaly values.",
+                "fileType": "tif",
+                "requires": ["metadata"],
+                "fileParams": {}
+              },
+              {
+                "id": "metadata",
+                "fileTag": "metadata",
+                "label": "Metadata and Error Metrics",
+                "description": "Gridded map product metadata and error metrics.",
+                "fileType": "txt",
+                "requires": [],
+                "fileParams": {}
+              }
+            ]
+          },
+          {
+            "properties": [
+              {
+                "id": "extent_stations",
+                "fieldTag": "extent",
+                "label": "Spatial Extent",
+                "description": "The area of coverage for the data",
+                "defaults": ["statewide"],
+                "values": [
+                  {
+                    "id": "statewide",
+                    "label": "Statewide",
+                    "description": "Data covering the entire state of Hawaiʻi"
+                  }
+                ]
+              },
+              {
+                "id": "units_stations",
+                "fieldTag": "units",
+                "label": "Units",
+                "description": "The units the data are represented in",
+                "defaults": ["mm"],
+                "values": [
+                  {
+                    "id": "mm",
+                    "label": "mm",
+                    "description": "Values in millimeters"
+                  }
+                ]
+              }
+            ],
+            "files": [
+              {
+                "id": "station_data_partial",
+                "fileTag": "station_data",
+                "label": "Partial Filled Station Data",
+                "description": "Processed station data including each station's metadata and values over a period of time",
+                "fileType": "csv",
+                "requires": [],
+                "fileParams": {
+                  "fill": "partial"
+                }
+              },
+              {
+                "id": "station_data_raw",
+                "fileTag": "station_data",
+                "label": "Unfilled Station Data",
+                "description": "Unprocessed station data including each station's metadata and values over a period of time",
+                "fileType": "csv",
+                "requires": [],
+                "fileParams": {
+                  "fill": "raw"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

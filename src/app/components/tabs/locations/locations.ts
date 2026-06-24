@@ -1,4 +1,4 @@
-import { Component, resource, computed, signal } from '@angular/core';
+import { Component, resource, computed, signal, effect, untracked } from '@angular/core';
 import { MatTableModule } from '@angular/material/table';
 import { MatSortModule } from '@angular/material/sort';
 import { TabBase } from "../tab-base/tab-base";
@@ -6,18 +6,25 @@ import { HCDPDatasetTimeseriesVisualization, HCDPVisSubtypes } from '../../../mo
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { StationTable } from '../../controls/station-table/station-table';
 import { StationFilters } from '../../controls/station-filters/station-filters';
+import { LocationSelector } from '../../controls/location-selector/location-selector';
+import { MapLocation } from '../../../models/datasets/locationManager';
+import { StationData } from '../../../models/datasets/stations';
 
 @Component({
   selector: 'app-locations',
-  imports: [MatTableModule, MatSortModule, MatProgressSpinnerModule, StationTable, StationFilters],
+  imports: [MatTableModule, MatSortModule, MatProgressSpinnerModule, StationTable, StationFilters, LocationSelector],
   templateUrl: './locations.html',
   styleUrl: './locations.scss',
 })
 export class Locations extends TabBase {
-  activeStationId = signal<string | undefined>(undefined);
+  selectedStation = signal<StationData | undefined>(undefined);
 
   typedDataset = computed(() => {
     return this.dataset() as HCDPVisSubtypes;
+  });
+
+  locationManager = computed(() => {
+    return this.typedDataset().locationManager;
   });
 
   stationData = computed(() => {
@@ -31,4 +38,32 @@ export class Locations extends TabBase {
     }
     return undefined;
   });
+
+
+  constructor() {
+    super();
+    effect(() => {
+      let station = this.selectedStation();
+      if(station) {
+        this.selectStation(station);
+      }
+    });
+
+    effect(() => {
+      let locationData = this.locationManager().location();
+      if(locationData && locationData.type == "station") {
+        untracked(() => {
+          this.selectedStation.set(locationData.location);
+        });
+      }
+    });
+  }
+
+  selectMapLocation(location: MapLocation) {
+    this.locationManager().selectLocation("map", location);
+  }
+
+  selectStation(station: StationData) {
+    this.locationManager().selectLocation("station", station);
+  }
 }

@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { Map } from './map';
+import { LocationSelector } from './location-selector';
 
-describe('Map', () => {
-  let component: Map;
-  let fixture: ComponentFixture<Map>;
+describe('LocationSelector', () => {
+  let component: LocationSelector;
+  let fixture: ComponentFixture<LocationSelector>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [Map]
+      imports: [LocationSelector]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(Map);
+    fixture = TestBed.createComponent(LocationSelector);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

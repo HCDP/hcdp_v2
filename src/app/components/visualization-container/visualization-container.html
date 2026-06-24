@@ -8,8 +8,9 @@
   </div>
   
   <div #mapContainer class="map-container">
-    <app-map #map
+    <app-map-component #map
       [dataset]="dataset()"
-      [imageContainer]="mapContainerRef()"> </app-map>
+      [imageContainer]="mapContainerRef()">
+    </app-map-component>
   </div>
 </div>

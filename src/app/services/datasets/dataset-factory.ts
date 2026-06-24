@@ -56,7 +56,9 @@ export class DatasetFactory {
   public readonly DEFAULT_DS_ID = "contemporary-rainfall-daily";
 
   public readonly DS_DEF_INDEX: Record<string, string> = {
-    "contemporary-rainfall-daily": "assets/datasets/time-dependent-variables/contemporary-rainfall/contemporary-daily-rainfall.json"
+    "contemporary-rainfall-daily": "assets/datasets/time-dependent-variables/contemporary-rainfall/contemporary-rainfall-daily.json",
+    "contemporary-rainfall-monthly": "assets/datasets/time-dependent-variables/contemporary-rainfall/contemporary-rainfall-monthly.json",
+    "legacy-rainfall-monthly": "assets/datasets/time-dependent-variables/legacy-rainfall/legacy-rainfall-monthly.json"
   }
 
   constructor() {
