@@ -53,21 +53,19 @@ export class ApiHandler {
     );
 
     if(options.abortSignal) {
+      const innerRequest = request; 
+
       request = new Observable<T>((subscriber: Subscriber<T>) => {
-        // Reject immediately if aborted before the request even fires
-        if (options.abortSignal!.aborted) {
+        if(options.abortSignal!.aborted) {
           subscriber.error(new DOMException('Aborted', 'AbortError'));
           return;
         }
 
-        // Listener to force the Observable to error out if the signal fires
         const abortListener = () => subscriber.error(new DOMException('Aborted', 'AbortError'));
         options.abortSignal!.addEventListener('abort', abortListener, { once: true });
 
-        // Subscribe to the actual HttpClient request
-        const subscription = request.subscribe(subscriber);
+        const subscription = innerRequest.subscribe(subscriber);
 
-        // Cleanup the listener when the HTTP request finishes naturally
         subscription.add(() => {
           options.abortSignal!.removeEventListener('abort', abortListener);
         });

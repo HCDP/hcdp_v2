@@ -4,17 +4,47 @@
   margin: 20px auto;
 }
 
+.loading-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 
-/* Add to your styles */
-button {
-  padding: 8px 12px;
-  margin-right: 5px;
-  cursor: pointer;
-  border: 1px solid var(--mat-sys-outline);
-  background: var(--mat-sys-surface);
+  h3 {
+    margin: 0;
+  }
 }
-button.active {
-  background: var(--mat-sys-primary-container);
-  color: var(--mat-sys-on-primary-container);
-  font-weight: bold;
+
+.stats-card {
+  max-width: 400px;
+  margin: 16px; /* Adjust based on where this sits in your layout */
+  
+  mat-card-header {
+    margin-bottom: 8px; /* Adds a little breathing room under the title */
+  }
 }
+
+.stats-table {
+  width: 100%;
+  /* Removed border-radius and overflow since the card handles the bounds now */
+}
+
+/* Optional: Right-align the numbers so the decimals line up nicely */
+.value-cell {
+  text-align: right;
+}
+
+.loading-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px;
+
+  h3 {
+    margin: 0;
+  }
+}
+
+.spacer {
+  padding: 20px;
+}
+

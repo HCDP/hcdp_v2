@@ -1,6 +1,48 @@
-<div class="chart-wrapper">
-  <div echarts 
-    [options]="chartOptions" 
-    class="weather-chart">
+
+@if(timeseriesDataResource.isLoading()) {
+  <div class="loading-container">
+    <h3>Loading Timeseries Data...</h3>
+    <mat-spinner diameter="24"></mat-spinner>
   </div>
-</div>
+}
+@if(timeseriesDataResource.hasValue() && timeseriesDataResource.value()) {
+  <app-timeseries-chart
+    [dataStream]="dataStream()"
+    [period]="period()">
+  </app-timeseries-chart>
+}
+
+<span class="spacer"></span>
+
+@if (rasterData()) {
+  <mat-card class="stats-card">
+    <mat-card-header>
+      <mat-card-title>Map Statistics</mat-card-title>
+    </mat-card-header>
+    
+    <mat-card-content>
+      <table mat-table [dataSource]="statsDataSource()" class="stats-table">
+        <ng-container matColumnDef="metric">
+          <td mat-cell *matCellDef="let element"> 
+            <strong>{{element.metric}}</strong> 
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="value">
+          <td mat-cell *matCellDef="let element" class="value-cell"> 
+            {{element.value | number:'1.2-2'}} 
+          </td>
+        </ng-container>
+
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+    </mat-card-content>
+  </mat-card>
+} @else {
+  <div class="loading-container">
+    <h3>Loading Raster Data...</h3>
+    <mat-spinner diameter="24"></mat-spinner>
+  </div>
+}
+
+

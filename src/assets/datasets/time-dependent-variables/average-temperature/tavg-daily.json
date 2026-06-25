@@ -1,0 +1,183 @@
+{
+  "id": "tavg_daily",
+  "label": "Average Daily Temperature (Tavg)",
+  "description": "Daily average temperature from January 1, 1990 to the previous day. These maps represent the average temperature over the 24-hour period starting from midnight (00:00) on the target day to midnight at the end of day. The maximum and minimum temperature maps for the target day are averaged to produce the Daily Average Temperature.",
+  "layout": {
+    "schema": "timeseries",
+    "data": {
+      "warnings": {},
+      "computeUnitConversionsFrom": "c",
+      "datasetParams": {
+        "location": "hawaii",
+        "datatype": "temperature",
+        "aggregation": "avg",
+        "period": "day"
+      },
+      "streams": [
+        {
+          "id": "dataMap",
+          "type": "raster",
+          "bind": ["date"],
+          "staticParams": {
+            "type": "data_map"
+          }
+        }
+      ],
+      "options": {
+        "defaults": {
+          "units": "c"
+        },
+        "controls": [
+          {
+            "id": "date",
+            "label": "Date",
+            "description": "The date represented by the data.",
+            "type": "date"
+          },
+          {
+            "id": "units",
+            "label": "Units",
+            "description": "The units the data are represented in.",
+            "type": "units",
+            "values": [
+              {
+                "id": "c",
+                "name": "Celcius",
+                "shortName": "°C",
+                "system": "metric"
+              },
+              {
+                "id": "f",
+                "name": "Fahrenheit",
+                "shortName": "°F",
+                "system": "usc"
+              }
+            ]
+          }
+        ]
+      },
+      "timeseries": {
+        "period": {
+          "unit": "day",
+          "interval": 1
+        }
+      },
+      "mapLayers": {
+        "layers": [
+          {
+            "stream": "dataMap",
+            "label": "Data Map"
+          }
+        ],
+        "range": {
+          "standard": [-10, 35],
+          "limits": [null, null]
+        },
+        "colors": ["viridis", "monochromatic", "nwsRadar", "turbo"],
+        "defaultColor": "viridis"
+      },
+      "exportData": {
+        "fileTypes": {
+          "tif": {
+            "label": "GeoTIFF",
+            "ext": ".tif",
+            "description": "GeoTIFF files are a variant of the TIFF file format which is used to store raster based data/graphics including georeferencing information."
+          },
+          "txt": {
+            "label": "Text",
+            "ext": ".txt",
+            "description": "A plaintext file."
+          },
+          "csv": {
+            "label": "Comma Separated Values",
+            "ext": ".csv",
+            "description": "A text based file with data separated by commas."
+          }
+        },
+        "files": [
+          {
+            "properties": [
+              {
+                "id": "extent_rasters",
+                "fieldTag": "extent",
+                "label": "Spatial Extent",
+                "description": "The area of coverage for the data",
+                "defaults": ["statewide"],
+                "values": [
+                  {
+                    "id": "statewide",
+                    "label": "Statewide",
+                    "description": "Data covering the entire state of Hawaiʻi"
+                  },
+                  {
+                    "id": "bi",
+                    "label": "Hawaiʻi",
+                    "description": "Data covering Hawaiʻi county"
+                  },
+                  {
+                    "id": "mn",
+                    "label": "Maui",
+                    "description": "Data covering Maui county"
+                  },
+                  {
+                    "id": "oa",
+                    "label": "Honolulu",
+                    "description": "Data covering Honolulu county"
+                  },
+                  {
+                    "id": "ka",
+                    "label": "Kauaʻi",
+                    "description": "Data covering Kauaʻi county"
+                  }
+                ]
+              },
+              {
+                "id": "units_rasters",
+                "fieldTag": "units",
+                "label": "Units",
+                "description": "The units the data are represented in",
+                "defaults": ["c"],
+                "values": [
+                  {
+                    "id": "c",
+                    "label": "°C",
+                    "description": "Values in degrees celcius"
+                  }
+                ]
+              }
+            ],
+            "files": [
+              {
+                "id": "data_map",
+                "fileTag": "data_map",
+                "label": "Temperature Map",
+                "description": "A gridded temperature map representing estimated temperature values over the state of Hawaiʻi.",
+                "fileType": "tif",
+                "requires": ["metadata"],
+                "fileParams": {}
+              },
+              {
+                "id": "se",
+                "fileTag": "se",
+                "label": "Standard Error Map",
+                "description": "The standard error values for the gridded map data.",
+                "fileType": "tif",
+                "requires": ["metadata"],
+                "fileParams": {}
+              },
+              {
+                "id": "metadata",
+                "fileTag": "metadata",
+                "label": "Metadata and Error Metrics",
+                "description": "Gridded map product metadata and error metrics.",
+                "fileType": "txt",
+                "requires": [],
+                "fileParams": {}
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

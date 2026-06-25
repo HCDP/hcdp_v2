@@ -1,0 +1,252 @@
+{
+  "id": "tmin_monthly",
+  "label": "Minimum Monthly Temperature (Tmin)",
+  "description": "Monthly-averaged minimum daily temperature from January 1990 to the previous month. These maps represent the average minimum temperature in a day during each month in the record. The daily minimum temperature maps are averaged over each month to produce the Monthly Minimum Temperature.",
+  "layout": {
+    "schema": "timeseries",
+    "data": {
+      "warnings": {},
+      "computeUnitConversionsFrom": "c",
+      "datasetParams": {
+        "location": "hawaii",
+        "datatype": "temperature",
+        "aggregation": "min",
+        "period": "month"
+      },
+      "streams": [
+        {
+          "id": "stations",
+          "type": "stations",
+          "bind": ["date", "fill"],
+          "staticParams": {}
+        },
+        {
+          "id": "dataMap",
+          "type": "raster",
+          "bind": ["date"],
+          "staticParams": {
+            "type": "data_map"
+          }
+        }
+      ],
+      "options": {
+        "defaults": {
+          "fill": "partial",
+          "units": "c"
+        },
+        "controls": [
+          {
+            "id": "date",
+            "label": "Date",
+            "description": "The date represented by the data.",
+            "type": "date"
+          },
+          {
+            "id": "fill",
+            "label": "Station Fill",
+            "description": "The type of processing the station data goes through. Data maps are generated using partially filled station data.",
+            "type": "list",
+            "values": [
+              {
+                "id": "partial",
+                "label": "Partial Filled",
+                "description": "This data has undergone QA/QC processing. Some missing/removed station values may be filled using statistical techniques to estimate the value for that station. These values are used to generate the gridded data maps."
+              }
+            ]
+          },
+          {
+            "id": "units",
+            "label": "Units",
+            "description": "The units the data are represented in.",
+            "type": "units",
+            "values": [
+              {
+                "id": "c",
+                "name": "Celcius",
+                "shortName": "°C",
+                "system": "metric"
+              },
+              {
+                "id": "f",
+                "name": "Fahrenheit",
+                "shortName": "°F",
+                "system": "usc"
+              }
+            ]
+          }
+        ]
+      },
+      "timeseries": {
+        "period": {
+          "unit": "month",
+          "interval": 1
+        }
+      },
+      "mapLayers": {
+        "layers": [
+          {
+            "stream": "stations",
+            "label": "Station Data"
+          },
+          {
+            "stream": "dataMap",
+            "label": "Data Map"
+          }
+        ],
+        "range": {
+          "standard": [-10, 35],
+          "limits": [null, null]
+        },
+        "colors": ["viridis", "monochromatic", "nwsRadar", "turbo"],
+        "defaultColor": "viridis"
+      },
+      "exportData": {
+        "fileTypes": {
+          "tif": {
+            "label": "GeoTIFF",
+            "ext": ".tif",
+            "description": "GeoTIFF files are a variant of the TIFF file format which is used to store raster based data/graphics including georeferencing information."
+          },
+          "txt": {
+            "label": "Text",
+            "ext": ".txt",
+            "description": "A plaintext file."
+          },
+          "csv": {
+            "label": "Comma Separated Values",
+            "ext": ".csv",
+            "description": "A text based file with data separated by commas."
+          }
+        },
+        "files": [
+          {
+            "properties": [
+              {
+                "id": "extent_rasters",
+                "fieldTag": "extent",
+                "label": "Spatial Extent",
+                "description": "The area of coverage for the data",
+                "defaults": ["statewide"],
+                "values": [
+                  {
+                    "id": "statewide",
+                    "label": "Statewide",
+                    "description": "Data covering the entire state of Hawaiʻi"
+                  },
+                  {
+                    "id": "bi",
+                    "label": "Hawaiʻi",
+                    "description": "Data covering Hawaiʻi county"
+                  },
+                  {
+                    "id": "mn",
+                    "label": "Maui",
+                    "description": "Data covering Maui county"
+                  },
+                  {
+                    "id": "oa",
+                    "label": "Honolulu",
+                    "description": "Data covering Honolulu county"
+                  },
+                  {
+                    "id": "ka",
+                    "label": "Kauaʻi",
+                    "description": "Data covering Kauaʻi county"
+                  }
+                ]
+              },
+              {
+                "id": "units_rasters",
+                "fieldTag": "units",
+                "label": "Units",
+                "description": "The units the data are represented in",
+                "defaults": ["c"],
+                "values": [
+                  {
+                    "id": "c",
+                    "label": "°C",
+                    "description": "Values in degrees celcius"
+                  }
+                ]
+              }
+            ],
+            "files": [
+              {
+                "id": "data_map",
+                "fileTag": "data_map",
+                "label": "Rainfall Map",
+                "description": "A gridded temperature map representing estimated temperature values over the state of Hawaiʻi.",
+                "fileType": "tif",
+                "requires": ["metadata"],
+                "fileParams": {}
+              },
+              {
+                "id": "se",
+                "fileTag": "se",
+                "label": "Standard Error Map",
+                "description": "The standard error values for the gridded map data.",
+                "fileType": "tif",
+                "requires": ["metadata"],
+                "fileParams": {}
+              },
+              {
+                "id": "metadata",
+                "fileTag": "metadata",
+                "label": "Metadata and Error Metrics",
+                "description": "Gridded map product metadata and error metrics.",
+                "fileType": "txt",
+                "requires": [],
+                "fileParams": {}
+              }
+            ]
+          },
+          {
+            "properties": [
+              {
+                "id": "extent_stations",
+                "fieldTag": "extent",
+                "label": "Spatial Extent",
+                "description": "The area of coverage for the data",
+                "defaults": ["statewide"],
+                "values": [
+                  {
+                    "id": "statewide",
+                    "label": "Statewide",
+                    "description": "Data covering the entire state of Hawaiʻi"
+                  }
+                ]
+              },
+              {
+                "id": "units_stations",
+                "fieldTag": "units",
+                "label": "Units",
+                "description": "The units the data are represented in",
+                "defaults": ["c"],
+                "values": [
+                  {
+                    "id": "c",
+                    "label": "°C",
+                    "description": "Values in degrees celcius"
+                  }
+                ]
+              }
+            ],
+            "files": [
+              {
+                "id": "station_data_partial",
+                "fileTag": "station_data",
+                "label": "Partial Filled Station Data",
+                "description": "Processed station data including each station's metadata and values over a period of time",
+                "fileType": "csv",
+                "requires": [],
+                "fileParams": {
+                  "fill": "partial"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

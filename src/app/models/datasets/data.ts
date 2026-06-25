@@ -1,8 +1,8 @@
-import { inject, Signal, ResourceRef, computed, Injector } from "@angular/core";
+import { inject, Signal, ResourceRef, computed, Injector, signal } from "@angular/core";
 import { ApiHandler, APISource, HttpOptions } from "../../services/requests/api-handler";
 import { DataStreamRecipe, DataStreamType } from "./recipe";
 import { Params } from "@angular/router";
-import { combineLatest, map, Observable, of, switchMap } from "rxjs";
+import { Observable, switchMap } from "rxjs";
 import { rxResource, toSignal } from "@angular/core/rxjs-interop";
 import { WorkerInterconnect } from "../../services/workerInterconnect/worker-interconnect";
 import { RasterData } from "../leaflet/rasterData";
@@ -16,6 +16,8 @@ export class DataStreamManager {
   private stationMetadata = inject(StationMetadataRetreiver);
 
   private _streamMap: Record<string, { type: DataStreamType, stream: ResourceRef<any> }>;
+  private _streamParams: Record<string, Signal<Params | undefined>>;
+
   private _datasetParams: Record<string, string>;
   
   // The bridged signal that rxResource will watch natively
@@ -23,6 +25,7 @@ export class DataStreamManager {
 
   constructor(datasetParams: Record<string, string>, streams: DataStreamRecipe[], state: Observable<Record<string, string> | undefined>) {
     this._datasetParams = datasetParams;
+    this._streamParams = {};
 
     // if inactive resolve to undefined to pause resource, otherwise provide state to signal for conversion to resource
     this._sourceState = toSignal(
@@ -41,42 +44,61 @@ export class DataStreamManager {
       let resource = null;
       switch(type) {
         case "stations": {
-          resource = this.createStationStream(bind, staticParams);
+          resource = this.createStationStream(id, bind, staticParams);
           break;
         }
         case "raster": {
-          resource = this.createRasterStream(bind, staticParams);
+          resource = this.createRasterStream(id, bind, staticParams);
           break;
         }
       }
-      this._streamMap[id] = { type, stream: resource! };
+      this._streamMap[id] = { type, stream: resource };
     }
   }
 
   // T = Raw Data Type
   // R = Transformed Data Type
   // Overload with transform
-  private setupResource<T, R>(endpoint: string, triggers: string[], options: HttpOptions, transform: (data: T) => R | Promise<R>): ResourceRef<R | undefined>;
+  private setupResource<T, R>(id: string, endpoint: string, triggers: string[], options: HttpOptions, transform: (data: T) => R | Promise<R>): ResourceRef<R | undefined>;
   // Overload no transform, return T
-  private setupResource<T>(endpoint: string, triggers: string[], options?: HttpOptions): ResourceRef<T | undefined>;
-  private setupResource<T, R = T>(endpoint: string, triggers: string[], options?: HttpOptions,transform?: (data: T) => R | Promise<R>): ResourceRef<R | T | undefined> {
-    const requestSignal = computed<APISource | undefined>(() => {
+  private setupResource<T>(id: string, endpoint: string, triggers: string[], options?: HttpOptions): ResourceRef<T | undefined>;
+  private setupResource<T, R = T>(id: string, endpoint: string, triggers: string[], options?: HttpOptions, transform?: (data: T) => R | Promise<R>): ResourceRef<R | T | undefined> {
+    
+    // 1. Create a dedicated computed signal for this stream's parameters
+    const streamParamsSignal = computed<Params | undefined>(() => {
       const validParams = this._sourceState();
       if (!validParams) return undefined; 
 
-      options = options ?? {};
-      let staticParams = options.params ?? {}
-      let mergedParams = { ...this._datasetParams, ...staticParams };
-      options = { ...options, params: mergedParams };
+      const baseOptions = options ?? {};
+      const staticParams = baseOptions.params ?? {};
+      const mergedParams: Params = { ...this._datasetParams, ...staticParams };
       
       for(let param of triggers) {
-        if (validParams[param] === undefined || validParams[param] === null) {
+        if(validParams[param] === undefined || validParams[param] === null) {
           return undefined; 
         }
         mergedParams[param] = validParams[param];
       }
+
+      return mergedParams;
+    }, {
+      equal: (a, b) => JSON.stringify(a) === JSON.stringify(b)
+    });
+
+    // 2. Assign the computed signal to the dictionary so getStreamParams() can access it natively
+    this._streamParams[id] = streamParamsSignal;
+
+    // 3. Create the APISource signal that depends entirely on the params signal
+    const requestSignal = computed<APISource | undefined>(() => {
+      const params = streamParamsSignal();
       
-      return { endpoint, options };
+      // If the params aren't ready, the request isn't ready
+      if (!params) return undefined;
+
+      const baseOptions = options ?? {};
+      const finalOptions = { ...baseOptions, params };
+      
+      return { endpoint, options: finalOptions };
     }, {
       equal: (a, b) => JSON.stringify(a) === JSON.stringify(b)
     });
@@ -97,8 +119,8 @@ export class DataStreamManager {
     });
   }
 
-  private createRasterStream(triggers: string[], staticParams: Params) {
-    return this.setupResource<ArrayBuffer, RasterData | null>("/raster", triggers, { params: staticParams, responseType: "arraybuffer" }, async (data: ArrayBuffer) => {
+  private createRasterStream(id: string, triggers: string[], staticParams: Params) {
+    return this.setupResource<ArrayBuffer, RasterData | null>(id, "/raster", triggers, { params: staticParams, responseType: "arraybuffer" }, async (data: ArrayBuffer) => {
       let processedGeotiff = await this.workerInterconnect.workerApi.processArrayBufferGeotiffData(data, -3.3999999521443642e+38, [0], [0]);
       if(processedGeotiff) {
         let imageData = processedGeotiff[0];
@@ -109,8 +131,8 @@ export class DataStreamManager {
     });
   }
 
-  private createStationStream(triggers: string[], staticParams: Params) {
-    return this.setupResource<RawStationData<StationValue>[], HCDPStationDataManager>("/stations/value", triggers, { params: staticParams }, async (data: RawStationData<StationValue>[]) => {
+  private createStationStream(id: string, triggers: string[], staticParams: Params) {
+    return this.setupResource<RawStationData<StationValue>[], HCDPStationDataManager>(id, "/stations/value", triggers, { params: staticParams }, async (data: RawStationData<StationValue>[]) => {
       let metadata = await this.stationMetadata.getMetadata();
       let stationData = new HCDPStationDataManager(metadata, data.map(item => item.value));
       return stationData;
@@ -133,6 +155,16 @@ export class DataStreamManager {
     return streams;
   }
 
+  public getStreamIdsOfType(type: DataStreamType) {
+    let ids: string[] = [];
+    for(let streamID in this._streamMap) {
+      if(this._streamMap[streamID].type == type) {
+        ids.push(streamID);
+      }
+    }
+    return ids;
+  }
+
   public getStreamData(id: string) {
     return this._streamMap[id];
   }
@@ -144,4 +176,8 @@ export class DataStreamManager {
   public getStream(id: string) {
     return this._streamMap[id].stream;
   } 
+
+  public getStreamParams(id: string) {
+    return this._streamParams[id];
+  }
 }

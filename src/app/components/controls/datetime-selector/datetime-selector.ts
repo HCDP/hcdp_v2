@@ -103,7 +103,6 @@ export class DatetimeSelector {
 
   setDate() {
     if(this.dateControl.value) {
-      console.log(this.dateControl.value);
       this.timeseries().setDate(this.dateControl.value);
     }
   }

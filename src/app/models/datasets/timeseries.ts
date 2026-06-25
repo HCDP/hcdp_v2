@@ -47,9 +47,7 @@ export class HCDPTimeseriesData {
   }
 
   setDate(date: DateTime) {
-    console.log(date.toISO());
     date = this.checkDate(date);
-    console.log(date.toISO());
     this._dateSubject.next(date);
     return date;
   }

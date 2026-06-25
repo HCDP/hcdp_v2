@@ -3,7 +3,7 @@ import * as L from "leaflet";
 import { LeafletCompassRose, RoseControlOptions } from "../controls/leaflet/leaflet-compass-rose/leaflet-compass-rose";
 import { LeafletImageExport } from '../controls/leaflet/leaflet-image-export/leaflet-image-export';
 import { AssetManager } from '../../services/util/asset-manager';
-import { HCDPDataset, HCDPDatasetTimeseriesVisualization, HCDPDatasetVisualization, HCDPVisSubtypes } from '../../models/datasets/dataset';
+import { HCDPDatasetVisualization, HCDPVisSubtypes } from '../../models/datasets/dataset';
 import { LeafletColorScale } from '../controls/leaflet/leaflet-color-scale/leaflet-color-scale';
 import { RasterData } from '../../models/leaflet/rasterData';
 import { ColorScale } from '../../models/leaflet/colors';
@@ -145,6 +145,133 @@ export class MapComponent {
         resizeObserver.disconnect();
       });
     });
+
+
+    // Dataset streams tracking effect
+    effect((onDatasetCleanup) => {
+      if(!this.map()) return;
+
+      let map = this.map()!;
+      const datasetLayerGroup = L.layerGroup().addTo(map);
+      let isCancelled = false;
+
+      // --- Hover Effect State & Utilities ---
+      let hoverTimeout: any;
+      let hoverHighlightLayer: L.Layer | null = null;
+      let hoverTooltip: L.Tooltip | null = null;
+
+      const clearHoverEffect = () => {
+        if (hoverTimeout) clearTimeout(hoverTimeout);
+        if (hoverHighlightLayer) {
+          map.removeLayer(hoverHighlightLayer);
+          hoverHighlightLayer = null;
+        }
+        if (hoverTooltip) {
+          map.removeLayer(hoverTooltip);
+          hoverTooltip = null;
+        }
+      };
+
+      // --- Map Mouse Event Listeners ---
+      let lastHoverLatLng: L.LatLng | null = null;
+
+      const onMapMouseMove = (e: L.LeafletMouseEvent) => {
+        if (lastHoverLatLng && e.latlng.distanceTo(lastHoverLatLng) < 5) {
+          return; 
+        }
+        lastHoverLatLng = e.latlng;
+
+        const mapContainer = map.getContainer();
+        let hasDataUnderCursor = false;
+        let activeRasterLayer: any = null;
+
+        clearHoverEffect();
+
+        // Check if hovering over a Leaflet marker/shape
+        const isOverInteractiveLayer = (e.originalEvent.target as HTMLElement)
+          .classList.contains('leaflet-interactive');
+
+        if (isOverInteractiveLayer) {
+          hasDataUnderCursor = true;
+        } else {
+          // Check raster data matrix
+          datasetLayerGroup.eachLayer((layer: any) => {
+            if (layer.geoPosToGridValue) {
+              const value = layer.geoPosToGridValue(e.latlng.lat, e.latlng.lng);
+              if (!isNaN(value)) {
+                hasDataUnderCursor = true;
+                activeRasterLayer = layer; // Save a reference for the timeout
+              }
+            }
+          });
+        }
+
+        if (hasDataUnderCursor) {
+          mapContainer.classList.add('map-crosshair-cursor');
+
+          hoverTimeout = setTimeout(() => {
+            
+            if (activeRasterLayer) {
+              const value = activeRasterLayer.geoPosToGridValue(e.latlng.lat, e.latlng.lng);
+              const displayValue = Number.isInteger(value) ? value : value.toFixed(2);
+
+              hoverTooltip = L.tooltip({
+                permanent: true,     
+                direction: 'top',    
+                className: 'transient-hover-popup',
+                interactive: false,
+                opacity: 0.95
+              })
+              .setLatLng(e.latlng)
+              .setContent(`<div style="padding: 2px 4px; font-weight: bold;">Value: ${displayValue}</div>`)
+              .addTo(map); 
+
+              if(activeRasterLayer.getCellBoundsFromGeoPos) {
+                const cellBounds = activeRasterLayer.getCellBoundsFromGeoPos(e.latlng);
+                
+                if (cellBounds) {
+                  hoverHighlightLayer = L.rectangle(cellBounds, {
+                    fillColor: "orange",
+                    weight: 3,
+                    opacity: 1,
+                    color: "orange",
+                    fillOpacity: 0.2,
+                    interactive: false
+                  }).addTo(map);
+                }
+              }
+            }
+          }, 1000);
+
+        } else {
+          mapContainer.classList.remove('map-crosshair-cursor');
+        }
+      };
+
+      const onMapMouseOut = () => clearHoverEffect();
+
+      // Attach the listeners to the map
+      map.on('mousemove', onMapMouseMove);
+      map.on('mouseout', onMapMouseOut);
+
+      // --- Stream Handling ---
+      const childEffects = this.handleDatasetStreams(map, datasetLayerGroup, () => isCancelled);
+
+      // --- Complete Cleanup ---
+      onDatasetCleanup(() => {
+        isCancelled = true;
+        
+        // 1. Wipe hover interactions and unbind map listeners
+        clearHoverEffect();
+        map.off('mousemove', onMapMouseMove);
+        map.off('mouseout', onMapMouseOut);
+        map.getContainer().classList.remove('map-crosshair-cursor');
+        
+        // 2. Destroy layers and child stream effects
+        map.removeLayer(datasetLayerGroup);
+        childEffects.forEach(eRef => eRef?.destroy());
+      });
+    });
   }
 
   updateOpacity(event: Event) {
@@ -216,7 +343,7 @@ export class MapComponent {
 
     const createdEffects: EffectRef[] = [];
 
-    for (let layer of layers) {
+    for(let layer of layers) {
       let { stream, label } = layer;
       let type = dataStreamsManager.getStreamType(stream);
       let dataStream = dataStreamsManager.getStream(stream);
@@ -269,7 +396,7 @@ export class MapComponent {
                 });
 
                 // Set up the popup content
-                const popupContent = `<b>${station.name || 'Station ' + station.skn}</b><br/>SKN: ${station.skn}<br/>Value: ${station.value}`;
+                const popupContent = `<b>${station.name || 'Station ' + station.skn}</b><br/>SKN: ${station.skn}<br/>Value: ${station.value.toFixed(2)}`;
                 
                 // Disable autoPan so the popup opening doesn't interrupt flyTo
                 circle.bindPopup(popupContent, { autoPan: false });
@@ -343,6 +470,7 @@ export class MapComponent {
               leafletLayer = raster as unknown as L.Layer;
 
               let opacityEffect: EffectRef;
+              let currentHighlight: L.Layer | null = null;
 
               untracked(() => {
                 opacityEffect = effect(() => {
@@ -357,10 +485,9 @@ export class MapComponent {
               const onMapClick = (e: L.LeafletMouseEvent | any) => {
                 if (!mapInstance.hasLayer(datasetLayerGroup)) return;
                 
-                // Check if data exists at the clicked location BEFORE selecting it
                 const value = raster.geoPosToGridValue(e.latlng.lat, e.latlng.lng);
                 if (isNaN(value)) {
-                  return; // Ignore clicks on areas with no data
+                  return; 
                 }
                 
                 this.typedDataset().locationManager.selectLocation("map", { lat: e.latlng.lat, lng: e.latlng.lng });
@@ -374,35 +501,68 @@ export class MapComponent {
                 selectionEffect = effect(() => {
                   const selectedLoc = this.typedDataset().locationManager.location();
                   
+                  // Clear the previous highlight box if it exists
+                  if (currentHighlight) {
+                    mapInstance.removeLayer(currentHighlight);
+                    currentHighlight = null;
+                  }
+
                   if (selectedLoc?.type === "map") {
                     const mapLocation = selectedLoc.location as MapLocation;
                     const { lat, lng } = mapLocation;
                     
                     const value = raster.geoPosToGridValue(lat, lng);
                     
-                    // Only fly and open popup if data exists
-                    if (!isNaN(value)) {
+                    if(!isNaN(value)) {
                       mapInstance.flyTo([lat, lng], mapInstance.getZoom(), {
                         animate: true,
                         duration: 0.75
                       });
 
+                      const cellBounds = raster.getCellBoundsFromGeoPos(L.latLng(lat, lng));
+                      if(cellBounds) {
+                        currentHighlight = L.rectangle(cellBounds, {
+                          fillColor: "black",
+                          weight: 3,
+                          opacity: 1,
+                          color: "black",
+                          fillOpacity: 0.2,
+                          interactive: false
+                        }).addTo(mapInstance);
+                      }
+
                       const displayValue = Number.isInteger(value) ? value : value.toFixed(2);
                       
                       L.popup({ autoPan: false })
                         .setLatLng([lat, lng])
-                        .setContent(`<b>Value:</b> ${displayValue}`)
+                        .setContent(`
+                          <b>Value:</b> ${displayValue}<br>
+                          <small style="color: #666;">Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}</small>
+                        `)
                         .openOn(mapInstance);
-                    } else {
-                      // If a location without data was selected externally, just close the popup
+                    }
+                    else {
                       mapInstance.closePopup();
                     }
                   }
                 }, { injector: this.injector });
               });
+
+              // 3. Clear the box if the user manually closes the popup
+              const onPopupClose = () => {
+                if (currentHighlight) {
+                  mapInstance.removeLayer(currentHighlight);
+                  currentHighlight = null;
+                }
+              };
+              mapInstance.on('popupclose', onPopupClose);
               
               cleanupEvent = () => {
                 mapInstance.off('click', onMapClick);
+                mapInstance.off('popupclose', onPopupClose);
+                if (currentHighlight) {
+                  mapInstance.removeLayer(currentHighlight);
+                }
                 if(opacityEffect) opacityEffect.destroy();
                 if(selectionEffect) selectionEffect.destroy();
               };

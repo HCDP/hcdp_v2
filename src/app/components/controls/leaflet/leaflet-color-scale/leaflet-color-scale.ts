@@ -73,7 +73,6 @@ export class LeafletColorScale {
   }
 
   async openConfig() {
-    console.log(this.mapState());
     let dialogRef = this.dialog.open(MapScaleConfig, {
       data: {
         state: this.mapState(),

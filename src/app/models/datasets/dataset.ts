@@ -139,6 +139,8 @@ export abstract class HCDPDatasetVisualization {
 
 
 export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization {
+  private static readonly DATE_CHUNK_SIZE =  1000;
+
   private injector = inject(Injector);
 
   private _timeseriesData: HCDPTimeseriesData;
@@ -147,6 +149,7 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
   private _mapState: MapState;
   private _exportData: ExportTimeseriesDataHandler;
   private _locationManager: LocationManager;
+  private _dateChunks: [DateTime, DateTime][];
   
 
   constructor(id: string, label: string, description: string, layout: TimeseriesSchemaData, initData: {range: [DateTime, DateTime]}, active: Signal<boolean>) {
@@ -157,7 +160,7 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
       label: "Locations",
       component: Locations
     }, {
-      label: "Timeseries",
+      label: "Timeseries and Stats",
       component: Timeseries
     }];
     super("timeseries", id, label, description, tabs, active);
@@ -181,6 +184,20 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
     this._mapState = new MapState(mapLayers);
     this._exportData = new ExportTimeseriesDataHandler(exportData, datasetParams, this.timeseriesData);
     this._locationManager = new LocationManager();
+    this.createDateChunks();
+  }
+
+  private createDateChunks(): void {
+    this._dateChunks = [];
+    let date = this._timeseriesData.start;
+    while(date < this._timeseriesData.end) {
+      let chunkEnd = this._timeseriesData.period.add(HCDPDatasetTimeseriesVisualization.DATE_CHUNK_SIZE, date);
+      if(chunkEnd > this._timeseriesData.end) {
+        chunkEnd = this._timeseriesData.end;
+      }
+      this._dateChunks.push([date, chunkEnd]);
+      date = chunkEnd;
+    }
   }
 
   get exportData() {
@@ -205,6 +222,10 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
 
   get locationManager() {
     return this._locationManager;
+  }
+
+  get dateChunks() {
+    return this._dateChunks;
   }
 }
 

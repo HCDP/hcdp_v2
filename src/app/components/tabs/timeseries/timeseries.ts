@@ -1,148 +1,247 @@
-import { Component, ViewChild, ElementRef, AfterViewInit, OnDestroy, OnInit, NgZone } from '@angular/core';
+import { Component, computed, effect, inject, resource, signal, untracked } from '@angular/core';
 import { TabBase } from "../tab-base/tab-base";
-import * as echarts from 'echarts';
-import { LineSeriesOption } from 'echarts';
+import { TimeseriesChart } from '../../controls/timeseries-chart/timeseries-chart';
+import { HCDPDatasetTimeseriesVisualization } from '../../../models/datasets/dataset';
 import { DateTime } from 'luxon';
-import { NgxEchartsDirective, NGX_ECHARTS_CONFIG } from 'ngx-echarts';
+import { Params } from '@angular/router';
+import { ApiHandler } from '../../../services/requests/api-handler';
+import { firstValueFrom, map } from 'rxjs';
+import { DataStreamType } from '../../../models/datasets/recipe';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { RasterData } from '../../../models/leaflet/rasterData';
+import { DecimalPipe } from '@angular/common';
+import { MatTableModule } from '@angular/material/table';
+import { MatCardModule } from '@angular/material/card';
 
 @Component({
   selector: 'app-timeseries',
-  imports: [ NgxEchartsDirective ],
+  imports: [ TimeseriesChart, MatProgressSpinnerModule, DecimalPipe, MatTableModule, MatCardModule ],
   templateUrl: './timeseries.html',
-  styleUrl: './timeseries.scss',
-  providers: [
-    {
-      provide: NGX_ECHARTS_CONFIG,
-      useValue: { echarts }
-    }
-  ]
+  styleUrl: './timeseries.scss'
 })
 export class Timeseries extends TabBase {
-  
- chartOptions: echarts.EChartsOption = {};
+  apiHandler = inject(ApiHandler);
 
-  ngAfterViewInit() {
-  const rawData = this.generateData();
+  dataStream = signal<Map<DateTime, number> | null>(null);
 
-  // 1. Extract styles natively
-  const styles = getComputedStyle(document.body);
-  let primaryColor = styles.getPropertyValue('--mat-sys-on-primary-container').trim() || '#1976d2';
-  const textColor = styles.getPropertyValue('--mat-sys-on-surface').trim() || '#333333';
-  const axisLineColor = styles.getPropertyValue('--mat-sys-outline-variant').trim() || '#ccc';
+  timeseriesInfo = signal<TimeseriesInfo | null>(null);
 
-  // 2. Resolve the light-dark() CSS function cleanly
-  if (primaryColor.startsWith('light-dark')) {
-    const matches = primaryColor.match(/light-dark\s*\(\s*([^,]+)\s*,\s*([^)]+)\s*\)/);
-    if (matches) {
-      const isDarkMode = document.body.classList.contains('dark-theme') || 
-                         document.body.classList.contains('dark-mode') ||
-                         window.matchMedia('(prefers-color-scheme: dark)').matches;
-      primaryColor = isDarkMode ? matches[2].trim() : matches[1].trim();
+  castDataset = computed(() => {
+    // requires dataset to be timeseries vis
+    let dataset = this.dataset() as HCDPDatasetTimeseriesVisualization;
+
+    return dataset;
+  });
+
+  period = computed(() => {
+    return this.castDataset().timeseriesData.period;
+  });
+
+  rasterData = computed(() => {
+    let rasterStreams = this.castDataset().dataStreams.getStreamsOfType("raster");
+    // assume one for now
+    for(let streamId in rasterStreams) {
+      if(rasterStreams[streamId].hasValue()) {
+        let rasterData: RasterData = rasterStreams[streamId].value();
+        return rasterData;
+      }
     }
+    return undefined;
+  });
+
+  displayedColumns: string[] = ['metric', 'value'];
+
+  statsDataSource = computed(() => {
+    const data = this.rasterData();
+    
+    // Return empty array if data isn't loaded yet
+    if (!data) return [];
+
+    return [
+      { metric: 'Map Minimum', value: data.min },
+      { metric: 'Map Maximum', value: data.max },
+      { metric: 'Map Mean', value: data.mean },
+      { metric: 'Map Standard Deviation', value: data.stddev }
+    ];
+  });
+
+
+
+  timeseriesDataResource = resource({
+    params: () => this.timeseriesInfo(),
+    loader: async ({ params: info, abortSignal }) => {
+      this.dataStream.set(null);
+
+      if(!info) return null;
+
+      const dateChunks = this.castDataset().dateChunks;
+
+      const chunkRequests = dateChunks.map(async (dateRange: [DateTime, DateTime]) => {
+        let data = await (info.type == "raster" ? this.createRasterTSQuery(info, dateRange, abortSignal) : this.createStationTSQuery(info, dateRange, abortSignal));
+        this.dataStream.set(data);
+      });
+
+      try {
+        await Promise.all(chunkRequests);
+      }
+      catch (e: any) {
+        if(e.name !== 'AbortError') {
+          throw e;
+        }
+      }
+
+      return true; // Value isn't used strictly since we populate dataStream, but required by resource
+    }
+  });
+
+  private async createStationTSQuery(info: TimeseriesInfo, dateRange: [DateTime, DateTime], abortSignal: AbortSignal): Promise<Map<DateTime, number>> {
+    let ep = "/stations/value";
+
+    let [ start, end ] = dateRange;
+    const queryParams = {
+      ...info.params,
+      startDate: this.period().formatDate(start), 
+      endDate: this.period().formatDate(end)
+    };
+
+    const data = await firstValueFrom(
+      this.apiHandler.get<any>(ep, {
+        params: queryParams,
+        abortSignal: abortSignal
+      }).pipe(map((values: Record<string, number>) => {
+        let tsMap = new Map<DateTime, number>();
+        for(let ts in values) {
+          tsMap.set(DateTime.fromISO(ts), values[ts]);
+        }
+        return tsMap;
+      }))
+    );
+    return data;
   }
 
-  const areaGradientColor = primaryColor + '66'; // 40% transparency
+  private async createRasterTSQuery(info: TimeseriesInfo, dateRange: [DateTime, DateTime], abortSignal: AbortSignal): Promise<Map<DateTime, number>> {
+    let ep = "/raster/timeseries";
 
-  // 3. Define the COMPLETE options payload all at once to prevent engine collisions
-  this.chartOptions = {
-    title: {
-      text: 'Temperature (1960 - Present)',
-      left: 'center',
-      textStyle: { color: textColor, fontSize: 16 }
-    },
-    tooltip: {
-      trigger: 'axis',
-      axisPointer: { type: 'cross' }
-    },
-    toolbox: {
-      right: 10,
-      feature: {
-        dataZoom: {
-          yAxisIndex: 'none',
-          title: { zoom: 'Box Zoom', back: 'Reset Zoom' }
-        },
-        saveAsImage: {
-          title: 'Export PNG',
-          pixelRatio: window.devicePixelRatio,
-          type: 'png',
-          excludeComponents: ['toolbox']
+    let [ start, end ] = dateRange;
+    const queryParams = {
+      ...info.params,
+      start: start.toISO(), 
+      end: end.toISO()
+    };
+
+    const data = await firstValueFrom(
+      this.apiHandler.get<any>(ep, {
+        params: queryParams,
+        abortSignal: abortSignal
+      }).pipe(map((values: Record<string, number>) => {
+        let tsMap = new Map<DateTime, number>();
+        for(let ts in values) {
+          tsMap.set(DateTime.fromISO(ts), values[ts]);
         }
-      },
-      iconStyle: { borderColor: textColor }
-    },
-    grid: {
-      top: 80,
-      left: 60,
-      right: 60,
-      bottom: 60
-    },
-    // CRITICAL FIX: Explicitly populated xAxis configuration
-    xAxis: {
-      type: 'time',
-      boundaryGap: [0, 0], 
-      axisLine: { lineStyle: { color: axisLineColor } },
-      axisLabel: { color: textColor }
-    },
-    // CRITICAL FIX: Explicitly populated yAxis configuration
-    yAxis: {
-      type: 'value',
-      axisLabel: { 
-        color: textColor,
-        formatter: '{value}°C' 
-      },
-      splitLine: { lineStyle: { color: axisLineColor, type: 'dashed' } }
-    },
-    dataZoom: [
-      {
-        type: 'inside',
-        disabled: false,
-        zoomOnMouseWheel: true,
-        moveOnMouseMove: true,
-        moveOnMouseWheel: false
+        return tsMap;
+      }))
+    );
+    return data;
+
+  }
+
+
+
+
+
+
+
+  constructor() {
+    super();
+
+    effect(() => {
+      let location = this.castDataset().locationManager.location();
+      if(!location) {
+        this.timeseriesInfo.set(null);
+        return;
       }
-    ],
-    series: [
-      {
-        name: 'Temperature',
-        type: 'line',
-        symbol: 'none',
-        data: rawData,
-        large: true,          
-        largeThreshold: 2000, 
-        sampling: 'lttb',     
-        itemStyle: { color: primaryColor },
-        lineStyle: { width: 1.5 },
-        areaStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: areaGradientColor },
-            { offset: 1, color: primaryColor + '00' }
-          ])
+      let streamIds: string[] = [];
+      let streamType: DataStreamType;
+      let baseParams: Params = {};
+      if(location.type == "map") {
+        streamType = "raster";
+        baseParams = {
+          ...location.location
         }
-      } as LineSeriesOption
-    ]
-  };
+      }
+      else {
+        streamType = "stations";
+        baseParams.skn = location.location.skn;
+      }
+      streamIds = this.castDataset().dataStreams.getStreamIdsOfType(streamType);
+      // if no streams for the selected type reset and ignore
+      if(streamIds.length < 0) {
+        this.timeseriesInfo.set(null);
+        return;
+      }
+      // assume one for now
+      let streamId = streamIds[0];
+      // get the stream params
+      let params = this.castDataset().dataStreams.getStreamParams(streamId)();
+      if(!params) {
+        this.timeseriesInfo.set(null);
+        return;
+      }
+      let mergedParams = {
+        ...baseParams,
+        ...params
+      }
+      if(mergedParams.date) {
+        delete mergedParams.date
+      }
+      
+      let timeseriesInfo = new TimeseriesInfo(streamType, mergedParams);
+      untracked(() => {
+        let currentTimeseriesInfo = this.timeseriesInfo();
+        if(currentTimeseriesInfo === null || !timeseriesInfo.equal(currentTimeseriesInfo)) {
+          this.timeseriesInfo.set(timeseriesInfo);
+        }
+      });
+      
+    });
+  }
 }
 
-  /**
-   * Generates a structural 2D Tuple Array format natively optimized for ECharts:
-   * [ [DateString, Value], [DateString, Value], ... ]
-   */
-  private generateData(): [number, number][] {
-    let date = DateTime.fromISO("1960-01-01");
-    const end = DateTime.now();
-    const data: [number, number][] = [];
+class TimeseriesInfo {
+  private _type: DataStreamType;
+  private _params: Params
 
-    while (date < end) {
-      // Your actual weather metric or math calculation
-      const seasonPhase = Math.sin((date.toSeconds() / 31536000) * Math.PI * 2);
-      const value = 20 + (seasonPhase * 15) + ((Math.random() * 6) - 3);
-      
-      data.push([date.valueOf(), parseFloat(value.toFixed(2))]);
-      
-      // Increment the timeline (e.g., daily, hourly, etc.)
-      date = date.plus({ hours: 1 }); 
+  constructor(type: DataStreamType, params: Params) {
+    this._type = type;
+    this._params = params;
+  }
+
+  get type() {
+    return this._type;
+  }
+
+  get params() {
+    return this._params;
+  }
+
+  public equal(compare: TimeseriesInfo): boolean {
+    if (this._type !== compare.type) {
+      return false;
     }
 
-    return data;
+    const thisKeys = Object.keys(this._params);
+    const compareKeys = Object.keys(compare.params);
+
+    if (thisKeys.length !== compareKeys.length) {
+      return false;
+    }
+
+    for(const key of thisKeys) {
+      if(this._params[key as keyof typeof this._params] !== compare.params[key as keyof typeof compare.params]) {
+        return false;
+      }
+    }
+
+    return true;
   }
 }

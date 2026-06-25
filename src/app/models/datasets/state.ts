@@ -193,7 +193,6 @@ export class TimeseriesDataStateController extends DataStateController {
 
       if(currentUrlParams[id]) {
         let initialDate = DateTime.fromISO(currentUrlParams[id], { zone: "UTC" });
-        console.log(initialDate.toISO());
         if(initialDate.isValid) {
           this.timeseriesData.setDate(initialDate);
           currentDate = initialDate; 
