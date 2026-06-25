@@ -1,11 +1,12 @@
 
-@if(timeseriesDataResource.isLoading()) {
-  <div class="loading-container">
-    <h3>Loading Timeseries Data...</h3>
-    <mat-spinner diameter="24"></mat-spinner>
-  </div>
-}
-@if(timeseriesDataResource.hasValue() && timeseriesDataResource.value()) {
+@if(timeseriesInfo()) {
+  @if(timeseriesDataResource.isLoading()) {
+    <div class="loading-container">
+      <h3>Loading Timeseries Data...</h3>
+      <mat-spinner diameter="24"></mat-spinner>
+    </div>
+  }
+
   <app-timeseries-chart
     [dataStream]="dataStream()"
     [period]="period()">
@@ -14,7 +15,7 @@
 
 <span class="spacer"></span>
 
-@if (rasterData()) {
+@if(rasterData()) {
   <mat-card class="stats-card">
     <mat-card-header>
       <mat-card-title>Map Statistics</mat-card-title>
@@ -38,7 +39,8 @@
       </table>
     </mat-card-content>
   </mat-card>
-} @else {
+}
+@else {
   <div class="loading-container">
     <h3>Loading Raster Data...</h3>
     <mat-spinner diameter="24"></mat-spinner>

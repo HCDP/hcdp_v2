@@ -78,7 +78,12 @@ export class Timeseries extends TabBase {
 
       const chunkRequests = dateChunks.map(async (dateRange: [DateTime, DateTime]) => {
         let data = await (info.type == "raster" ? this.createRasterTSQuery(info, dateRange, abortSignal) : this.createStationTSQuery(info, dateRange, abortSignal));
-        this.dataStream.set(data);
+
+        this.dataStream.update(current => {
+          const updatedMap = current ? new Map(current) : new Map();
+          data.forEach((val, key) => updatedMap.set(key, val));
+          return updatedMap;
+        });
       });
 
       try {
@@ -90,7 +95,7 @@ export class Timeseries extends TabBase {
         }
       }
 
-      return true; // Value isn't used strictly since we populate dataStream, but required by resource
+      return true;
     }
   });
 
@@ -108,10 +113,12 @@ export class Timeseries extends TabBase {
       this.apiHandler.get<any>(ep, {
         params: queryParams,
         abortSignal: abortSignal
-      }).pipe(map((values: Record<string, number>) => {
+      }).pipe(map((values: any) => {
         let tsMap = new Map<DateTime, number>();
-        for(let ts in values) {
-          tsMap.set(DateTime.fromISO(ts), values[ts]);
+        for(let item of values) {
+          let { value: valueData } = item;
+          let { value, date } = valueData;
+          tsMap.set(DateTime.fromISO(date), value);
         }
         return tsMap;
       }))
@@ -142,7 +149,6 @@ export class Timeseries extends TabBase {
       }))
     );
     return data;
-
   }
 
 
@@ -171,7 +177,7 @@ export class Timeseries extends TabBase {
       }
       else {
         streamType = "stations";
-        baseParams.skn = location.location.skn;
+        baseParams.station_id = location.location.skn;
       }
       streamIds = this.castDataset().dataStreams.getStreamIdsOfType(streamType);
       // if no streams for the selected type reset and ignore

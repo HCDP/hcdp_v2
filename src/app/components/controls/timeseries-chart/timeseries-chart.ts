@@ -1,4 +1,4 @@
-import { Component, effect, input } from '@angular/core';
+import { Component, computed, effect, input } from '@angular/core';
 import { LineSeriesOption, graphic, EChartsOption } from 'echarts';
 import { DateTime } from 'luxon';
 import { Period } from '../../../models/datasets/time';
@@ -21,69 +21,51 @@ export class TimeseriesChart {
   period = input.required<Period>();
   dataStream = input.required<Map<DateTime, number> | null>();
 
-  chartOptions: EChartsOption = {};
-  updateOptions: EChartsOption = {}; 
+  // Baseline options (Static, sets up axes/colors/styles)
+  chartOptions: EChartsOption = this.initChartBase();
 
-  private accumulatedData = new Map<number, number>(); 
+  // --- THE BETTER WAY ---
+  // A computed signal that automatically derives the ECharts update payload
+  // anytime dataStream or period changes. No effect() needed!
+  updateOptions = computed<EChartsOption>(() => {
+    const rawMap = this.dataStream();
 
-  constructor() {
-    this.initChartBase();
+    // 1. Handle reset / null state immediately
+    if (!rawMap || rawMap.size === 0) {
+      return { series: [{ data: [] } as LineSeriesOption] };
+    }
 
-    effect(() => {
-      const chunk = this.dataStream();
+    // 2. Convert map to epoch tuples and sort them chronologically 
+    // (We must sort because concurrent API chunks arrive out of order)
+    const sortedEntries = Array.from(rawMap.entries())
+      .map(([dt, val]) => [dt.toMillis(), val] as [number, number])
+      .sort((a, b) => a[0] - b[0]);
 
-      // reset data on null signal
-      if(chunk === null) {
-        this.accumulatedData.clear();
-        this.updateChart();
-        return;
-      }
-
-      // merge incoming data
-      if(chunk.size > 0) {
-        // map to ms dates
-        chunk.forEach((value, dateTime) => {
-          this.accumulatedData.set(dateTime.toMillis(), value);
-        });
-        this.updateChart();
-      }
-    });
-  }
-
-  private updateChart() {
-    // sort the timestamps
-    const sortedTimestamps = Array.from(this.accumulatedData.keys()).sort((a, b) => a - b);
+    const expectedIntervalMs = this.period().valueOf(); 
     const processedData: [number, number | null][] = [];
-    
-    // get rough ms between data points (may not be exact for months)
-    // add a buffer for imprecise durations, disconnect data with a larger gap
-    const disconnectIntervalMs = this.period().valueOf() * 1.5; 
 
-    // build processed array with nulls injected between gaps
-    for(let i = 0; i < sortedTimestamps.length; i++) {
-      const currentTs = sortedTimestamps[i];
-      processedData.push([currentTs, this.accumulatedData.get(currentTs)!]);
+    // 3. Build the array and inject nulls for missing chunks
+    for (let i = 0; i < sortedEntries.length; i++) {
+      const [currentTs, val] = sortedEntries[i];
+      processedData.push([currentTs, val]);
 
-      // check the gap to the next timestamp
-      if(i < sortedTimestamps.length - 1) {
-        const nextTs = sortedTimestamps[i + 1];
+      // Check gap to the next known point
+      if (i < sortedEntries.length - 1) {
+        const nextTs = sortedEntries[i + 1][0];
         
-        // If the gap is larger than disconnect interval, inject a null value to disconnect the graph
-        if(nextTs - currentTs > disconnectIntervalMs) {
-          processedData.push([currentTs + disconnectIntervalMs, null]);
+        // If gap exceeds expected interval, inject a null to break the ECharts line
+        // (Added a 1.5x buffer to prevent float math rounding errors from triggering false gaps)
+        if (nextTs - currentTs > expectedIntervalMs * 1.5) {
+          processedData.push([currentTs + expectedIntervalMs, null]);
         }
       }
     }
 
-    // use ECharts merge to inject data
-    this.updateOptions = {
-      series: [
-        {
-          data: processedData
-        } as LineSeriesOption
-      ]
+    // 4. Return the merge payload
+    return {
+      series: [{ data: processedData } as LineSeriesOption]
     };
-  }
+  });
 
   private initChartBase() {
     // 1. Extract styles natively
@@ -105,7 +87,7 @@ export class TimeseriesChart {
 
     const areaGradientColor = primaryColor + '66';
 
-    this.chartOptions = {
+    return {
       animation: false,
       title: {
         text: 'Rainfall',
@@ -157,6 +139,6 @@ export class TimeseriesChart {
           }
         } as LineSeriesOption
       ]
-    };
+    } as EChartsOption;
   }
 }
