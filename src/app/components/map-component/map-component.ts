@@ -29,6 +29,9 @@ export class MapComponent {
   typedDataset = computed(() => {
     return this.dataset() as HCDPVisSubtypes;
   });
+  tabManager = computed(() => {
+    return this.dataset().tabManager;
+  });
 
   readonly isSpinning = computed(() => {
     const dataset = this.typedDataset();
@@ -206,7 +209,7 @@ export class MapComponent {
           });
         }
 
-        if (hasDataUnderCursor) {
+        if(hasDataUnderCursor) {
           mapContainer.classList.add('map-crosshair-cursor');
 
           hoverTimeout = setTimeout(() => {
@@ -386,7 +389,7 @@ export class MapComponent {
               stations.forEach((station: StationData) => {
                 const markerColor = colorScale!.getColor(station.value).hex(); 
                 const { radius, weight } = computeMarkerSizing();
-                const circle = L.circleMarker([station.lat, station.lng], {
+                const marker = L.circleMarker([station.lat, station.lng], {
                   radius,
                   fillColor: markerColor,
                   color: '#000',
@@ -397,17 +400,18 @@ export class MapComponent {
 
                 // Set up the popup content
                 const popupContent = `<b>${station.name || 'Station ' + station.skn}</b><br/>SKN: ${station.skn}<br/>Value: ${station.value.toFixed(2)}`;
+                let popupContainer = this.createPopupContainer(popupContent);
                 
                 // Disable autoPan so the popup opening doesn't interrupt flyTo
-                circle.bindPopup(popupContent, { autoPan: false });
+                marker.bindPopup(popupContainer, { autoPan: false });
 
                 // Map -> App synchronization
-                circle.on('click', () => {
+                marker.on('click', () => {
                   this.typedDataset().locationManager.selectLocation("station", station);
                 });
 
-                markerMap.set(station.skn, circle);
-                stationGroup.addLayer(circle);
+                markerMap.set(station.skn, marker);
+                stationGroup.addLayer(marker);
               });
 
               leafletLayer = stationGroup;
@@ -507,7 +511,7 @@ export class MapComponent {
                     currentHighlight = null;
                   }
 
-                  if (selectedLoc?.type === "map") {
+                  if(selectedLoc?.type === "map") {
                     const mapLocation = selectedLoc.location as MapLocation;
                     const { lat, lng } = mapLocation;
                     
@@ -532,14 +536,19 @@ export class MapComponent {
                       }
 
                       const displayValue = Number.isInteger(value) ? value : value.toFixed(2);
-                      
+
+
+                      let popupContent = `
+                        <b>Value:</b> ${displayValue}<br>
+                        <small style="color: #666;">Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}</small>
+                      `;
+                      let popupContainer = this.createPopupContainer(popupContent);
                       L.popup({ autoPan: false })
                         .setLatLng([lat, lng])
-                        .setContent(`
-                          <b>Value:</b> ${displayValue}<br>
-                          <small style="color: #666;">Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}</small>
-                        `)
+                        .setContent(popupContainer) 
                         .openOn(mapInstance);
+  
+
                     }
                     else {
                       mapInstance.closePopup();
@@ -596,5 +605,30 @@ export class MapComponent {
       data: rasterData,
       zIndex: 10
     });
+  }
+
+  createPopupContainer(content: string) {
+    const popupContainer = document.createElement('div');
+
+    if (this.tabManager().hasTab("timeseries")) {
+      content += `
+        <hr>
+        <a href="javascript:void(0);" class="timeseries-link">
+          View Timeseries
+        </a>
+      `;
+    }
+
+    popupContainer.innerHTML = content;
+
+    const linkElement = popupContainer.querySelector('.timeseries-link');
+    if(linkElement) {
+      linkElement.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.tabManager().tab = "timeseries";
+      });
+    }
+
+    return popupContainer;
   }
 }

@@ -3,9 +3,12 @@
   height: 100%;
 }
 
+
+
 .data-tab {
   padding: 20px;
 }
+
 
 .tab-content {
   height: 100%;
@@ -15,14 +18,87 @@
   flex-grow: 1;
 }
 
-mat-spinner {
-  margin: 50px;
+
+
+.tab-icon-gif {
+  width: 32px;  
+  height: 25px; 
+  margin-left: 15px;
 }
 
-.error-container {
-  padding: 20px;
+.fade-in {
+  animation: fadeIn 300ms ease-in forwards;
+}
 
-  p {
-    color: #B00020;
+.fade-out {
+  animation: fadeOut 300ms ease-out forwards;
+}
+
+@keyframes fadeIn {
+  0% { 
+    opacity: 0; 
+    width: 0px; 
+    margin-right: 0px;
   }
+  100% { 
+    opacity: 1; 
+    width: 32px; 
+    margin-right: 8px;
+  }
+}
+
+@keyframes fadeOut {
+  0% { 
+    opacity: 1; 
+    width: 32px; 
+    margin-right: 8px;
+  }
+  100% { 
+    opacity: 0; 
+    width: 0px; 
+    margin-right: 0px;
+  }
+}
+
+
+
+
+
+
+/* Base State: Hidden and Collapsed */
+:host ::ng-deep .mat-mdc-tab-body-wrapper::before,
+:host ::ng-deep .mat-mdc-tab-body-wrapper::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0px;
+  opacity: 0;
+  z-index: 1000;
+  pointer-events: none;
+  transition: opacity 500ms ease-in-out, height 500ms ease-in-out;
+}
+
+/* Top Shadow Gradient */
+:host ::ng-deep .mat-mdc-tab-body-wrapper::before {
+  top: 0;
+  background: radial-gradient(farthest-side at 50% 0, rgba(0, 0, 0, 0.6), transparent);
+}
+
+/* Bottom Shadow Gradient */
+:host ::ng-deep .mat-mdc-tab-body-wrapper::after {
+  bottom: 0;
+  background: radial-gradient(farthest-side at 50% 100%, rgba(0, 0, 0, 0.6), transparent);
+}
+
+/* Active State: Top Shadow */
+:host.show-top-shadow ::ng-deep .mat-mdc-tab-body-wrapper::before {
+  opacity: 1;
+  height: 14px;
+}
+
+/* Active State: Bottom Shadow */
+:host.show-bottom-shadow ::ng-deep .mat-mdc-tab-body-wrapper::after {
+  opacity: 1;
+  height: 14px;
 }

@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, viewChild, input } from '@angular/core';
+import { Component, ElementRef, viewChild, input } from '@angular/core';
 import { CommonModule } from "@angular/common"
 import { DataPanel } from "../data-panel/data-panel";
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -18,20 +18,21 @@ export class VisualizationContainer {
   dataContainerRef = viewChild.required<ElementRef>('dataContainer');
   mapContainerRef = viewChild.required<ElementRef>('mapContainer');
 
-
-  dataContainerWidth: string = "calc(50% - 10px)";
-
   startResize(touch: boolean): boolean {
     let moveHandler = (event: MouseEvent | TouchEvent) => {
       let clientY = touch ? (<TouchEvent>event).touches[0].clientY : (<MouseEvent>event).clientY;
+      
       let dragbar: HTMLElement = this.dragbar().nativeElement;
-      let mapContainer: HTMLElement = this.dataContainerRef().nativeElement;
-      //offset to midpoint of dragbar
+      let dataContainer: HTMLElement = this.dataContainerRef().nativeElement;
+      
+      // offset to midpoint of dragbar
       let dragbarOffset = dragbar.clientHeight / 2;
-      let top = mapContainer.getBoundingClientRect().top;
+      let top = dataContainer.getBoundingClientRect().top;
       let y = clientY - top - dragbarOffset;
       y = Math.max(0, y);
-      this.dataContainerWidth = `${y}px`;
+      
+      dataContainer.style.height = `${y}px`;
+      
       return false;
     }
 
@@ -57,7 +58,7 @@ export class VisualizationContainer {
       document.addEventListener("mouseup", stopResize);
     }
 
-    //stops default and propogation, equivalent of calling preventDefault and stopPropagation
+    // stops default and propogation, equivalent of calling preventDefault and stopPropagation
     return false;
   }
 }

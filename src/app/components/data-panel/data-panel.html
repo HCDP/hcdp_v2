@@ -1,13 +1,29 @@
-
-@if(dataset().tabs) {
-  <mat-tab-group class="tab-content" color="accent">
-  @for(tab of dataset().tabs; track tab) {
-    <mat-tab [label]="tab.label">
+<mat-tab-group
+  class="tab-content shadow-tabs" 
+  color="accent"
+  [(selectedIndex)]="tabManager().activeTab"
+  (animationDone)="attachObservers()">
+  @for(tab of tabManager().tabs; track tab) {
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <span>{{ tab.label }}</span>
+        @if(tab.animation()) {
+          <img
+            class="tab-icon-gif"
+            animate.enter="fade-in"
+            animate.leave="fade-out"
+            [src]="tab.animation()" 
+            alt="Tab animation">
+        }
+      </ng-template>
+      
       <div class="data-tab">
-        <ng-container appDynamicTabTemplate [component]="tab.component" [dataset]="dataset()"></ng-container>
+        <ng-container 
+          appDynamicTabTemplate 
+          [component]="tab.component" 
+          [dataset]="dataset()">
+        </ng-container>
       </div>
     </mat-tab>
   }
-  </mat-tab-group>
-}
-  
+</mat-tab-group>

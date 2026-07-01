@@ -12,8 +12,9 @@ import { HCDPDatasetDefinition, HCDPLayout, TimeseriesData, TimeseriesSchemaData
 import { DataStreamManager } from "./data";
 import { TimeseriesDataStateController } from "./state";
 import { MapState } from "./mapState";
-import { ExportDataHandler, ExportTimeseriesDataHandler } from "./export";
+import { ExportTimeseriesDataHandler } from "./export";
 import { LocationManager } from "./locationManager";
+import { TabManager } from "./tabManager";
 
 
 
@@ -100,20 +101,20 @@ export abstract class HCDPDatasetVisualization {
   private _id: string;
   private _label: string;
   private _description: string;
-  private _tabs: Tab[]
+  private _tabManager: TabManager;
   private _active: Signal<boolean>;
 
   constructor(type: string, id: string, label: string, description: string, tabs: Tab[], active: Signal<boolean>) {
     this.type = type;
-    this._tabs = tabs;
+    this._tabManager = new TabManager(tabs);
     this._active = active;
     this._id = id;
     this._label = label;
     this._description = description;
   }
 
-  get tabs() {
-    return this._tabs;
+  get tabManager() {
+    return this._tabManager;
   }
 
   protected get active() {
@@ -153,16 +154,11 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
   
 
   constructor(id: string, label: string, description: string, layout: TimeseriesSchemaData, initData: {range: [DateTime, DateTime]}, active: Signal<boolean>) {
-    let tabs: Tab[] = [{
-      label: "Options",
-      component: DatasetOptions
-    }, {
-      label: "Locations",
-      component: Locations
-    }, {
-      label: "Timeseries and Stats",
-      component: Timeseries
-    }];
+    let tabs: Tab[] = [
+      new Tab("options", "Options", DatasetOptions),
+      new Tab("locations", "Locations", Locations),
+      new Tab("timeseries", "Timeseries and Stats", Timeseries)
+    ];
     super("timeseries", id, label, description, tabs, active);
     
     let { datasetParams, streams, timeseries, options, mapLayers, exportData } = layout;

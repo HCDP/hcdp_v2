@@ -12,6 +12,7 @@ import { RasterData } from '../../../models/leaflet/rasterData';
 import { DecimalPipe } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatCardModule } from '@angular/material/card';
+import { TabManager } from '../../../models/datasets/tabManager';
 
 @Component({
   selector: 'app-timeseries',
@@ -20,6 +21,8 @@ import { MatCardModule } from '@angular/material/card';
   styleUrl: './timeseries.scss'
 })
 export class Timeseries extends TabBase {
+  private animationTimeout: number | undefined;
+
   apiHandler = inject(ApiHandler);
 
   dataStream = signal<Map<DateTime, number> | null>(null);
@@ -29,8 +32,11 @@ export class Timeseries extends TabBase {
   castDataset = computed(() => {
     // requires dataset to be timeseries vis
     let dataset = this.dataset() as HCDPDatasetTimeseriesVisualization;
-
     return dataset;
+  });
+
+  tabManager = computed(() => {
+    return this.dataset().tabManager;
   });
 
   period = computed(() => {
@@ -166,6 +172,18 @@ export class Timeseries extends TabBase {
         this.timeseriesInfo.set(null);
         return;
       }
+
+      untracked(() => {
+        // reset animation timeout
+        clearTimeout(this.animationTimeout);
+        // set graph indicator animation for 10 seconds
+        this.tabManager().setAnimation("timeseries", TabManager.ANIMATIONS.GRAPH_LOADING);
+        this.animationTimeout = setTimeout(() => {
+          this.tabManager().setAnimation("timeseries", null);
+          this.animationTimeout = undefined;
+        }, 10000);
+      });
+
       let streamIds: string[] = [];
       let streamType: DataStreamType;
       let baseParams: Params = {};
