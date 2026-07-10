@@ -1,4 +1,4 @@
-import { afterNextRender, Component, computed, effect, ElementRef, inject, Injector, input, signal, viewChild, untracked, EffectRef } from '@angular/core';
+import { afterNextRender, Component, computed, effect, ElementRef, inject, Injector, input, signal, viewChild, untracked, EffectRef, ResourceRef } from '@angular/core';
 import * as L from "leaflet";
 import { LeafletCompassRose, RoseControlOptions } from "../controls/leaflet/leaflet-compass-rose/leaflet-compass-rose";
 import { LeafletImageExport } from '../controls/leaflet/leaflet-image-export/leaflet-image-export';
@@ -13,6 +13,7 @@ import { MatSliderModule } from '@angular/material/slider';
 import { Spinner } from 'spin.js';
 import { LayerData } from '../../models/datasets/recipe';
 import { MapLocation } from '../../models/datasets/locationManager';
+import { DataStreamManager } from '../../models/datasets/dataStreams';
 
 @Component({
   selector: 'app-map-component',
@@ -35,7 +36,7 @@ export class MapComponent {
 
   readonly isSpinning = computed(() => {
     const dataset = this.typedDataset();
-    if (!dataset || !dataset.dataStreams) return false;
+    if(!dataset || !dataset.dataStreams) return false;
 
     const manager = dataset.dataStreams;
     const layers = dataset.mapState?.layers || [];
@@ -118,22 +119,6 @@ export class MapComponent {
       }
     });
 
-    effect((onDatasetCleanup) => {
-      if(!this.map()) return;
-
-      let map = this.map()!;
-      const datasetLayerGroup = L.layerGroup().addTo(map);
-      let isCancelled = false;
-
-      const childEffects = this.handleDatasetStreams(map, datasetLayerGroup, () => isCancelled);
-
-      onDatasetCleanup(() => {
-        isCancelled = true;
-        map.removeLayer(datasetLayerGroup);
-        childEffects.forEach(eRef => eRef?.destroy());
-      });
-    });
-
     effect((onCleanup) => {
       const element = this.imageContainer().nativeElement;
       let invalidateSizeThrottle: number;
@@ -164,12 +149,12 @@ export class MapComponent {
       let hoverTooltip: L.Tooltip | null = null;
 
       const clearHoverEffect = () => {
-        if (hoverTimeout) clearTimeout(hoverTimeout);
-        if (hoverHighlightLayer) {
+        if(hoverTimeout) clearTimeout(hoverTimeout);
+        if(hoverHighlightLayer) {
           map.removeLayer(hoverHighlightLayer);
           hoverHighlightLayer = null;
         }
-        if (hoverTooltip) {
+        if(hoverTooltip) {
           map.removeLayer(hoverTooltip);
           hoverTooltip = null;
         }
@@ -179,7 +164,7 @@ export class MapComponent {
       let lastHoverLatLng: L.LatLng | null = null;
 
       const onMapMouseMove = (e: L.LeafletMouseEvent) => {
-        if (lastHoverLatLng && e.latlng.distanceTo(lastHoverLatLng) < 5) {
+        if(lastHoverLatLng && e.latlng.distanceTo(lastHoverLatLng) < 5) {
           return; 
         }
         lastHoverLatLng = e.latlng;
@@ -190,20 +175,20 @@ export class MapComponent {
 
         clearHoverEffect();
 
-        // Check if hovering over a Leaflet marker/shape
+        // Check ifhovering over a Leaflet marker/shape
         const isOverInteractiveLayer = (e.originalEvent.target as HTMLElement)
           .classList.contains('leaflet-interactive');
 
-        if (isOverInteractiveLayer) {
+        if(isOverInteractiveLayer) {
           hasDataUnderCursor = true;
         } else {
           // Check raster data matrix
           datasetLayerGroup.eachLayer((layer: any) => {
-            if (layer.geoPosToGridValue) {
+            if(layer.geoPosToGridValue) {
               const value = layer.geoPosToGridValue(e.latlng.lat, e.latlng.lng);
-              if (!isNaN(value)) {
+              if(!isNaN(value)) {
                 hasDataUnderCursor = true;
-                activeRasterLayer = layer; // Save a reference for the timeout
+                activeRasterLayer = layer;
               }
             }
           });
@@ -214,7 +199,7 @@ export class MapComponent {
 
           hoverTimeout = setTimeout(() => {
             
-            if (activeRasterLayer) {
+            if(activeRasterLayer) {
               const value = activeRasterLayer.geoPosToGridValue(e.latlng.lat, e.latlng.lng);
               const displayValue = Number.isInteger(value) ? value : value.toFixed(2);
 
@@ -232,7 +217,7 @@ export class MapComponent {
               if(activeRasterLayer.getCellBoundsFromGeoPos) {
                 const cellBounds = activeRasterLayer.getCellBoundsFromGeoPos(e.latlng);
                 
-                if (cellBounds) {
+                if(cellBounds) {
                   hoverHighlightLayer = L.rectangle(cellBounds, {
                     fillColor: "orange",
                     weight: 3,
@@ -337,9 +322,285 @@ export class MapComponent {
     this.activeColorScale.set(colorScale);
   }
 
+
+
+
+
+  private handleDataLayer(dataStreamsManager: DataStreamManager, layer: LayerData, mapInstance: L.Map, datasetLayerGroup: L.LayerGroup) {
+    let { stream, label } = layer;
+    let type = dataStreamsManager.getStreamType(stream);
+    let dataStream = dataStreamsManager.getStream(stream);
+
+    let layerEffectRef: EffectRef;
+
+    untracked(() => {
+      layerEffectRef = effect((onLayerCleanup) => {
+        const data = dataStream.value();
+        const colorScale = this.activeColorScale();
+
+        if(!data || !colorScale) return;
+
+        let layerData: {
+            cleanupEvent: () => void;
+            leafletLayer: L.Layer;
+        };
+        switch(type) {
+          case "stations": {
+            layerData = this.handleStationLayer(data, colorScale, mapInstance);
+            break;
+          }
+          case "raster": {
+            layerData = this.handleRasterLayer(data, colorScale, mapInstance);
+            break
+          }
+          default: {
+            return;
+          }
+        }
+
+        const { leafletLayer, cleanupEvent } = layerData;
+
+        datasetLayerGroup.addLayer(leafletLayer);
+        this.layerControl.addOverlay(leafletLayer, label);
+
+        onLayerCleanup(() => {
+          cleanupEvent();
+          datasetLayerGroup.removeLayer(leafletLayer);
+          this.layerControl.removeLayer(leafletLayer);
+        });
+      }, { injector: this.injector });
+    });
+    return layerEffectRef!;
+  }
+
+
+  private handleRasterLayer(data: RasterData, colorScale: ColorScale, mapInstance: L.Map) {
+    this.mapRange.set([data.min, data.max]);
+
+    const leafletLayer = rasterLayer({
+      colorScale,
+      data,
+      zIndex: 10
+    });
+
+    let opacityEffect: EffectRef;
+    let currentHighlight: L.Layer | null = null;
+
+    untracked(() => {
+      opacityEffect = effect(() => {
+        const opacity = this.mapOpacity();
+        leafletLayer.setOpacity(opacity / 100); 
+      }, { injector: this.injector });
+    });
+
+    // 1. Map -> App Synchronization
+    const onMapClick = (e: L.LeafletMouseEvent | any) => {
+      const value = leafletLayer.geoPosToGridValue(e.latlng.lat, e.latlng.lng);
+      if(isNaN(value)) {
+        return; 
+      }
+      
+      this.typedDataset().locationManager.selectLocation("map", { lat: e.latlng.lat, lng: e.latlng.lng });
+    };
+
+    mapInstance.on('click', onMapClick);
+    
+    // 2. App -> Map Synchronization
+    let selectionEffect: EffectRef;
+    untracked(() => {
+      selectionEffect = effect(() => {
+        const selectedLoc = this.typedDataset().locationManager.location();
+        
+        // Clear the previous highlight box ifit exists
+        if(currentHighlight) {
+          mapInstance.removeLayer(currentHighlight);
+          currentHighlight = null;
+        }
+
+        if(selectedLoc?.type === "map") {
+          const mapLocation = selectedLoc.location as MapLocation;
+          const { lat, lng } = mapLocation;
+          
+          const value = leafletLayer.geoPosToGridValue(lat, lng);
+          
+          if(!isNaN(value)) {
+            mapInstance.flyTo([lat, lng], mapInstance.getZoom(), {
+              animate: true,
+              duration: 0.75
+            });
+
+            const cellBounds = leafletLayer.getCellBoundsFromGeoPos(L.latLng(lat, lng));
+            if(cellBounds) {
+              currentHighlight = L.rectangle(cellBounds, {
+                fillColor: "black",
+                weight: 3,
+                opacity: 1,
+                color: "black",
+                fillOpacity: 0.2,
+                interactive: false
+              }).addTo(mapInstance);
+            }
+
+            const displayValue = Number.isInteger(value) ? value : value.toFixed(2);
+
+
+            let popupContent = `
+              <b>Value:</b> ${displayValue}<br>
+              <small style="color: #666;">Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}</small>
+            `;
+            let popupContainer = this.createPopupContainer(popupContent);
+            L.popup({ autoPan: false })
+              .setLatLng([lat, lng])
+              .setContent(popupContainer) 
+              .openOn(mapInstance);
+
+
+          }
+          else {
+            mapInstance.closePopup();
+          }
+        }
+      }, { injector: this.injector });
+    });
+
+    // 3. Clear the box ifthe user manually closes the popup
+    const onPopupClose = () => {
+      if(currentHighlight) {
+        mapInstance.removeLayer(currentHighlight);
+        currentHighlight = null;
+      }
+    };
+    mapInstance.on('popupclose', onPopupClose);
+    
+    let cleanupEvent = () => {
+      mapInstance.off('click', onMapClick);
+      mapInstance.off('popupclose', onPopupClose);
+      if(currentHighlight) {
+        mapInstance.removeLayer(currentHighlight);
+      }
+      if(opacityEffect) opacityEffect.destroy();
+      if(selectionEffect) selectionEffect.destroy();
+    };
+
+    return {
+      cleanupEvent,
+      leafletLayer: leafletLayer as L.Layer
+    }
+  }
+
+
+  private handleStationLayer(data: HCDPStationDataManager, colorScale: ColorScale, mapInstance: L.Map) {
+    const stations: StationData[] = data.filteredStations();
+    const stationGroup = L.featureGroup();
+    
+    const markerMap = new Map<string, L.CircleMarker>();
+
+    const pivotZoom = 10;
+    const weightToRadiusFactor = 0.4;
+    const pivotRadius = 7;
+
+    const computeMarkerSizing = () => {
+      let radius = pivotRadius;
+      let zoom = mapInstance.getZoom();
+      if(zoom < pivotZoom) {
+        let scale = mapInstance.getZoomScale(zoom, pivotZoom);
+        radius = pivotRadius * scale;
+      }
+      let weight = radius * weightToRadiusFactor;
+      return { radius, weight };
+    }
+
+    stations.forEach((station: StationData) => {
+      const markerColor = colorScale!.getColor(station.value).hex(); 
+      const { radius, weight } = computeMarkerSizing();
+      const marker = L.circleMarker([station.lat, station.lng], {
+        radius,
+        fillColor: markerColor,
+        color: '#000',
+        weight,
+        opacity: 1,
+        fillOpacity: 1
+      });
+
+      // Set up the popup content
+      const popupContent = `<b>${station.name || 'Station ' + station.skn}</b><br/>SKN: ${station.skn}<br/>Value: ${station.value.toFixed(2)}`;
+      let popupContainer = this.createPopupContainer(popupContent);
+      
+      // Disable autoPan so the popup opening doesn't interrupt flyTo
+      marker.bindPopup(popupContainer, { autoPan: false });
+
+      // Map -> App synchronization
+      marker.on('click', () => {
+        this.typedDataset().locationManager.selectLocation("station", station);
+      });
+
+      markerMap.set(station.skn, marker);
+      stationGroup.addLayer(marker);
+    });
+
+    let leafletLayer = stationGroup;
+
+    const onZoomEnd = () => {
+      const { radius, weight } = computeMarkerSizing();
+      stationGroup.eachLayer((layer: any) => {
+        if(layer.setRadius) {
+          layer.setRadius(radius);
+          layer.setStyle({ weight });
+        }
+      });
+    };
+
+    mapInstance.on("zoomend", onZoomEnd);
+
+    // App -> Map synchronization
+    let selectionEffect: EffectRef;
+    untracked(() => {
+      selectionEffect = effect(() => {
+        const selectedLoc = this.typedDataset().locationManager.location();
+        
+        if(selectedLoc?.type === "station") {
+          const stationData = selectedLoc.location as StationData;
+          const marker = markerMap.get(stationData.skn);
+          
+          if(marker) {
+            // flyTo prevents snapping and guarantees smooth animation.
+            mapInstance.flyTo(
+              [stationData.lat, stationData.lng], 
+              mapInstance.getZoom(), 
+              {
+                animate: true,
+                duration: 0.75 
+              }
+            );
+            marker.openPopup();
+          }
+        } else {
+          mapInstance.closePopup();
+        }
+      }, { injector: this.injector });
+    });
+
+    let cleanupEvent = () => {
+      mapInstance.off("zoomend", onZoomEnd);
+      if(selectionEffect) {
+        selectionEffect.destroy();
+      }
+    };
+
+    return {
+      cleanupEvent,
+      leafletLayer: leafletLayer as L.Layer
+    }
+  }
+
+
+
+
+
+
   private handleDatasetStreams(mapInstance: L.Map, datasetLayerGroup: L.LayerGroup, isCancelled: () => boolean): EffectRef[] {
     const dataStreamsManager = this.typedDataset().dataStreams;
-    if (isCancelled()) return [];
+    if(isCancelled()) return [];
 
     const { layers } = this.typedDataset().mapState;
     this.mapOpacity.set(this.typedDataset().mapState.opacity);
@@ -347,270 +608,19 @@ export class MapComponent {
     const createdEffects: EffectRef[] = [];
 
     for(let layer of layers) {
-      let { stream, label } = layer;
-      let type = dataStreamsManager.getStreamType(stream);
-      let dataStream = dataStreamsManager.getStream(stream);
-
-      let layerEffectRef: EffectRef;
-
-      untracked(() => {
-        layerEffectRef = effect((onLayerCleanup) => {
-          const data = dataStream.value();
-          const colorScale = this.activeColorScale();
-
-          if(!data || !colorScale) return;
-
-          let leafletLayer: L.Layer | undefined;
-          let cleanupEvent = () => {};
-
-          switch(type) {
-            case "stations": {
-              const dataManager = data as HCDPStationDataManager;
-              const stations: StationData[] = dataManager.filteredStations();
-              const stationGroup = L.featureGroup();
-              
-              const markerMap = new Map<string, L.CircleMarker>();
-
-              const pivotZoom = 10;
-              const weightToRadiusFactor = 0.4;
-              const pivotRadius = 7;
-
-              const computeMarkerSizing = () => {
-                let radius = pivotRadius;
-                let zoom = mapInstance.getZoom();
-                if(zoom < pivotZoom) {
-                  let scale = mapInstance.getZoomScale(zoom, pivotZoom);
-                  radius = pivotRadius * scale;
-                }
-                let weight = radius * weightToRadiusFactor;
-                return { radius, weight };
-              }
-
-              stations.forEach((station: StationData) => {
-                const markerColor = colorScale!.getColor(station.value).hex(); 
-                const { radius, weight } = computeMarkerSizing();
-                const marker = L.circleMarker([station.lat, station.lng], {
-                  radius,
-                  fillColor: markerColor,
-                  color: '#000',
-                  weight,
-                  opacity: 1,
-                  fillOpacity: 1
-                });
-
-                // Set up the popup content
-                const popupContent = `<b>${station.name || 'Station ' + station.skn}</b><br/>SKN: ${station.skn}<br/>Value: ${station.value.toFixed(2)}`;
-                let popupContainer = this.createPopupContainer(popupContent);
-                
-                // Disable autoPan so the popup opening doesn't interrupt flyTo
-                marker.bindPopup(popupContainer, { autoPan: false });
-
-                // Map -> App synchronization
-                marker.on('click', () => {
-                  this.typedDataset().locationManager.selectLocation("station", station);
-                });
-
-                markerMap.set(station.skn, marker);
-                stationGroup.addLayer(marker);
-              });
-
-              leafletLayer = stationGroup;
-
-              const onZoomEnd = () => {
-                const { radius, weight } = computeMarkerSizing();
-                stationGroup.eachLayer((layer: any) => {
-                  if(layer.setRadius) {
-                    layer.setRadius(radius);
-                    layer.setStyle({ weight });
-                  }
-                });
-              };
-
-              mapInstance.on("zoomend", onZoomEnd);
-
-              // App -> Map synchronization
-              let selectionEffect: EffectRef;
-              untracked(() => {
-                selectionEffect = effect(() => {
-                  const selectedLoc = this.typedDataset().locationManager.location();
-                  
-                  if(selectedLoc?.type === "station") {
-                    const stationData = selectedLoc.location as StationData;
-                    const marker = markerMap.get(stationData.skn);
-                    
-                    if (marker) {
-                      // flyTo prevents snapping and guarantees smooth animation.
-                      mapInstance.flyTo(
-                        [stationData.lat, stationData.lng], 
-                        mapInstance.getZoom(), 
-                        {
-                          animate: true,
-                          duration: 0.75 
-                        }
-                      );
-                      marker.openPopup();
-                    }
-                  } else {
-                    mapInstance.closePopup();
-                  }
-                }, { injector: this.injector });
-              });
-
-              cleanupEvent = () => {
-                mapInstance.off("zoomend", onZoomEnd);
-                if (selectionEffect) {
-                  selectionEffect.destroy();
-                }
-              };
-
-              break;
-            }
-
-            case "raster": {
-              const rasterData = data as RasterData;
-              this.mapRange.set([rasterData.min, rasterData.max]);
-
-              const raster = this.createRasterLayer(rasterData, colorScale!);
-              leafletLayer = raster as unknown as L.Layer;
-
-              let opacityEffect: EffectRef;
-              let currentHighlight: L.Layer | null = null;
-
-              untracked(() => {
-                opacityEffect = effect(() => {
-                  const opacity = this.mapOpacity();
-                  if((raster as any).setOpacity) {
-                    (raster as any).setOpacity(opacity / 100); 
-                  }
-                }, { injector: this.injector });
-              });
-
-              // 1. Map -> App Synchronization
-              const onMapClick = (e: L.LeafletMouseEvent | any) => {
-                if (!mapInstance.hasLayer(datasetLayerGroup)) return;
-                
-                const value = raster.geoPosToGridValue(e.latlng.lat, e.latlng.lng);
-                if (isNaN(value)) {
-                  return; 
-                }
-                
-                this.typedDataset().locationManager.selectLocation("map", { lat: e.latlng.lat, lng: e.latlng.lng });
-              };
-
-              mapInstance.on('click', onMapClick);
-              
-              // 2. App -> Map Synchronization
-              let selectionEffect: EffectRef;
-              untracked(() => {
-                selectionEffect = effect(() => {
-                  const selectedLoc = this.typedDataset().locationManager.location();
-                  
-                  // Clear the previous highlight box if it exists
-                  if (currentHighlight) {
-                    mapInstance.removeLayer(currentHighlight);
-                    currentHighlight = null;
-                  }
-
-                  if(selectedLoc?.type === "map") {
-                    const mapLocation = selectedLoc.location as MapLocation;
-                    const { lat, lng } = mapLocation;
-                    
-                    const value = raster.geoPosToGridValue(lat, lng);
-                    
-                    if(!isNaN(value)) {
-                      mapInstance.flyTo([lat, lng], mapInstance.getZoom(), {
-                        animate: true,
-                        duration: 0.75
-                      });
-
-                      const cellBounds = raster.getCellBoundsFromGeoPos(L.latLng(lat, lng));
-                      if(cellBounds) {
-                        currentHighlight = L.rectangle(cellBounds, {
-                          fillColor: "black",
-                          weight: 3,
-                          opacity: 1,
-                          color: "black",
-                          fillOpacity: 0.2,
-                          interactive: false
-                        }).addTo(mapInstance);
-                      }
-
-                      const displayValue = Number.isInteger(value) ? value : value.toFixed(2);
-
-
-                      let popupContent = `
-                        <b>Value:</b> ${displayValue}<br>
-                        <small style="color: #666;">Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}</small>
-                      `;
-                      let popupContainer = this.createPopupContainer(popupContent);
-                      L.popup({ autoPan: false })
-                        .setLatLng([lat, lng])
-                        .setContent(popupContainer) 
-                        .openOn(mapInstance);
-  
-
-                    }
-                    else {
-                      mapInstance.closePopup();
-                    }
-                  }
-                }, { injector: this.injector });
-              });
-
-              // 3. Clear the box if the user manually closes the popup
-              const onPopupClose = () => {
-                if (currentHighlight) {
-                  mapInstance.removeLayer(currentHighlight);
-                  currentHighlight = null;
-                }
-              };
-              mapInstance.on('popupclose', onPopupClose);
-              
-              cleanupEvent = () => {
-                mapInstance.off('click', onMapClick);
-                mapInstance.off('popupclose', onPopupClose);
-                if (currentHighlight) {
-                  mapInstance.removeLayer(currentHighlight);
-                }
-                if(opacityEffect) opacityEffect.destroy();
-                if(selectionEffect) selectionEffect.destroy();
-              };
-              
-              break;
-            }
-          }
-
-          if(leafletLayer) {
-            datasetLayerGroup.addLayer(leafletLayer);
-            this.layerControl.addOverlay(leafletLayer, label);
-
-            onLayerCleanup(() => {
-              cleanupEvent();
-              datasetLayerGroup.removeLayer(leafletLayer!);
-              this.layerControl.removeLayer(leafletLayer!);
-            });
-          }
-        }, { injector: this.injector });
-      });
-
-      createdEffects.push(layerEffectRef!);
+      const layerEffectRef = this.handleDataLayer(dataStreamsManager, layer, mapInstance, datasetLayerGroup)
+      createdEffects.push(layerEffectRef);
     }
 
     return createdEffects;
   }
 
-  createRasterLayer(rasterData: RasterData, colorScale: ColorScale): RasterLayer {
-    return rasterLayer({
-      colorScale: colorScale,
-      data: rasterData,
-      zIndex: 10
-    });
-  }
+
 
   createPopupContainer(content: string) {
     const popupContainer = document.createElement('div');
 
-    if (this.tabManager().hasTab("timeseries")) {
+    if(this.tabManager().hasTab("timeseries")) {
       content += `
         <hr>
         <a href="javascript:void(0);" class="timeseries-link">

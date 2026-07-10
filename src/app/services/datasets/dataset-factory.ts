@@ -14,7 +14,7 @@ export class DatasetFactory {
   private http = inject(HttpClient);
   private injector = inject(Injector);
   // get paths as signal to trigger dataset resource
-  private pathParams = toSignal(this.urlStateManager.paths, { requireSync: true });
+  private pathParams = this.urlStateManager.paths;
 
   // resource binds the signal state to an async loader
   private datasetData = resource<HCDPDataset, string>({

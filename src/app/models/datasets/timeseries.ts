@@ -1,6 +1,5 @@
 import { DateTime } from "luxon";
 import { Period } from "./time";
-import { BehaviorSubject, Observable } from "rxjs";
 
 
 // dates should already have timezone built in
@@ -8,14 +7,11 @@ export class HCDPTimeseriesData {
   private readonly _period: Period
   private readonly _start: DateTime;
   private readonly _end: DateTime;
-  private readonly _dateSubject: BehaviorSubject<DateTime>;
 
-  constructor(period: Period, start: DateTime, end: DateTime, defaultDate?: DateTime) {
+  constructor(period: Period, start: DateTime, end: DateTime) {
     this._period = period;
     this._start = start;
     this._end = end;
-    let initialDate = defaultDate ?? end;
-    this._dateSubject = new BehaviorSubject<DateTime>(initialDate);
   }
 
   get unit() {
@@ -38,32 +34,6 @@ export class HCDPTimeseriesData {
     return this._end
   }
 
-  get date() {
-    return this._dateSubject.value;
-  }
-
-  get dateStream(): Observable<DateTime> {
-    return this._dateSubject.asObservable();
-  }
-
-  setDate(date: DateTime) {
-    date = this.checkDate(date);
-    this._dateSubject.next(date);
-    return date;
-  }
-
-  next(intervals: number = 1) {
-    let date = this.checkNext(intervals);
-    this._dateSubject.next(date);
-    return date;
-  }
-
-  previous(intervals: number = 1) {
-    let date = this.checkPrevious(intervals);
-    this._dateSubject.next(date);
-    return date;
-  }
-
   checkDate(date: DateTime) {
     date = this._period.round(date);
     if(date > this._end) {
@@ -75,67 +45,42 @@ export class HCDPTimeseriesData {
     return date;
   }
 
-  checkNext(intervals: number = 1) {
-    let date = this._period.add(intervals, this.date)
-    if(date > this._end) {
-      date = this._end;
+  next(date: DateTime, intervals: number = 1) {
+    let nextDate = this._period.add(intervals, date)
+    if(nextDate > this._end) {
+      nextDate = this._end;
     }
-    return date;
+    return nextDate;
   }
 
-  checkPrevious(intervals: number = 1) {
-    let date = this._period.subtract(intervals, this.date);
-    if(date < this._start) {
-      date = this._start;
+  previous(date: DateTime, intervals: number = 1) {
+    let previousDate = this._period.subtract(intervals, date);
+    if(previousDate < this._start) {
+      previousDate = this._start;
     }
-    return date;
+    return previousDate;
   }
 
-  setToStart() {
-    this._dateSubject.next(this._start);
-  }
-
-  setToEnd() {
-    this._dateSubject.next(this._end);
-  }
-
-
-  checkJumpBackward(magnitude: number = 1) {
+  jumpBackward(date: DateTime, magnitude: number = 1, intervals = 1) {
     let higherOrder = this.period.getHigherOrder(magnitude);
-    let date = null;
+    let jumpDate = null;
     if(higherOrder) {
-      date = higherOrder.subtract(1, this.date);
+      jumpDate = higherOrder.subtract(intervals, date);
       // round date to valid period and round out of range
-      date = this.checkDate(date);
+      jumpDate = this.checkDate(jumpDate);
     }
-    return date;
+    return jumpDate;
   }
 
-  checkJumpForward(magnitude: number = 1) {
+  jumpForward(date: DateTime, magnitude: number = 1, intervals = 1) {
     let higherOrder = this.period.getHigherOrder(magnitude);
-    let date = null;
+    let jumpDate = null;
     if(higherOrder) {
-      date = higherOrder.add(1, this.date);
+      jumpDate = higherOrder.add(intervals, date);
       // round date to valid period and round out of range
-      date = this.checkDate(date);
+      jumpDate = this.checkDate(jumpDate);
     }
-    return date;
-  }
-
-  jumpForward(magnitude: number = 1) {
-    let date = this.checkJumpForward(magnitude);
-    if(date) {
-      this._dateSubject.next(date);
-    }
-    return date;
-  }
-
-  jumpBackward(magnitude: number = 1) {
-    let date = this.checkJumpBackward(magnitude);
-    if(date) {
-      this._dateSubject.next(date);
-    }
-    return date;
+    return jumpDate;
   }
 
 

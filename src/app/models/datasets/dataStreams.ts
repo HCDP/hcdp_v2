@@ -1,13 +1,14 @@
-import { inject, Signal, ResourceRef, computed, Injector, signal } from "@angular/core";
+import { inject, Signal, ResourceRef, computed, Injector } from "@angular/core";
 import { ApiHandler, APISource, HttpOptions } from "../../services/requests/api-handler";
 import { DataStreamRecipe, DataStreamType } from "./recipe";
 import { Params } from "@angular/router";
-import { Observable, switchMap } from "rxjs";
-import { rxResource, toSignal } from "@angular/core/rxjs-interop";
+import { switchMap } from "rxjs";
+import { rxResource } from "@angular/core/rxjs-interop";
 import { WorkerInterconnect } from "../../services/workerInterconnect/worker-interconnect";
 import { RasterData } from "../leaflet/rasterData";
 import { StationMetadataRetreiver } from "../../services/stations/station-metadata-retreiver";
 import { HCDPStationDataManager, RawStationData, StationValue } from "./stations";
+import { DataStateController } from "./stateController";
 
 export class DataStreamManager {
   private requestManager = inject(ApiHandler);
@@ -20,18 +21,13 @@ export class DataStreamManager {
 
   private _datasetParams: Record<string, string>;
   
-  // The bridged signal that rxResource will watch natively
-  private _sourceState: Signal<Record<string, string> | undefined>;
+  private _stateController: DataStateController;
 
-  constructor(datasetParams: Record<string, string>, streams: DataStreamRecipe[], state: Observable<Record<string, string> | undefined>) {
+  constructor(datasetParams: Record<string, string>, streams: DataStreamRecipe[], stateController: DataStateController) {
     this._datasetParams = datasetParams;
     this._streamParams = {};
 
-    // if inactive resolve to undefined to pause resource, otherwise provide state to signal for conversion to resource
-    this._sourceState = toSignal(
-      state,
-      { initialValue: undefined } 
-    );
+    this._stateController = stateController;
 
     this.createStreams(streams);
   }
@@ -66,18 +62,18 @@ export class DataStreamManager {
     
     // 1. Create a dedicated computed signal for this stream's parameters
     const streamParamsSignal = computed<Params | undefined>(() => {
-      const validParams = this._sourceState();
-      if (!validParams) return undefined; 
-
       const baseOptions = options ?? {};
       const staticParams = baseOptions.params ?? {};
       const mergedParams: Params = { ...this._datasetParams, ...staticParams };
       
       for(let param of triggers) {
-        if(validParams[param] === undefined || validParams[param] === null) {
-          return undefined; 
-        }
-        mergedParams[param] = validParams[param];
+        // Fetch the controller from the orchestrator
+        const controller = this._stateController.getControl(param);
+        
+        // If the control doesn't exist, the params aren't ready
+        if (!controller) return undefined; 
+        
+        mergedParams[param] = controller.state.stringValue;
       }
 
       return mergedParams;

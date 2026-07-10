@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { Configuration } from '../configuration/configuration';
-import { HttpHeaders, HttpClient, HttpContext, HttpParams, HttpResponse, HttpEvent } from '@angular/common/http';
-import { Observable, of, retry, shareReplay, Subscriber, switchMap, tap } from "rxjs";
+import { HttpHeaders, HttpClient, HttpResponse, HttpEvent } from '@angular/common/http';
+import { Observable, retry, Subscriber } from "rxjs";
 import { Params } from '@angular/router';
 
 @Injectable({

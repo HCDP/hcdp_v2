@@ -6,7 +6,7 @@ import { HCDPDatasetTimeseriesVisualization, HCDPVisSubtypes } from '../../../mo
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatIconModule } from '@angular/material/icon';
-import { OptionControlState } from '../../../models/datasets/state';
+import { OptionControlState } from '../../../models/datasets/stateController';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 @Component({

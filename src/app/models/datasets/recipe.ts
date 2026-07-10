@@ -1,5 +1,6 @@
 import { DateTimeUnit } from "luxon";
 import { ColorScheme } from "../../services/colors/color-store";
+import { HCDPTimeseriesData } from "./timeseries";
 
 export interface HCDPDatasetDefinition {
   id: string,
@@ -53,17 +54,27 @@ export interface UnitValue {
   system: UnitSystem | null
 }
 
-export interface OptionControlData {
+export interface ControlValuesTypeMap {
+  units: UnitValue[];
+  list: ListControlValue[];
+  date: HCDPTimeseriesData;
+}
+
+export type OptionControlData<T extends ControlType> = {
   id: string,
   label: string,
   description: string,
-  type: ControlType,
-  values?: ListControlValue[] | UnitValue[]
-}
+  type: T,
+  values: ControlValuesTypeMap[T]
+};
+
+export type AnyOptionControlData = {
+  [K in ControlType]: OptionControlData<K>
+}[ControlType];
 
 export interface DataOptions {
   defaults: Record<string, string>,
-  controls: OptionControlData[]
+  controls: AnyOptionControlData[]
 }
 
 export interface DataRange {
@@ -95,7 +106,6 @@ export interface TimeseriesSchemaData {
   computeUnitConversionsFrom: UnitBase | null,
   datasetParams: Record<string, string>,
   streams: DataStreamRecipe[],
-  // dataset option controls
   options: DataOptions,
   timeseries: TimeseriesData,
   mapLayers: MapLayers,
@@ -146,5 +156,15 @@ export interface FileDetails {
 
 
 export interface StaticSchemaData {
-  
+  experimental: boolean,
+  warnings: {
+    experimental: boolean,
+    usage: string
+  },
+  computeUnitConversionsFrom: UnitBase | null,
+  datasetParams: Record<string, string>,
+  streams: DataStreamRecipe[],
+  options: DataOptions,
+  mapLayers: MapLayers,
+  exportData: ExportData
 }

@@ -8,9 +8,9 @@ import { ApiHandler } from "../../services/requests/api-handler";
 import { DateTime } from "luxon";
 import { firstValueFrom, map } from "rxjs";
 import { Period } from "./time";
-import { HCDPDatasetDefinition, HCDPLayout, TimeseriesData, TimeseriesSchemaData } from "./recipe";
-import { DataStreamManager } from "./data";
-import { TimeseriesDataStateController } from "./state";
+import { HCDPDatasetDefinition, HCDPLayout, OptionControlData, TimeseriesData, TimeseriesSchemaData } from "./recipe";
+import { DataStreamManager } from "./dataStreams";
+import { DataStateController } from "./stateController";
 import { MapState } from "./mapState";
 import { ExportTimeseriesDataHandler } from "./export";
 import { LocationManager } from "./locationManager";
@@ -145,7 +145,7 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
   private injector = inject(Injector);
 
   private _timeseriesData: HCDPTimeseriesData;
-  private _dataState: TimeseriesDataStateController;
+  private _dataState: DataStateController;
   private _dataStreamManager: DataStreamManager;
   private _mapState: MapState;
   private _exportData: ExportTimeseriesDataHandler;
@@ -163,19 +163,38 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
     
     let { datasetParams, streams, timeseries, options, mapLayers, exportData } = layout;
     let { range } = initData;
+    let [ startDate, endDate ] = range;
     
-    let defaultDate: DateTime | undefined;
+    let defaultDate: DateTime;
     if(timeseries.defaultDate) {
       defaultDate = DateTime.fromISO(timeseries.defaultDate);
     }
+    else {
+      defaultDate = endDate
+    }
+
+
     let periodData = new Period(timeseries.period.unit, timeseries.period.interval);
-    this._timeseriesData = new HCDPTimeseriesData(periodData, range[0], range[1], defaultDate);
+    let timeseriesData = new HCDPTimeseriesData(periodData, startDate, endDate);
+    this._timeseriesData = timeseriesData;
+
+    // add date control
+    let dateControl: OptionControlData<"date"> = {
+      id: "date",
+      label: "Date",
+      description: "The date represented by the data.",
+      type: "date",
+      values: timeseriesData
+    };
+    options.controls.push(dateControl);
+    // add default date value
+    options.defaults.date = timeseriesData.period.formatDate(defaultDate);
 
     this._dataState = runInInjectionContext(this.injector, () => {
-      return new TimeseriesDataStateController(active, options, this.timeseriesData);
+      return new DataStateController(active, options);
     });
     this._dataStreamManager = runInInjectionContext(this.injector, () => {
-      return new DataStreamManager(datasetParams, streams, this.dataState.state);
+      return new DataStreamManager(datasetParams, streams, this.dataState);
     });
     this._mapState = new MapState(mapLayers);
     this._exportData = new ExportTimeseriesDataHandler(exportData, datasetParams, this.timeseriesData);
