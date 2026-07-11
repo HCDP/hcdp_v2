@@ -36,12 +36,6 @@
         },
         "controls": [
           {
-            "id": "date",
-            "label": "Date",
-            "description": "The date represented by the data.",
-            "type": "date"
-          },
-          {
             "id": "fill",
             "label": "Station Fill",
             "description": "The type of processing the station data goes through. Data maps are generated using partially filled station data.",

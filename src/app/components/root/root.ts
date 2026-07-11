@@ -55,21 +55,17 @@ export class Root implements AfterViewInit {
 
   
   visualizationSelected = computed(() => {
-    let currentView = this.pathsSignal()["view"];
+    let currentView = this.urlStateManager.paths()["view"];
     return currentView;
   });
-  //  signal<boolean>(true);
+
 
   
 
-  pathsSignal = toSignal(this.urlStateManager.paths, { initialValue: {} as Params });
+
 
   constructor() {
-    // effect(() => {
-    //   let currentView = this.pathsSignal()["view"];
-    //   this.visualizationSelected.set(currentView === "visualize");
 
-    // });
   }
 
   ngAfterViewInit(): void {

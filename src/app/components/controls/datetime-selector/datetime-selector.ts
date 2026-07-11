@@ -1,18 +1,15 @@
-import { Component, Input, ViewChild, Injectable, input, viewChild, computed, inject, DestroyRef } from '@angular/core';
+import { Component, Injectable, input, viewChild, computed, inject, model, effect, untracked } from '@angular/core';
 import { MatDatepickerModule, MatCalendarHeader, MatCalendarView, MatDatepicker } from '@angular/material/datepicker';
 import { MatInputModule } from '@angular/material/input';
 import { FormControl } from '@angular/forms';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatTimepickerModule } from '@angular/material/timepicker';
-import { DateTime, DateTimeUnit } from 'luxon';
+import { DateTime } from 'luxon';
 import { LuxonDateAdapter } from '@angular/material-luxon-adapter';
 import { DateAdapter, MAT_DATE_FORMATS, MAT_DATE_LOCALE } from '@angular/material/core';
-import { DateFormatHelper } from '../../../services/controlHelpers/date-format-helper';
 import { TimeSelector } from '../time-selector/time-selector';
-import { HCDPTimeseriesData } from '../../../models/datasets/timeseries';
-import { UNIT_PRECEDENT } from '../../../models/datasets/time';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Period, UNIT_PRECEDENT } from '../../../models/datasets/time';
 
 @Injectable()
 export class DynamicLuxonAdapter extends LuxonDateAdapter {
@@ -52,20 +49,23 @@ export const DYNAMIC_FORMATS = {
   ]
 })
 export class DatetimeSelector {
-  private destroyRef = inject(DestroyRef);
+  private adapter = inject<DateAdapter<DateTime>>(DateAdapter);
 
-  timeseries = input.required<HCDPTimeseriesData>();
+  min = input<DateTime>();
+  max = input<DateTime>();
+  period = input.required<Period>();
+
+  date = model.required<DateTime>(); 
+
   datePicker = viewChild.required<MatDatepicker<DateTime>>('datePicker');
   dateControl: FormControl<DateTime|null> = new FormControl<DateTime|null>(null);
+  
   showTime = computed(() => {
-    let period = this.timeseries().period;
-    // show time if subdaily
-    return UNIT_PRECEDENT.lookup(period.unit)! < UNIT_PRECEDENT.lookup("day")!
+    return UNIT_PRECEDENT.lookup(this.period().unit)! < UNIT_PRECEDENT.lookup("day")!;
   });
   
 
-  constructor(private adapter: DateAdapter<DateTime>, private dateHelper: DateFormatHelper) {
-    //override the confusing default method that switches to random things and make it go up one level
+  constructor() {
     MatCalendarHeader.prototype.currentPeriodClicked = function () {
       switch(this.calendar.currentView) {
         case "year": {
@@ -77,38 +77,37 @@ export class DatetimeSelector {
         }
       }
     };
+
+    // Reactively sync the external model -> form control
+    effect(() => {
+      const newDate = this.date();
+      
+      // Untrack the control reading so we don't accidentally trigger circular updates
+      untracked(() => {
+        const currentControlDate = this.dateControl.value;
+        if(!currentControlDate || !newDate.equals(currentControlDate)) {
+          this.dateControl.setValue(newDate, { emitEvent: false });
+        }
+      });
+    });
   }
 
 
   ngOnInit() {
-    let period = this.timeseries().period.unit;
+    let period = this.period().unit;
     const luxonAdapter = this.adapter as DynamicLuxonAdapter;
-
     luxonAdapter.activeFormat = period === 'month' ? 'yyyy/MM' : 'yyyy/MM/dd';
-    this.dateControl.setValue(this.timeseries().date, { emitEvent: false });
-
-    // 2. Subscribe to the timeseries date stream to catch external changes
-    this.timeseries().dateStream.pipe(
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe((newDate: DateTime) => {
-      const currentControlDate = this.dateControl.value;
-
-      // Check if the incoming date is different from what the control already has.
-      // Luxon's .equals() handles the math safely so we don't trigger an infinite loop.
-      if (!currentControlDate || !newDate.equals(currentControlDate)) {
-        this.dateControl.setValue(newDate, { emitEvent: false });
-      }
-    });
   }
 
   setDate() {
-    if(this.dateControl.value) {
-      this.timeseries().setDate(this.dateControl.value);
+    const date = this.dateControl.value;
+    if(date) {
+      this.date.set(date);
     }
   }
 
   getDefaultView(): MatCalendarView {
-    let period = this.timeseries().period.unit;
+    let period = this.period().unit;
     switch(period) {
       case "year": {
         return "multi-year";
@@ -123,7 +122,7 @@ export class DatetimeSelector {
   }
 
   viewManager(view: MatCalendarView, date: DateTime) {
-    let period = this.timeseries().period.unit
+    let period = this.period().unit
     if(view == period) {
       this.dateControl.setValue(date);
       this.datePicker().close();
@@ -131,9 +130,8 @@ export class DatetimeSelector {
   }
 
   monthSelectHandler(event: DateTime) {
-    let period = this.timeseries().period.unit
+    let period = this.period().unit
     if(period == "month") {
-      //event is a luxon object for the selected date, set form control
       this.dateControl.setValue(event);
       this.datePicker().close();
     }

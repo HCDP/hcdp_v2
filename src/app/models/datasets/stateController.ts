@@ -1,17 +1,17 @@
-import { effect, inject, Injector, signal, Signal, untracked, WritableSignal } from "@angular/core";
+import { effect, inject, Injector, runInInjectionContext, signal, Signal, untracked, WritableSignal } from "@angular/core";
 import { AnyOptionControlData, ControlType, DataOptions, ListControlValue, OptionControlData, UnitValue } from "./recipe";
 import { DateTime } from "luxon";
 import { UrlStateManager } from "../../services/state/url-state-manager";
 import { GlobalPreferenceManager } from "../../services/state/global-preference-manager";
 import { Params } from "@angular/router";
 
+
 export class DataStateController {
   private globalPreferences = inject(GlobalPreferenceManager);
   private urlState = inject(UrlStateManager);
   private injector: Injector = inject(Injector);
 
-  private _controlData: Record<string, AnyOptionStateController> = {};
-  
+  private _controlData: Map<string, AnyOptionStateController>;
   private _active: Signal<boolean>;
 
   constructor(active: Signal<boolean>, definition: DataOptions) {
@@ -19,11 +19,11 @@ export class DataStateController {
     let defaultState = { ...defaults };
 
     this._active = active;
+    this._controlData = new Map<string, AnyOptionStateController>();
 
-    this.handleGlobalPrefs(controls, defaultState)
     this.initControls(controls, defaultState);
+    this.handleGlobalPrefs(controls, defaultState);
     this.handleUrlChanges(controls);
-
   }
 
 
@@ -44,9 +44,9 @@ export class DataStateController {
             for(let unitValue of unitValues) {
               if(unitValue.system == preferredUnit) {
                 defaultState[id] = unitValue.id;
-                let controlState = this._controlData[id] as OptionStateController<"units">;
+                let controlState = this._controlData.get(id) as OptionStateController<"units"> | undefined;
                 if(controlState) {
-                  controlState.state.value = unitValue;
+                  controlState.state.value.set(unitValue);
                 }
                 break;
               }
@@ -85,7 +85,7 @@ export class DataStateController {
       }
     }
 
-    this._controlData[id] = controller;
+    this._controlData.set(id, controller);
     this.handleControlChanges(controller);
   }
 
@@ -116,7 +116,7 @@ export class DataStateController {
       let { id } = control;
       let urlValue: string | undefined = urlParams[id];
 
-      const controller = this._controlData[id];
+      const controller = this._controlData.get(id)!;
 
       if(urlValue === undefined) {
         updateParams[id] = controller.state.stringValue;
@@ -190,15 +190,15 @@ export class DataStateController {
   //////////////////////////////////////////////////////////////
 
   public get controlIDs() {
-    return Object.keys(this._controlData);
+    return [...this._controlData.keys()];
   }
 
   public getControls() {
-    return Object.values(this._controlData);
+    return [...this._controlData.values()].map(c => c.state);
   }
 
   public getControl(id: string) {
-    return this._controlData[id];
+    return this._controlData.get(id)?.state;
   }
 }
 
@@ -207,19 +207,6 @@ export class DataStateController {
 
 
 
-
-
-
-
-export interface ControlValueTypeMap {
-  units: UnitValue;
-  list: ListControlValue;
-  date: DateTime;
-}
-
-export type AnyOptionStateController = {
-  [K in ControlType]: OptionStateController<K>
-}[ControlType];
 
 export class OptionState<T extends ControlType> {
   private _getStringValue: () => string;
@@ -248,34 +235,42 @@ export class OptionState<T extends ControlType> {
     return this._controlData.description;
   }
 
-  set value(value: ControlValueTypeMap[T]) {
-    this._value.set(value);
-  }
-
   get value() {
-    return this._value();
-  }
-
-  get valueSignal() {
-    return this._value.asReadonly();
+    return this._value;
   }
 
   get type() {
     return this._controlData.type;
   }
+
+  get values() {
+    return this._controlData.values;
+  }
 }
 
 
-export abstract class OptionStateController<T extends ControlType> {
+
+interface ControlValueTypeMap {
+  units: UnitValue;
+  list: ListControlValue;
+  date: DateTime;
+}
+
+type ListLikeControlType = "list" | "units";
+
+
+type AnyOptionStateController = {
+  [K in ControlType]: OptionStateController<K>
+}[ControlType];
+
+
+abstract class OptionStateController<T extends ControlType> {
   protected _state: OptionState<T>;
   protected _value: WritableSignal<ControlValueTypeMap[T]>;
   protected _controlData: OptionControlData<T>;
 
   constructor(controlData: OptionControlData<T>, urlValue: string | undefined, defaultValue: string | undefined, updateParams: Params) {
     this._controlData = controlData;
-
-    this.initControl(urlValue, defaultValue, updateParams);
-    this._state = new OptionState<T>(controlData, this._value, this.getStringValue.bind(this));
   }
 
   protected abstract initControl(urlValue: string | undefined, defaultValue: string | undefined, updateParams: Params): void;
@@ -283,144 +278,104 @@ export abstract class OptionStateController<T extends ControlType> {
   protected abstract getStringValue(): string;
 
 
+  abstract get type(): T;
+
   get state() {
     return this._state
   }
 }
 
 
-export class UnitStateController extends OptionStateController<"units"> {
+abstract class ListLikeStateController<T extends ListLikeControlType> extends OptionStateController<T> {
 
-  constructor(controlData: OptionControlData<"units">, urlValue: string | undefined, defaultValue: string | undefined, updateParams: Params) {
+  constructor(controlData: OptionControlData<T>, urlValue: string | undefined, defaultValue: string | undefined, updateParams: Params) {
     super(controlData, urlValue, defaultValue, updateParams);
+
+    this.initControl(urlValue, defaultValue, updateParams);
+    this._state = new OptionState<T>(controlData, this._value, this.getStringValue.bind(this));
   }
+
+  abstract override get type(): T;
+
+  protected initControl(urlValue: string | undefined, defaultValue: string | undefined, updateParams: Params) {    
+    let setURL = true;
+    let { id, values } = this._controlData;
+
+    if(values.length === 0) {
+      throw new Error(`Invalid data: Control ${id} was initialized with an empty values array.`);
+    }
+
+    let initialValueId = defaultValue;
+
+    // if the url has a value for this control and it is valid, initialize to the url value
+    if(urlValue !== undefined && values.some(v => v.id === urlValue)) {
+      initialValueId = urlValue;
+      // the url is already set, does not need to be updated
+      setURL = false;
+    }
+
+    const initialValue = (values.find(v => v.id === initialValueId) ?? values[0]) as ControlValueTypeMap[T];
+    // if url param for this control is not loaded or invalid add it to updateParams
+    if(setURL) {
+      updateParams[id] = initialValue.id;
+    }
+
+    this._value = signal(initialValue);
+  }
+
+  updateControl(urlValue: string, updateParams: Params) {
+    let { id, values } = this._controlData;
+
+    let newValue: ControlValueTypeMap[T] | undefined;
+    const currentControlValue = this._value();
+    // if the current control string is already equivalent to the url value, skip
+    if(currentControlValue.id !== urlValue) {
+      newValue = values.find(v => v.id === urlValue) as ControlValueTypeMap[T] | undefined;
+      if(newValue === undefined) {
+        updateParams[id] = currentControlValue.id;
+      }
+    }
+    if(newValue) {
+      this._value.set(newValue);
+    }
+  }
+
+  protected getStringValue() {
+    return this._value().id;
+  }
+}
+
+
+class UnitStateController extends ListLikeStateController<"units"> {
 
   get type(): "units" {
     return "units";
   }
-
-
-  protected initControl(urlValue: string | undefined, defaultValue: string | undefined, updateParams: Params) {    
-    let setURL = true;
-    let { id, values } = this._controlData;
-
-    if(values.length === 0) {
-      throw new Error(`Invalid data: Control ${id} was initialized with an empty values array.`);
-    }
-
-    let initialValueId = defaultValue;
-
-    // if the url has a value for this control and it is valid, initialize to the url value
-    if(urlValue !== undefined && values.some((v: UnitValue) => v.id === urlValue)) {
-      initialValueId = urlValue;
-      // the url is already set, does not need to be updated
-      setURL = false;
-    }
-
-    const initialValue = values.find((v: UnitValue) => v.id === initialValueId) ?? values[0];
-    // if url param for this control is not loaded or invalid add it to updateParams
-    if(setURL) {
-      updateParams[id] = initialValue.id;
-    }
-
-    this._value = signal(initialValue);
-  }
-
-  updateControl(urlValue: string, updateParams: Params) {
-    let { id, values } = this._controlData;
-
-    let newValue: UnitValue | undefined;
-    const currentControlValue = this._value();
-    // if the current control string is already equivalent to the url value, skip
-    if(currentControlValue.id !== urlValue) {
-      newValue = values.find((v: UnitValue) => v.id === urlValue);
-      if(newValue === undefined) {
-        updateParams[id] = currentControlValue.id;
-      }
-    }
-    if(newValue) {
-      this._value.set(newValue);
-    }
-  }
-
-  protected getStringValue() {
-    return this._value().id;
-  }
 }
 
 
 
-export class ListStateController extends OptionStateController<"list"> {
-
-  constructor(controlData: OptionControlData<"list">, urlValue: string | undefined, defaultValue: string | undefined, updateParams: Params) {
-    super(controlData, urlValue, defaultValue, updateParams);
-  }
+class ListStateController extends ListLikeStateController<"list"> {
 
   get type(): "list" {
     return "list";
   }
-
-
-  protected initControl(urlValue: string | undefined, defaultValue: string | undefined, updateParams: Params) {    
-    let setURL = true;
-    let { id, values } = this._controlData;
-
-    if(values.length === 0) {
-      throw new Error(`Invalid data: Control ${id} was initialized with an empty values array.`);
-    }
-
-    let initialValueId = defaultValue;
-
-    // if the url has a value for this control and it is valid, initialize to the url value
-    if(urlValue !== undefined && values.some((v: ListControlValue) => v.id === urlValue)) {
-      initialValueId = urlValue;
-      // the url is already set, does not need to be updated
-      setURL = false;
-    }
-
-    const initialValue = values.find((v: ListControlValue) => v.id === initialValueId) ?? values[0];
-    // if url param for this control is not loaded or invalid add it to updateParams
-    if(setURL) {
-      updateParams[id] = initialValue.id;
-    }
-
-    this._value = signal(initialValue);
-  }
-
-  updateControl(urlValue: string, updateParams: Params) {
-    let { id, values } = this._controlData;
-
-    let newValue: ListControlValue | undefined;
-    const currentControlValue = this._value();
-    // if the current control string is already equivalent to the url value, skip
-    if(currentControlValue.id !== urlValue) {
-      newValue = values.find((v: ListControlValue) => v.id === urlValue);
-      if(newValue === undefined) {
-        updateParams[id] = currentControlValue.id;
-      }
-    }
-    if(newValue) {
-      this._value.set(newValue);
-    }
-  }
-
-  protected getStringValue() {
-    return this._value().id;
-  }
 }
 
 
 
-export class DateStateController extends OptionStateController<"date"> {
+class DateStateController extends OptionStateController<"date"> {
 
   constructor(controlData: OptionControlData<"date">, urlValue: string | undefined, defaultValue: string | undefined, updateParams: Params) {
     super(controlData, urlValue, defaultValue, updateParams);
+
+    this.initControl(urlValue, defaultValue, updateParams);
+    this._state = new OptionState<"date">(controlData, this._value, this.getStringValue.bind(this));
   }
 
   get type(): "date" {
     return "date";
   }
-
 
   protected initControl(urlValue: string | undefined, defaultValue: string | undefined, updateParams: Params) {    
     let setURL = true;
@@ -430,7 +385,7 @@ export class DateStateController extends OptionStateController<"date"> {
     let initialDate: DateTime = values.end;
     // if a value is provided in the URL parse and validate value
     if(urlValue) {
-      let urlDate = DateTime.fromISO(urlValue);
+      let urlDate = values.parseDate(urlValue);
       // check if url date is valid
       if(urlDate.isValid) {
         // url provided valid date, do not set default
@@ -445,7 +400,7 @@ export class DateStateController extends OptionStateController<"date"> {
     }
     // if set default flag is set, attempt to use default if provided
     if(setDefault && defaultValue) {
-      let defaultDate = DateTime.fromISO(defaultValue);
+      let defaultDate = values.parseDate(defaultValue);
       // check if default date is valid
       if(defaultDate.isValid) {
         // correct date to timeseries data
@@ -466,7 +421,7 @@ export class DateStateController extends OptionStateController<"date"> {
   updateControl(urlValue: string, updateParams: Params) {
     let { id, values } = this._controlData;
 
-    const urlDate = DateTime.fromISO(urlValue);
+    const urlDate = values.parseDate(urlValue);
     const currentDate = this._value();
     
     // check if url date is valid

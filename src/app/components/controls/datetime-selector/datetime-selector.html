@@ -3,23 +3,23 @@
   <mat-label>Select Date</mat-label>
   
   <input matInput 
-         [matDatepicker]="datePicker" 
-         [formControl]="dateControl"
-         [min]="timeseries().start" 
-         [max]="timeseries().end">
+    [matDatepicker]="datePicker" 
+    [formControl]="dateControl"
+    [min]="min()" 
+    [max]="max()">
          
   <mat-datepicker-toggle matIconSuffix [for]="datePicker"></mat-datepicker-toggle>
   
   <mat-datepicker #datePicker
-        [startView]="getDefaultView()"
-        (yearSelected)="viewManager('year', $event)"
-        (monthSelected)="viewManager('month', $event)"
-        (closed)="setDate()">
+    [startView]="getDefaultView()"
+    (yearSelected)="viewManager('year', $event)"
+    (monthSelected)="viewManager('month', $event)"
+    (closed)="setDate()">
   </mat-datepicker>
 </mat-form-field>
 
-@if (showTime()) {
-  <app-time-selector></app-time-selector>
+@if(showTime()) {
+  <app-time-selector [interval]="period()" [(datetime)]="date"></app-time-selector>
 }
   
 </div>

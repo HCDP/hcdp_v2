@@ -67,13 +67,13 @@ export class DataStreamManager {
       const mergedParams: Params = { ...this._datasetParams, ...staticParams };
       
       for(let param of triggers) {
-        // Fetch the controller from the orchestrator
-        const controller = this._stateController.getControl(param);
+        // Fetch the state from the orchestrator
+        const state = this._stateController.getControl(param);
         
         // If the control doesn't exist, the params aren't ready
-        if (!controller) return undefined; 
-        
-        mergedParams[param] = controller.state.stringValue;
+        if (!state) return undefined; 
+
+        mergedParams[param] = state.stringValue;
       }
 
       return mergedParams;

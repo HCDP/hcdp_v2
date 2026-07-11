@@ -1,9 +1,13 @@
 import { DateTime } from "luxon";
 import { Period } from "./time";
+import { inject } from "@angular/core";
+import { Configuration } from "../../services/configuration/configuration";
 
 
 // dates should already have timezone built in
 export class HCDPTimeseriesData {
+  private config = inject(Configuration)
+
   private readonly _period: Period
   private readonly _start: DateTime;
   private readonly _end: DateTime;
@@ -98,5 +102,12 @@ export class HCDPTimeseriesData {
       date = this._period.add(1, date);
     }
     return dates;
+  }
+
+  parseDate(dateStr: string): DateTime {
+    return DateTime.fromISO(dateStr, {
+      // Default to this if string has no timezone
+      zone: this.config.timezone,
+    });
   }
 }

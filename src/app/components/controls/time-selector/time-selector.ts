@@ -38,8 +38,8 @@ import { provideLuxonDateAdapter } from '@angular/material-luxon-adapter';
   styleUrl: './time-selector.scss',
 })
 export class TimeSelector {
-  interval = model<Period>(new Period("minute", 5));
-  datetime = model<DateTime>(DateTime.fromISO("1970-01-01T00:00:00"));
+  interval = model.required<Period>();
+  datetime = model.required<DateTime>();
 
   isHourly = computed<boolean>(() => this.interval().unit == "hour");
   intervalStr = computed<string>(() => `${this.interval().interval}${this.interval().unit[0]}`);

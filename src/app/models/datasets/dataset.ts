@@ -15,12 +15,14 @@ import { MapState } from "./mapState";
 import { ExportTimeseriesDataHandler } from "./export";
 import { LocationManager } from "./locationManager";
 import { TabManager } from "./tabManager";
+import { Configuration } from "../../services/configuration/configuration";
 
 
 
 export class HCDPDataset {
   private injector = inject(Injector);
   private requestManager = inject(ApiHandler);
+  private config = inject(Configuration);
   
   private _data: Promise<HCDPDatasetVisualization>;
   private _active: WritableSignal<boolean> = signal(false);
@@ -54,7 +56,7 @@ export class HCDPDataset {
     // if range override provided on both ends resolve directly with these values
     if(rangeOverride && rangeOverride[0] && rangeOverride[1]) {
       dateRange = (rangeOverride as [string, string]).map((isoDate: string) => {
-        return DateTime.fromISO(isoDate, { zone: "UTC"});
+        return DateTime.fromISO(isoDate, { zone: this.config.timezone});
       }) as [DateTime, DateTime];
     }
     // otherwise get range from API
@@ -71,7 +73,7 @@ export class HCDPDataset {
                 dates[1] = rangeOverride[1];
               }
               return dates.map((isoDate: string) => {
-                return DateTime.fromISO(isoDate);
+                return DateTime.fromISO(isoDate, { zone: this.config.timezone });
               }) as [DateTime, DateTime];
             }
           )
@@ -142,8 +144,6 @@ export abstract class HCDPDatasetVisualization {
 export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization {
   private static readonly DATE_CHUNK_SIZE =  1000;
 
-  private injector = inject(Injector);
-
   private _timeseriesData: HCDPTimeseriesData;
   private _dataState: DataStateController;
   private _dataStreamManager: DataStreamManager;
@@ -190,12 +190,8 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
     // add default date value
     options.defaults.date = timeseriesData.period.formatDate(defaultDate);
 
-    this._dataState = runInInjectionContext(this.injector, () => {
-      return new DataStateController(active, options);
-    });
-    this._dataStreamManager = runInInjectionContext(this.injector, () => {
-      return new DataStreamManager(datasetParams, streams, this.dataState);
-    });
+    this._dataState = new DataStateController(active, options);
+    this._dataStreamManager = new DataStreamManager(datasetParams, streams, this.dataState);
     this._mapState = new MapState(mapLayers);
     this._exportData = new ExportTimeseriesDataHandler(exportData, datasetParams, this.timeseriesData);
     this._locationManager = new LocationManager();

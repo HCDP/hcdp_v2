@@ -1,10 +1,11 @@
-import { Component, inject, input, OnInit } from '@angular/core';
+import { Component, computed, inject, input, model, OnInit, Signal } from '@angular/core';
 import { DatetimeSelector } from '../datetime-selector/datetime-selector';
 import { AssetManager } from '../../../services/util/asset-manager';
-import { MatIconModule, MatIconRegistry } from "@angular/material/icon"; // Required for <mat-icon>
-import { MatButtonModule } from "@angular/material/button"; // Required for mat-mini-fab
-import { MatTooltipModule } from "@angular/material/tooltip"; // Required for [matTooltip]
+import { MatIconModule, MatIconRegistry } from "@angular/material/icon";
+import { MatButtonModule } from "@angular/material/button";
+import { MatTooltipModule } from "@angular/material/tooltip";
 import { HCDPTimeseriesData } from '../../../models/datasets/timeseries';
+import { DateTime } from 'luxon';
 
 @Component({
   selector: 'app-datetime-control',
@@ -22,6 +23,8 @@ export class DatetimeControl implements OnInit {
   matIconRegistry = inject(MatIconRegistry)
 
   timeseries = input.required<HCDPTimeseriesData>();
+  date = model.required<DateTime>();
+
   dateMoveData: MoveButtonData;
 
   constructor() {
@@ -54,7 +57,8 @@ export class DatetimeControl implements OnInit {
       tooltip: `Skip to first ${unit}`,
       icon: "el",
       trigger: () => {
-        this.timeseries().setToStart();
+        const startDate = this.timeseries().start;
+        this.date.set(startDate);
       }
     }];
 
@@ -63,7 +67,8 @@ export class DatetimeControl implements OnInit {
         tooltip: `Move back ${jumpIntervalLabel}`,
         icon: "ffl",
         trigger: () => {
-          this.timeseries().jumpBackward();
+          const jumpDate = this.timeseries().jumpBackward(this.date())!;
+          this.date.set(jumpDate);
         }
       });
     }
@@ -72,7 +77,8 @@ export class DatetimeControl implements OnInit {
       tooltip: `Previous`,
       icon: "fl",
       trigger: () => {
-        this.timeseries().previous();
+        const previousDate = this.timeseries().previous(this.date());
+        this.date.set(previousDate);
       }
     });
 
@@ -80,7 +86,8 @@ export class DatetimeControl implements OnInit {
       tooltip: `Next`,
       icon: "fr",
       trigger: () => {
-        this.timeseries().next();
+        const nextDate = this.timeseries().next(this.date());
+        this.date.set(nextDate);
       }
     }];
 
@@ -89,7 +96,8 @@ export class DatetimeControl implements OnInit {
         tooltip: `Move forward ${jumpIntervalLabel}`,
         icon: "ffr",
         trigger: () => {
-          this.timeseries().jumpForward();
+          const jumpDate = this.timeseries().jumpForward(this.date())!;
+          this.date.set(jumpDate);
         }
       });
     }
@@ -98,21 +106,22 @@ export class DatetimeControl implements OnInit {
       tooltip: `Skip to most recent ${unit}`,
       icon: "er",
       trigger: () => {
-        this.timeseries().setToEnd();
+        const endDate = this.timeseries().end;
+        this.date.set(endDate);
       }
     });
 
     this.dateMoveData = {
       forward: {
-        disabled: () => {
-          return this.timeseries().date.equals(this.timeseries().end);
-        },
+        disabled: computed(() => {
+          return this.date().equals(this.timeseries().end);
+        }),
         moveData: dateForward
       },
       back: {
-        disabled: () => {
-          return this.timeseries().date.equals(this.timeseries().start);
-        },
+        disabled: computed(() => {
+          return this.date().equals(this.timeseries().start);
+        }),
         moveData: dateBack
       }
     }
@@ -125,7 +134,7 @@ interface MoveButtonData {
 }
 
 interface DirectionGroup {
-  disabled: () => boolean,
+  disabled: Signal<boolean>,
   moveData: MoveData[]
 }
 

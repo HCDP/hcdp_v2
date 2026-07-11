@@ -213,27 +213,26 @@ export class Period {
         return this.roundStandardCalendarReset(date, method);
       }
       case "epoch": {
-        return this.roundFixedOffsetMillis(date, method, 0);
+        const localEpoch = DateTime.fromObject({ year: 1970, month: 1, day: 1 }, { zone: date.zone });
+        return this.roundFixedOffsetCalendar(date, method, localEpoch);
       }
       case "fixed": {
-        const anchorMillis = (this._options.reset as DateTime).toMillis();
-        return this.roundFixedOffsetMillis(date, method, anchorMillis);
+        const anchorDate = this._options.reset as DateTime;
+        return this.roundFixedOffsetCalendar(date, method, anchorDate);
       }
       case "unit": {
-        const anchorMillis = date.startOf(this._options.reset as DateTimeUnit).toMillis();
-        return this.roundFixedOffsetMillis(date, method, anchorMillis);
+       const anchorDate = date.startOf(this._options.reset as DateTimeUnit);
+        return this.roundFixedOffsetCalendar(date, method, anchorDate);
       }
     }
   }
 
 
-  private roundFixedOffsetMillis(date: DateTime, method: "up" | "down" | "nearest" = "down", anchorMillis: number) {
-    // get epoch ms for date
-    const dateMillis = date.toMillis();
-    const anchorDelta = dateMillis - anchorMillis;
-    const periodMillis = this._duration.toMillis();
-    // get number of periods that have passed since anchor
-    let ratio = anchorDelta / periodMillis;
+  private roundFixedOffsetCalendar(date: DateTime, method: "up" | "down" | "nearest" = "down", anchorDate: DateTime) {
+    // calculate the number of calendar units between the anchor and the date
+    let diffStr = date.diff(anchorDate, this.unit).get(this.unit);
+    // divide by the period interval to get the ratio
+    let ratio = diffStr / this.interval;
 
     // round the ratio
     if(method === "down") {
@@ -245,14 +244,10 @@ export class Period {
     else {
       ratio = Math.round(ratio);
     }
-
-    // revert from ratio to ms from achor by multiplying by period duration
-    let roundedMillis = ratio * periodMillis;
-    // add back the anchor
-    roundedMillis += anchorMillis
-    // convert to DateTime
-    const roundedDate = DateTime.fromMillis(roundedMillis);
-    return roundedDate;
+    // multiply back by the interval to get the total calendar units to add
+    let roundedUnits = ratio * this.interval;
+    // add back to the anchor
+    return anchorDate.plus({ [this.unit]: roundedUnits });
   }
 
 

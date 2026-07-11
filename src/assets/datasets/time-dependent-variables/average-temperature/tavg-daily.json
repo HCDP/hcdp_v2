@@ -29,12 +29,6 @@
         },
         "controls": [
           {
-            "id": "date",
-            "label": "Date",
-            "description": "The date represented by the data.",
-            "type": "date"
-          },
-          {
             "id": "units",
             "label": "Units",
             "description": "The units the data are represented in.",

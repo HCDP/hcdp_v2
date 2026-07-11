@@ -1,4 +1,3 @@
-
 <div class="controls-container">
   @for(control of controls(); track control.id) {
     
@@ -18,33 +17,29 @@
       @switch(control.type) {
         @case("date") {
           @if(timeseriesData(); as data) {
-            <app-datetime-control [timeseries]="data">
+            <app-datetime-control
+              [timeseries]="data"
+              [(date)]="control.value">
             </app-datetime-control>
-            
           }
         }
-        @case("list") {
-          <mat-button-toggle-group 
-            [value]="control.value | async"
-            (change)="controlChange(control, $event.value)">
-            
-            @for(option of $any(control.values); track option.id) {
-              <mat-button-toggle [value]="option.id" [matTooltip]="option.description">
-                {{ option.label }}
-              </mat-button-toggle>
-            }
-          </mat-button-toggle-group>
-        }
-
+        
+        @case("list")
         @case("units") {
           <mat-button-toggle-group 
-            [value]="control.value | async"
-            (change)="controlChange(control, $event.value)">
-            
+            [value]="control.value()" 
+            (change)="control.value.set($event.value)">
             @for(option of $any(control.values); track option.id) {
-              <mat-button-toggle [value]="option.id">
-                {{ option.name }} ({{ option.shortName }})
-              </mat-button-toggle>
+                @if(control.type == "units") {
+                  <mat-button-toggle [value]="option">
+                    {{ option.name }} ({{ option.shortName }})
+                  </mat-button-toggle> 
+                }
+                @else {
+                  <mat-button-toggle [value]="option"  [matTooltip]="option.description">
+                    {{ option.label }}
+                  </mat-button-toggle>
+                }
             }
           </mat-button-toggle-group>
         }
