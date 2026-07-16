@@ -116,7 +116,7 @@ export class DataStreamManager {
   }
 
   private createRasterStream(id: string, triggers: string[], staticParams: Params) {
-    return this.setupResource<ArrayBuffer, RasterData | null>(id, "/raster", triggers, { params: staticParams, responseType: "arraybuffer" }, async (data: ArrayBuffer) => {
+    return this.setupResource<ArrayBuffer, RasterData | null>(id, "/raster", triggers, { params: { returnEmptyNotFound: true, ...staticParams }, responseType: "arraybuffer" }, async (data: ArrayBuffer) => {
       let processedGeotiff = await this.workerInterconnect.workerApi.processArrayBufferGeotiffData(data, -3.3999999521443642e+38, [0], [0]);
       if(processedGeotiff) {
         let imageData = processedGeotiff[0];

@@ -142,7 +142,7 @@ export abstract class HCDPDatasetVisualization {
 
 
 export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization {
-  private static readonly DATE_CHUNK_SIZE =  1000;
+  private static readonly DATE_CHUNK_SIZE =  2500;
 
   private _timeseriesData: HCDPTimeseriesData;
   private _dataState: DataStateController;
@@ -186,7 +186,7 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
       type: "date",
       values: timeseriesData
     };
-    options.controls.push(dateControl);
+    options.controls.unshift(dateControl);
     // add default date value
     options.defaults.date = timeseriesData.period.formatDate(defaultDate);
 
