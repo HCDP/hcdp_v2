@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "HCDP-v2": {
+    "hcdp-v2": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
