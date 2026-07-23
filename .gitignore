@@ -47,3 +47,6 @@ Thumbs.db
 
 # API key
 /src/assets/config.json
+
+.vscode
+.angular
