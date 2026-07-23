@@ -15,6 +15,10 @@
         "production": "new",
         "period": "day"
       },
+      "unitSource": {
+        "source": "units",
+        "convertFrom": "mm"
+      },
       "streams": [
         {
           "id": "stations",
@@ -85,14 +89,18 @@
         }
       },
       "mapLayers": {
-        "layers": [{
-          "stream": "stations",
-          "label": "Station Data"
-        }, {
-          "stream": "dataMap",
-          "label": "Data Map"
-        }],
+        "layers": [
+          {
+            "stream": "stations",
+            "label": "Station Data"
+          },
+          {
+            "stream": "dataMap",
+            "label": "Data Map"
+          }
+        ],
         "range": {
+          "units": "mm",
           "standard": [0, 20],
           "extreme": [0, 250],
           "limits": [0, null]

@@ -1,38 +1,13 @@
 <div class="export-container">
-  @if (hasDateControl()) {
+  @if(tsHandler(); as handler) {
     <mat-card class="file-group-card" appearance="outlined">
       <mat-card-content>
         <div class="section date-section">
           <h3 class="section-title">Date Range</h3>
           
           <div class="date-controls-row">
-            <mat-form-field>
-              <mat-label>Start Date</mat-label>
-              <input matInput [matDatepicker]="startPicker"
-                     [min]="tsHandler?.startDate"
-                     [max]="tsHandler?.checkEndDateState()"
-                     [value]="tsHandler?.checkStartDateState()"
-                     (dateChange)="onStartDateChange($event)">
-              <mat-datepicker-toggle matIconSuffix [for]="startPicker"></mat-datepicker-toggle>
-              <mat-datepicker #startPicker
-              [startView]="getDefaultView()"
-              (yearSelected)="viewManager('year', $event, startPicker, 'start')"
-              (monthSelected)="viewManager('month', $event, startPicker, 'start')"></mat-datepicker>
-            </mat-form-field>
-
-            <mat-form-field>
-              <mat-label>End Date</mat-label>
-              <input matInput [matDatepicker]="endPicker"
-                     [min]="tsHandler?.checkStartDateState()"
-                     [max]="tsHandler?.endDate"
-                     [value]="tsHandler?.checkEndDateState()"
-                     (dateChange)="onEndDateChange($event)">
-              <mat-datepicker-toggle matIconSuffix [for]="endPicker"></mat-datepicker-toggle>
-              <mat-datepicker #endPicker
-              [startView]="getDefaultView()"
-              (yearSelected)="viewManager('year', $event, endPicker, 'end')"
-              (monthSelected)="viewManager('month', $event, endPicker, 'end')"></mat-datepicker>
-            </mat-form-field>
+            <app-datetime-selector label="Start Date" [min]="handler.startDate" [max]="endDate()" [period]="handler.period" [(date)]="startDate"></app-datetime-selector>
+            <app-datetime-selector label="End Date" [min]="startDate()" [max]="handler.endDate" [period]="handler.period" [(date)]="endDate"></app-datetime-selector>
           </div>
         </div>
       </mat-card-content>
@@ -71,7 +46,7 @@
           <h3 class="section-title">Available Files</h3>
           
           <div class="file-list">
-            @for (file of group.files; track file.id) {
+            @for(file of group.files; track file.id) {
               <mat-checkbox 
                 [checked]="exportDataHandler().checkFileSelected(file.id)"
                 [disabled]="isFileRequired(file.id)"
@@ -110,15 +85,21 @@
     </mat-icon>
   </div>
 
-  <div class="email-input">
-    <mat-form-field class="example-full-width">
+  <div>
+    <mat-form-field>
       <mat-label>Email Address</mat-label>
-      <input matInput [formControl]="emailControl" type="email" placeholder="name@example.com">
-      
-      @if(emailControl.hasError('email') && !emailControl.hasError('required')) {
+      <input matInput type="email" 
+         required 
+         email 
+         placeholder="user@hawaii.edu"
+         [ngModel]="globalExportData.email()" 
+         (ngModelChange)="onEmailInput($event, emailField.valid)"
+         #emailField="ngModel">
+
+      @if(emailField.hasError('email') && !emailField.hasError('required')) {
         <mat-error>Please enter a valid email address</mat-error>
       }
-      @if(emailControl.hasError('required')) {
+      @if(emailField.hasError('required')) {
         <mat-error>Email is required</mat-error>
       }
     </mat-form-field>
@@ -130,9 +111,7 @@
   </div>
 
   <div class="disclaimer-container">
-    <mat-checkbox
-      [checked]="exportDataHandler().licenseAck"
-      (change)="exportDataHandler().licenseAck = $event.checked">
+    <mat-checkbox [(ngModel)]="globalExportData.licenseAck">
     </mat-checkbox>
     <p>
       All data is covered under the <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank">Attribution-NonCommercial-NoDerivatives 4.0 International</a> licensing agreement. By checking this box, I acknowledge and agree to adhere to the terms of this license in my use of any data provided by this application.
@@ -151,7 +130,7 @@
       <mat-spinner></mat-spinner>
     </div>
   }
-  <button matButton="filled" color="primary" [disabled]="!exportDataHandler().canExport() || isGenerating()" (click)="export()">
+  <button matButton="filled" color="primary" [disabled]="!canExport() || isGenerating() || emailField.invalid" (click)="export()">
     Export Items
   </button>
   

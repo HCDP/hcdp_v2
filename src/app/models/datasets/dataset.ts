@@ -8,9 +8,9 @@ import { ApiHandler } from "../../services/requests/api-handler";
 import { DateTime } from "luxon";
 import { firstValueFrom, map } from "rxjs";
 import { Period } from "./time";
-import { HCDPDatasetDefinition, HCDPLayout, OptionControlData, TimeseriesData, TimeseriesSchemaData } from "./recipe";
+import { HCDPDatasetDefinition, HCDPLayout, OptionControlData, TimeseriesData, TimeseriesSchemaData, UnitBase, UnitValue } from "./recipe";
 import { DataStreamManager } from "./dataStreams";
-import { DataStateController } from "./stateController";
+import { DataStateController, OptionState } from "./stateController";
 import { MapState } from "./mapState";
 import { ExportTimeseriesDataHandler } from "./export";
 import { LocationManager } from "./locationManager";
@@ -151,6 +151,7 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
   private _exportData: ExportTimeseriesDataHandler;
   private _locationManager: LocationManager;
   private _dateChunks: [DateTime, DateTime][];
+  private _unitData: UnitData;
   
 
   constructor(id: string, label: string, description: string, layout: TimeseriesSchemaData, initData: {range: [DateTime, DateTime]}, active: Signal<boolean>) {
@@ -161,7 +162,7 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
     ];
     super("timeseries", id, label, description, tabs, active);
     
-    let { datasetParams, streams, timeseries, options, mapLayers, exportData } = layout;
+    let { datasetParams, streams, timeseries, options, mapLayers, exportData, unitSource } = layout;
     let { range } = initData;
     let [ startDate, endDate ] = range;
     
@@ -191,9 +192,27 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
     options.defaults.date = timeseriesData.period.formatDate(defaultDate);
 
     this._dataState = new DataStateController(active, options);
-    this._dataStreamManager = new DataStreamManager(datasetParams, streams, this.dataState);
-    this._mapState = new MapState(mapLayers);
-    this._exportData = new ExportTimeseriesDataHandler(exportData, datasetParams, this.timeseriesData);
+    let { source, convertFrom } = unitSource;
+    if(typeof source === "string") {
+      let controller = this._dataState.getControl(source) as OptionState<"units"> | undefined;
+      if(!controller || controller.type !== "units") {
+        throw new Error(`Invalid unit controller specified: ${source}`);
+      }
+      this._unitData = {
+        units: controller.value,
+        convertFrom
+      };
+      
+    }
+    else {
+      this._unitData = {
+        units: signal<UnitValue>(source),
+        convertFrom
+      };
+    }
+    this._dataStreamManager = new DataStreamManager(datasetParams, streams, this._dataState, this._unitData);
+    this._mapState = new MapState(mapLayers, this._unitData);
+    this._exportData = new ExportTimeseriesDataHandler(exportData, datasetParams, this._timeseriesData);
     this._locationManager = new LocationManager();
     this.createDateChunks();
   }
@@ -247,3 +266,9 @@ export class HCDPDatasetStaticVisualization extends HCDPDatasetVisualization {
 
 
 export type HCDPVisSubtypes = HCDPDatasetTimeseriesVisualization;
+
+
+export interface UnitData {
+  units: Signal<UnitValue>,
+  convertFrom?: UnitBase
+}

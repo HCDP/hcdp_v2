@@ -1,5 +1,5 @@
 <div class="scale-display-container">
-  <div class="scale-gradient-bar" [style.background]="displayData().gradient"></div>
+  <div class="scale-gradient-bar" [style.backgroundImage]="displayData().gradient"></div>
   <div class="scale-labels">
     @for (label of displayData().labels; track $index) {
       <div class="scale-label-row">

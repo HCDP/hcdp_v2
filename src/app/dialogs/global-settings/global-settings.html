@@ -13,6 +13,24 @@
         <mat-button-toggle value="usc">US Customary</mat-button-toggle>
       </mat-button-toggle-group>
     </section>
+    <section>
+      <div class="email-header">
+        <h3>Email Address</h3>
+        <mat-icon
+          class="help-icon"
+          matTooltip="This will be the default email for export features.">
+          help
+        </mat-icon>
+      </div>
+      <mat-form-field>
+        <mat-label>Email Address</mat-label>
+        <input matInput [formControl]="emailControl" type="email" placeholder="user@hawaii.edu">
+        
+        @if(emailControl.hasError("email")) {
+          <mat-error>Invalid email address. This value will not be saved</mat-error>
+        }
+      </mat-form-field>
+    </section>
   </div>
 </mat-dialog-content>
 <mat-dialog-actions>

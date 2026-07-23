@@ -1,5 +1,8 @@
+import { effect, inject } from "@angular/core";
 import { ColorScheme } from "../../services/colors/color-store";
-import { DataRange, LayerData, MapLayers } from "./recipe";
+import { DataRange, MapLayers } from "./recipe";
+import { UnitTranslations } from "../../services/unitHandlers/unit-translations";
+import { UnitData } from "./dataset";
 
 export type DataRangeType = "standard" | "extreme" | "custom";
 
@@ -17,13 +20,14 @@ interface MapStateData {
 }
 
 export class MapState {
-  private _layers: LayerData[];
-  private dataRanges: DataRange;
-  private _colors: ColorScheme[];
-  private state: MapStateData;
+  private unitHandler = inject(UnitTranslations);
 
-  constructor(layers: MapLayers) {
-    this.state = {
+  private _layers: MapLayers;
+  private _state: MapStateData;
+  private _adjustedRanges: DataRange;
+
+  constructor(layers: MapLayers, unitData: UnitData) {
+    this._state = {
       opacity: 75,
       config: {
         color: layers.defaultColor,
@@ -33,31 +37,54 @@ export class MapState {
         range: layers.range.standard
       }
     };
-    this.dataRanges = layers.range;
-    this._colors = layers.colors;
-    this._layers = layers.layers;
+    this._layers = layers;
+    this._adjustedRanges = layers.range;
+
+    const { units } = unitData;
+    const defaultRangeUnits = layers.range.units
+
+
+    effect(() => {
+      let { id } = units();
+      if(id === defaultRangeUnits) {
+        this._adjustedRanges = layers.range;
+      }
+      else {
+        let unitConversion = (value: number) => this.unitHandler.convert(defaultRangeUnits, id, value);
+        // let { standard, extreme, custom, limits } = layers.range;
+        // this._adjustedRanges = {
+        //   standard: standard.map((value: number) => unitConversion(value)) as [number, number],
+        //   extreme: extreme?.map((value: number) => unitConversion(value)) as undefined | [number, number],
+        //   custom: custom.map((value: number | null) => value === null ? null : unitConversion(value)) as [number, number],
+        //   limits: limits.map((value: number | null) => value === null ? null : unitConversion(value)) as [number, number],
+        // }
+      }
+    });
+  
+    
   }
 
   // --- Static Data Getters ---
 
+
   get extremeRange() {
-    return this.dataRanges.extreme;
+    return this._adjustedRanges.extreme;
   }
 
   get standardRange() {
-    return this.dataRanges.standard;
+    return this._adjustedRanges.standard;
   }
 
   get limits() {
-    return this.dataRanges.limits;
+    return this._adjustedRanges.limits;
   }
 
   get colors() {
-    return this._colors;
+    return this._layers.colors;
   }
 
   get layers() {
-    return this._layers;
+    return this._layers.layers;
   }
 
   public pseudoLog(value: number, base = Math.E) {
@@ -68,74 +95,74 @@ export class MapState {
   // --- State Variable Getters/Setters ---
 
   get opacity() {
-    return this.state.opacity;
+    return this._state.opacity;
   }
 
   set opacity(value: number) {
-    this.state.opacity = value;
+    this._state.opacity = value;
   }
 
   // Bulk getter/setter for the dialog payload
   get config(): ScaleConfigurationData {
-    return { ...this.state.config };
+    return { ...this._state.config };
   }
 
   set config(newConfig: ScaleConfigurationData) {
-    this.state.config = { ...newConfig };
+    this._state.config = { ...newConfig };
   }
 
   // --- Individual Config Getters/Setters ---
 
   get dataRangeType() {
-    return this.state.config.dataRangeType;
+    return this._state.config.dataRangeType;
   }
 
   set dataRangeType(value: DataRangeType) {
-    this.state.config.dataRangeType = value;
+    this._state.config.dataRangeType = value;
   }
 
   get range() {
-    switch(this.state.config.dataRangeType) {
+    switch(this._state.config.dataRangeType) {
       case "standard": 
-        return this.dataRanges.standard;
+        return this._adjustedRanges.standard;
       case "extreme": 
-        return this.dataRanges.extreme!;
+        return this._adjustedRanges.extreme!;
       case "custom": 
-        return this.state.config.range;
+        return this._state.config.range;
     }
   }
 
   set range(value: [number | null, number | null]) {
-    this.state.config.range = value;
+    this._state.config.range = value;
   }
 
   get colorScheme() {
-    return this.state.config.color;
+    return this._state.config.color;
   }
 
   set colorScheme(value: ColorScheme) {
-    this.state.config.color = value;
+    this._state.config.color = value;
   }
 
   get reverseColorScale() {
-    return this.state.config.reverse;
+    return this._state.config.reverse;
   }
 
   set reverseColorScale(value: boolean) {
-    this.state.config.reverse = value;
+    this._state.config.reverse = value;
   }
 
   get usePseudoLog() {
-    return this.state.config.usePseudoLog;
+    return this._state.config.usePseudoLog;
   }
 
   set usePseudoLog(value: boolean) {
-    this.state.config.usePseudoLog = value;
+    this._state.config.usePseudoLog = value;
   }
 
   // Derived read-only property. No setter needed!
   get domainScale() {
-    return this.state.config.usePseudoLog
+    return this._state.config.usePseudoLog
       ? (value: number) => this.pseudoLog(value)
       : (value: number) => value;
   }

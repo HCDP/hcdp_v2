@@ -10,17 +10,12 @@ export class ExportDataHandler {
   private _filePropertyState: Record<string, Set<string>>;
   private _fileSelectState: Set<string>;
   private _datasetParams: Record<string, string>;
-
-  private _detailsState: {
-    sendToEmail: boolean,
-    email: string,
-    emailIsValid: boolean,
-    licenseAck: boolean
-  }
+  private _sendToEmail: boolean;
 
   constructor(exportData: ExportData, datasetParams: Record<string, string>) {
     this._exportData = exportData;
     this._datasetParams = datasetParams;
+    this._sendToEmail = false;
     this._fileSelectState = new Set<string>();
     this._filePropertyState = {};
     for(let group of exportData.files) {
@@ -28,12 +23,6 @@ export class ExportDataHandler {
         this._filePropertyState[property.id] = new Set<string>(property.defaults);
       }
     }
-    this._detailsState = {
-      sendToEmail: false,
-      email: "",
-      emailIsValid: false,
-      licenseAck: false
-    };
   }
 
   get exportData(): ExportData {
@@ -66,6 +55,10 @@ export class ExportDataHandler {
     }
   }
 
+  public filesSelected(): boolean {
+    return this._fileSelectState.size > 0;
+  }
+
   protected estimateNumFiles() {
     let numFiles = 0;
     for(let group of this._exportData.files) {
@@ -91,48 +84,19 @@ export class ExportDataHandler {
     return numFiles > ExportDataHandler.IN_SITE_EXPORT_MAX;
   }
 
-  public canExport() {
-    return this._detailsState.emailIsValid && this._detailsState.licenseAck && this._fileSelectState.size > 0 && (!this.requireEmailExport() || this._detailsState.sendToEmail);
-  }
-
   
   // --- sendToEmail ---
   get sendToEmail(): boolean {
-    return this._detailsState.sendToEmail;
+    return this._sendToEmail;
   }
 
   set sendToEmail(value: boolean) {
-    this._detailsState.sendToEmail = value;
+    this._sendToEmail = value;
   }
 
-  // --- email ---
-  get email(): string {
-    return this._detailsState.email;
-  }
 
-  set email(value: string) {
-    this._detailsState.email = value;
-  }
 
-  // --- emailIsValid ---
-  get emailIsValid(): boolean {
-    return this._detailsState.emailIsValid;
-  }
-
-  set emailIsValid(value: boolean) {
-    this._detailsState.emailIsValid = value;
-  }
-
-  // --- licenseAck ---
-  get licenseAck(): boolean {
-    return this._detailsState.licenseAck;
-  }
-
-  set licenseAck(value: boolean) {
-    this._detailsState.licenseAck = value;
-  }
-
-  protected getExportPackageGroupDetails() {
+  public getExportPackageGroupDetails() {
     let data: any = {
       fileData: [],
       params: this._datasetParams
@@ -171,15 +135,6 @@ export class ExportDataHandler {
     return data;
   }
 
-  public getExportPackageData() {
-    let data: any = {
-      email: this._detailsState.email,
-      data: []
-    };
-    data.data.push(this.getExportPackageGroupDetails());
-    return data;
-  }
-
 }
 
 
@@ -213,8 +168,8 @@ export class ExportTimeseriesDataHandler extends ExportDataHandler {
     return this._timeseriesData.end;
   }
 
-  get periodUnit() {
-    return this._timeseriesData.unit;
+  get period() {
+    return this._timeseriesData.period;
   }
 
   
@@ -246,7 +201,7 @@ export class ExportTimeseriesDataHandler extends ExportDataHandler {
     return numPeriods * numFilesPerPeriod;
   }
 
-  protected override getExportPackageGroupDetails() {
+  public override getExportPackageGroupDetails() {
     let data = super.getExportPackageGroupDetails();
     let periodData = this._timeseriesData.period;
     let {unit, interval} = periodData;

@@ -54,10 +54,11 @@ export class DatetimeSelector {
   min = input<DateTime>();
   max = input<DateTime>();
   period = input.required<Period>();
+  label = input<string>("Select Date");
 
   date = model.required<DateTime>(); 
 
-  datePicker = viewChild.required<MatDatepicker<DateTime>>('datePicker');
+  datePicker = viewChild.required<MatDatepicker<DateTime>>("datePicker");
   dateControl: FormControl<DateTime|null> = new FormControl<DateTime|null>(null);
   
   showTime = computed(() => {

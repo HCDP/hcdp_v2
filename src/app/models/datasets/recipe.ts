@@ -27,6 +27,11 @@ export interface DataStreamRecipe {
   staticParams: Record<string, string>
 }
 
+export interface UnitSource {
+  source: string | UnitValue,
+  convertFrom?: UnitBase
+}
+
 export interface TimeseriesData {
   // static start and end dates in iso format
   range?: [string | null, string | null],
@@ -78,6 +83,7 @@ export interface DataOptions {
 }
 
 export interface DataRange {
+  units: UnitBase,
   standard: [number, number],
   extreme?: [number, number],
   limits: [number | null, number | null]
@@ -105,6 +111,8 @@ export interface TimeseriesSchemaData {
   },
   computeUnitConversionsFrom: UnitBase | null,
   datasetParams: Record<string, string>,
+  // need to arrange units, streams, and layers into groups
+  unitSource: UnitSource,
   streams: DataStreamRecipe[],
   options: DataOptions,
   timeseries: TimeseriesData,

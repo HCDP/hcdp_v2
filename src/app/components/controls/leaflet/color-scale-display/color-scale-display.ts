@@ -16,14 +16,8 @@ export class ColorScaleDisplay {
     const diff = max - min;
 
     const colors = scale.getColors();
-    const samples: string[] = [];
-    const steps = 15;
-
-    for (let i = 0; i <= steps; i++) {
-      const idx = Math.min(Math.floor((i / steps) * colors.length), colors.length - 1);
-      samples.push(colors[idx].css());
-    }
-    const gradient = `linear-gradient(to bottom, ${samples.join(', ')})`;
+    const cssColors: string[] = colors.map((color: chroma.Color) => color.css());
+    const gradient = `linear-gradient(to top, ${cssColors.join(', ')})`;
 
     const labels = [
       `+${max.toFixed(1)}`,

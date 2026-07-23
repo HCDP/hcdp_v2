@@ -21,3 +21,22 @@
   justify-content: space-between;
   width: 100%;
 }
+
+section {
+  margin-bottom: 30px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.email-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.email-header h3 {
+  margin: 0; 
+}

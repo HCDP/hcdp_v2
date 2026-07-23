@@ -19,19 +19,9 @@ type ImageHeader = {
   cellYSize:  number,
 };
 
-type BandData = {
-  values: [number, number][],
-  stats: BandStats
-};
+type BandData = [number, number][];
 
 type Bands = {[bandName: string]: BandData};
-
-type BandStats = {
-  min: number,
-  max: number,
-  mean: number,
-  stddev: number
-};
 
 async function processArrayBufferGeotiffData(buffer: ArrayBuffer, customNoData?: number, bands?: number[], images?: number[]): Promise<Images | null> {
   let imageData: Images = [];
@@ -73,8 +63,6 @@ async function processArrayBufferGeotiffData(buffer: ArrayBuffer, customNoData?:
       
       //package data
       for(let band of bands) {
-        let min: number = Infinity;
-        let max: number = -Infinity;
         let dataAcc: number = 0;
         let raster: geotiff.TypedArray = <geotiff.TypedArray>rasters[band];
         if(raster == undefined) {
@@ -89,40 +77,9 @@ async function processArrayBufferGeotiffData(buffer: ArrayBuffer, customNoData?:
             let valuePair: [number, number] = [valueIndex, value];
             values.push(valuePair);
             dataAcc += value;
-            if(value < min) {
-              min = value;
-            }
-            if(value > max) {
-              max = value;
-            }
           }
         }
-        let mean: number = NaN;
-        let stddev: number = NaN;
-        if(values.length > 0) {
-          mean = dataAcc / values.length;
-          stddev = 0;
-          for(let valuePair of values) {
-            let value = valuePair[1];
-            stddev += Math.pow(value - mean, 2)
-          }
-          stddev /= values.length;
-          stddev = Math.sqrt(stddev);
-        }
-        else {
-          min = NaN;
-          max = NaN;
-        }
-        
-        bandMap[band] = {
-          values,
-          stats: {
-            min,
-            max,
-            mean,
-            stddev
-          }
-        }
+        bandMap[band] = values;
       }
       imageData.push({
         header,

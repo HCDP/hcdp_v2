@@ -29,11 +29,13 @@
       <div class="custom-inputs-container" [class.disabled]="activePreset() !== 'custom'">
         
         <div class="bound-group">
-          <mat-checkbox [checked]="lockMin()" 
-                        (change)="lockMin.set($event.checked)" 
-                        [disabled]="activePreset() !== 'custom'">
-            Lock Min to Map
-          </mat-checkbox>
+          @if(mapRange) {
+            <mat-checkbox [checked]="lockMin()" 
+              (change)="lockMin.set($event.checked)" 
+              [disabled]="activePreset() !== 'custom'">
+              Lock Min to Map
+            </mat-checkbox>
+          }
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <mat-label>Low Value</mat-label>
             <input matInput type="number" 
@@ -44,11 +46,13 @@
         </div>
 
         <div class="bound-group">
-          <mat-checkbox [checked]="lockMax()" 
-                        (change)="lockMax.set($event.checked)" 
-                        [disabled]="activePreset() !== 'custom'">
-            Lock Max to Map
-          </mat-checkbox>
+          @if(mapRange) {
+            <mat-checkbox [checked]="lockMax()" 
+              (change)="lockMax.set($event.checked)" 
+              [disabled]="activePreset() !== 'custom'">
+              Lock Max to Map
+            </mat-checkbox>
+          }
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <mat-label>High Value</mat-label>
             <input matInput type="number" 
@@ -61,6 +65,9 @@
       </div>
 
       <div class="checkbox-section">
+        <mat-checkbox [checked]="reverseColorScale()" (change)="reverseColorScale.set($event.checked)" color="primary">
+          Reverse Color Scale
+        </mat-checkbox>
         <mat-checkbox [checked]="usePseudoLog()" (change)="usePseudoLog.set($event.checked)" color="primary">
           Use Pseudo-log Scaling
         </mat-checkbox>

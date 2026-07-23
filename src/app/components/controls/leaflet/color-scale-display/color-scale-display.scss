@@ -10,6 +10,10 @@
     height: 100%;
     border: 1px solid rgba(0, 0, 0, 0.2);
     border-radius: 4px;
+    
+    /* Add these two lines */
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
   }
 
   .scale-labels {

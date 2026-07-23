@@ -41,6 +41,7 @@ export class MapScaleConfig {
   selectedScheme = signal<ColorScheme>(this.mapState.colorScheme);
   activePreset = signal<DataRangeType>(this.mapState.dataRangeType);
   usePseudoLog = signal<boolean>(this.mapState.usePseudoLog);
+  reverseColorScale = signal<boolean>(this.mapState.reverseColorScale);
 
   lockMin = signal<boolean>(this.mapState.config.range[0] === null);
   lockMax = signal<boolean>(this.mapState.config.range[1] === null);
@@ -61,7 +62,7 @@ export class MapScaleConfig {
     }
 
     let domainScale = this.usePseudoLog() ? (value: number) => this.mapState.pseudoLog(value) : undefined;
-    return this.colorStore.getColorScale(this.selectedScheme(), range, this.mapState.reverseColorScale, domainScale);
+    return this.colorStore.getColorScale(this.selectedScheme(), range, this.reverseColorScale(), domainScale);
   });
 
   get customRangeLow() {
@@ -113,10 +114,9 @@ export class MapScaleConfig {
   }
 
   saveAndClose() {
-
     const newConfig: ScaleConfigurationData = {
       color: this.selectedScheme(),
-      reverse: this.mapState.reverseColorScale, 
+      reverse: this.reverseColorScale(), 
       usePseudoLog: this.usePseudoLog(),
       dataRangeType: this.activePreset(),
       range: [this.lockMin() ? null : this.customLow(), this.lockMax() ? null : this.customHigh()]

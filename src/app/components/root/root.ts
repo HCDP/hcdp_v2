@@ -60,10 +60,6 @@ export class Root implements AfterViewInit {
   });
 
 
-  
-
-
-
   constructor() {
 
   }
@@ -72,15 +68,20 @@ export class Root implements AfterViewInit {
     // Watch for screen size changes and update the sidenav
     this.breakpointObserver.observe(Breakpoints.Handset)
     .subscribe(result => {
-      let isHandset = result.matches;
-      if(isHandset) {
-        this.sidenav().mode = "over";
-        this.sidenav().close(); // close on mobile by default
-      } 
-      else {
-        this.sidenav().mode = "side";
-        this.sidenav().open(); // open and pin to side on desktop
-      }
+      
+      // Defer the Material state changes until after the view is fully settled
+      setTimeout(() => {
+        let isHandset = result.matches;
+        if(isHandset) {
+          this.sidenav().mode = "over";
+          this.sidenav().close(); // close on mobile by default
+        } 
+        else {
+          this.sidenav().mode = "side";
+          this.sidenav().open(); // open and pin to side on desktop
+        }
+      }, 0);
+      
     });
   }
 }
