@@ -1,4 +1,4 @@
-import { Component, effect, ElementRef, inject, input, model, viewChild } from '@angular/core';
+import { Component, effect, ElementRef, inject, input, model, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { HCDPStationDataManager, StationData } from '../../../models/datasets/stations';
@@ -8,6 +8,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
   selector: 'app-station-table',
   imports: [MatTableModule, MatSortModule, MatTooltipModule],
   templateUrl: './station-table.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './station-table.scss',
 })
 export class StationTable {

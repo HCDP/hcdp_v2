@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ViewChild, inject, computed, ResourceRef, resource, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ViewChild, inject, computed, ResourceRef, resource, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { VisualizationContainer } from '../visualization-container/visualization-container.js';
 import { ExportContainer } from '../export-container/export-container.js';
 import { Sidebar } from "../menus/sidebar/sidebar.js";
@@ -16,6 +16,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
   selector: 'app-root',
   imports: [VisualizationContainer, Sidebar, MatSidenavModule, Topbar, ExportContainer, MatProgressSpinnerModule],
   templateUrl: './root.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './root.scss',
 })
 export class Root implements AfterViewInit {

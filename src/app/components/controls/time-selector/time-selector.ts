@@ -1,4 +1,4 @@
-import { Component, model, computed } from '@angular/core';
+import { Component, model, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatMenuModule } from '@angular/material/menu';
@@ -35,6 +35,7 @@ import { provideLuxonDateAdapter } from '@angular/material-luxon-adapter';
     provideNgxMask()
   ],
   templateUrl: './time-selector.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './time-selector.scss',
 })
 export class TimeSelector {

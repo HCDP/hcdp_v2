@@ -1,4 +1,4 @@
-import { Component, output, signal } from '@angular/core';
+import { Component, output, signal, ChangeDetectionStrategy } from '@angular/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
@@ -20,6 +20,7 @@ import { MapLocation } from '../../../models/datasets/locationManager';
     ReactiveFormsModule
   ],
   templateUrl: './location-selector.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './location-selector.scss',
 })
 export class LocationSelector {

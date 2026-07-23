@@ -1,4 +1,4 @@
-import { Component, Injectable, input, viewChild, computed, inject, model, effect, untracked } from '@angular/core';
+import { Component, Injectable, input, viewChild, computed, inject, model, effect, untracked, ChangeDetectionStrategy } from '@angular/core';
 import { MatDatepickerModule, MatCalendarHeader, MatCalendarView, MatDatepicker } from '@angular/material/datepicker';
 import { MatInputModule } from '@angular/material/input';
 import { FormControl } from '@angular/forms';
@@ -43,6 +43,7 @@ export const DYNAMIC_FORMATS = {
   imports: [MatDatepickerModule, MatInputModule, ReactiveFormsModule, MatFormFieldModule, MatTimepickerModule, TimeSelector],
   templateUrl: './datetime-selector.html',
   styleUrl: './datetime-selector.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   providers: [
     { provide: DateAdapter, useClass: DynamicLuxonAdapter, deps: [MAT_DATE_LOCALE] },
     { provide: MAT_DATE_FORMATS, useValue: DYNAMIC_FORMATS }

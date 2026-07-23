@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { DataRangeType, MapState, ScaleConfigurationData } from '../../models/datasets/mapState';
@@ -26,6 +26,7 @@ import { ColorScaleDisplay } from '../../components/controls/leaflet/color-scale
     ColorScaleDisplay
   ],
   templateUrl: './map-scale-config.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './map-scale-config.scss'
 })
 export class MapScaleConfig {

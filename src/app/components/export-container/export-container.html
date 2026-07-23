@@ -56,7 +56,7 @@
                   <div class="file-header">
                     <span class="file-label">{{ file.label }}</span>
                     <span class="file-badge"
-                      [matTooltip]="exportDataConfig().fileTypes[file.fileType]?.description">
+                      [matTooltip]="$safeNavigationMigration(exportDataConfig().fileTypes[file.fileType]?.description)">
                       {{ exportDataConfig().fileTypes[file.fileType]?.ext }}
                     </span>
                   </div>

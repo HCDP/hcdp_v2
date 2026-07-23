@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, inject, signal, computed, viewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, inject, signal, computed, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { httpResource } from '@angular/common/http';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatSidenavModule, MatSidenav } from '@angular/material/sidenav';
@@ -14,6 +14,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
   standalone: true,
   imports: [MatExpansionModule, MatSidenavModule, MatButtonModule, MatIconModule, MatListModule, RouterModule, MatProgressSpinnerModule],
   templateUrl: './sidebar.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './sidebar.scss',
 })
 export class Sidebar implements OnInit {

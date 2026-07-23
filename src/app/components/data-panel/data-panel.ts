@@ -1,4 +1,4 @@
-import { Component, computed, ElementRef, HostBinding, inject, input, OnInit, signal } from '@angular/core';
+import { Component, computed, ElementRef, HostBinding, inject, input, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { MatTabsModule } from '@angular/material/tabs';
 import { DynamicTabTemplate } from "../../directives/dynamic-tab-template.js"
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -10,6 +10,7 @@ import { ScrollDispatcher } from '@angular/cdk/scrolling';
   selector: 'app-data-panel',
   imports: [ MatTabsModule, DynamicTabTemplate, MatProgressSpinnerModule, MatButtonModule ],
   templateUrl: './data-panel.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './data-panel.scss',
 })
 export class DataPanel implements OnInit {

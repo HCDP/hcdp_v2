@@ -1,4 +1,4 @@
-import { Component, computed, effect, input } from '@angular/core';
+import { Component, computed, effect, input, ChangeDetectionStrategy } from '@angular/core';
 import { LineSeriesOption, graphic, EChartsOption } from 'echarts';
 import { DateTime } from 'luxon';
 import { Period } from '../../../models/datasets/time';
@@ -10,6 +10,7 @@ import * as echarts from 'echarts';
   imports: [NgxEchartsDirective],
   templateUrl: './timeseries-chart.html',
   styleUrl: './timeseries-chart.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   providers: [
     {
       provide: NGX_ECHARTS_CONFIG,

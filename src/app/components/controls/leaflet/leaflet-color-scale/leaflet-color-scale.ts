@@ -1,4 +1,4 @@
-import { Component, effect, inject, input, output, ElementRef, viewChild, signal } from '@angular/core';
+import { Component, effect, inject, input, output, ElementRef, viewChild, signal, ChangeDetectionStrategy } from '@angular/core';
 import { MapState } from '../../../../models/datasets/mapState';
 import { ColorStore } from '../../../../services/colors/color-store';
 import { Control, ControlPosition, Map } from 'leaflet';
@@ -14,6 +14,7 @@ import { ColorScaleDisplay } from '../color-scale-display/color-scale-display';
   selector: 'app-leaflet-color-scale',
   imports: [MatButtonModule, MatIconModule, ColorScaleDisplay],
   templateUrl: './leaflet-color-scale.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './leaflet-color-scale.scss',
 })
 export class LeafletColorScale {

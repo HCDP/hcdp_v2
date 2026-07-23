@@ -1,4 +1,4 @@
-import { afterNextRender, Component, computed, effect, ElementRef, inject, Injector, input, signal, viewChild, untracked, EffectRef, ResourceRef } from '@angular/core';
+import { afterNextRender, Component, computed, effect, ElementRef, inject, Injector, input, signal, viewChild, untracked, EffectRef, ResourceRef, ChangeDetectionStrategy } from '@angular/core';
 import * as L from "leaflet";
 import { LeafletCompassRose, RoseControlOptions } from "../controls/leaflet/leaflet-compass-rose/leaflet-compass-rose";
 import { LeafletImageExport } from '../controls/leaflet/leaflet-image-export/leaflet-image-export';
@@ -19,6 +19,7 @@ import { DataStreamManager } from '../../models/datasets/dataStreams';
   selector: 'app-map-component',
   imports: [LeafletCompassRose, LeafletImageExport, LeafletColorScale, MatSliderModule],
   templateUrl: './map-component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './map-component.scss',
 })
 export class MapComponent {

@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, resource, signal, untracked } from '@angular/core';
+import { Component, computed, effect, inject, resource, signal, untracked, ChangeDetectionStrategy } from '@angular/core';
 import { TabBase } from "../tab-base/tab-base";
 import { TimeseriesChart } from '../../controls/timeseries-chart/timeseries-chart';
 import { HCDPDatasetTimeseriesVisualization } from '../../../models/datasets/dataset';
@@ -18,6 +18,7 @@ import { TabManager } from '../../../models/datasets/tabManager';
   selector: 'app-timeseries',
   imports: [ TimeseriesChart, MatProgressSpinnerModule, DecimalPipe, MatTableModule, MatCardModule ],
   templateUrl: './timeseries.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './timeseries.scss'
 })
 export class Timeseries extends TabBase {

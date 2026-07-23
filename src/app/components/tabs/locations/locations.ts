@@ -1,4 +1,4 @@
-import { Component, resource, computed, signal, effect, untracked } from '@angular/core';
+import { Component, resource, computed, signal, effect, untracked, ChangeDetectionStrategy } from '@angular/core';
 import { MatTableModule } from '@angular/material/table';
 import { MatSortModule } from '@angular/material/sort';
 import { TabBase } from "../tab-base/tab-base";
@@ -14,6 +14,7 @@ import { StationData } from '../../../models/datasets/stations';
   selector: 'app-locations',
   imports: [MatTableModule, MatSortModule, MatProgressSpinnerModule, StationTable, StationFilters, LocationSelector],
   templateUrl: './locations.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './locations.scss',
 })
 export class Locations extends TabBase {
