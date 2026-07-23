@@ -457,7 +457,7 @@ export class MapComponent {
 
 
           }
-          else {
+          else if(!selectedLoc) {
             mapInstance.closePopup();
           }
         }

@@ -22,7 +22,6 @@
   },
   "private": true,
   "dependencies": {
-    "@angular/animations": "^22.0.8",
     "@angular/cdk": "^22.0.6",
     "@angular/common": "^22.0.8",
     "@angular/compiler": "^22.0.8",
@@ -55,14 +54,14 @@
     "@types/luxon": "^3.7.1",
     "istanbul-lib-instrument": "^6.0.3",
     "jasmine-core": "~5.9.0",
+    "lmdb": "^3.5.6",
     "typescript": "~6.0.3",
     "vitest": "^4.0.8"
   },
   "allowScripts": {
-    "@parcel/watcher@2.6.0": true,
-    "esbuild@0.27.7": true,
-    "esbuild@0.28.1": true,
-    "lmdb@3.5.1": true,
-    "msgpackr-extract@3.0.3": true
+    "@parcel/watcher": true,
+    "esbuild": true,
+    "lmdb": true,
+    "msgpackr-extract": true
   }
 }
