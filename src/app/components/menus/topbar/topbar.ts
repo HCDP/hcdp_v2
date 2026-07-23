@@ -1,4 +1,4 @@
-import { Component, Input, effect, inject, input } from '@angular/core';
+import { Component, Input, effect, inject, input, ChangeDetectionStrategy } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule}  from '@angular/material/icon';
 import { MatSidenav } from '@angular/material/sidenav';
@@ -12,6 +12,7 @@ import { MatExpansionModule } from '@angular/material/expansion';
   selector: 'app-topbar',
   imports: [MatButtonModule, MatIconModule, MatExpansionModule],
   templateUrl: './topbar.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './topbar.scss',
 })
 export class Topbar {

@@ -1,4 +1,4 @@
-import { Component, ElementRef, viewChild, input } from '@angular/core';
+import { Component, ElementRef, viewChild, input, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from "@angular/common"
 import { DataPanel } from "../data-panel/data-panel";
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -9,6 +9,7 @@ import { MapComponent } from '../map-component/map-component';
   selector: 'app-visualization-container',
   imports: [ DataPanel, CommonModule, MatProgressSpinnerModule, MapComponent ],
   templateUrl: './visualization-container.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './visualization-container.scss',
 })
 export class VisualizationContainer {

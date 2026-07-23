@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, linkedSignal, signal, ChangeDetectionStrategy } from '@angular/core';
 import { HCDPDatasetVisualization, HCDPVisSubtypes } from '../../models/datasets/dataset';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
@@ -47,6 +47,7 @@ import { FormsModule } from '@angular/forms';
     provideLuxonDateAdapter()
   ],
   templateUrl: './export-container.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './export-container.scss',
 })
 export class ExportContainer {

@@ -1,4 +1,4 @@
-import { Component, computed } from '@angular/core';
+import { Component, computed, ChangeDetectionStrategy } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { TabBase } from '../tab-base/tab-base';
 import { DatetimeControl } from '../../controls/datetime-control/datetime-control';
@@ -12,6 +12,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
   selector: 'app-dataset-options',
   imports: [ DatetimeControl, MatButtonToggleModule, MatTooltipModule, MatIconModule, MatProgressSpinnerModule ],
   templateUrl: './dataset-options.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './dataset-options.scss',
 })
 export class DatasetOptions extends TabBase {

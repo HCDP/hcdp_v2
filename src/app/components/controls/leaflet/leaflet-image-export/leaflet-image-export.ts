@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild, input, effect, viewChild } from '@angular/core';
+import { Component, ElementRef, ViewChild, input, effect, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import {Map as LMap, Control, DomUtil, ControlPosition} from 'leaflet';
 import * as rasterizeHTML from 'rasterizehtml';
 
@@ -6,6 +6,7 @@ import * as rasterizeHTML from 'rasterizehtml';
   selector: 'app-leaflet-image-export',
   imports: [],
   templateUrl: './leaflet-image-export.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './leaflet-image-export.scss',
 })
 export class LeafletImageExport {

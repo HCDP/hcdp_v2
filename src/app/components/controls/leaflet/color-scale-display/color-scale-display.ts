@@ -1,10 +1,11 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, input, ChangeDetectionStrategy } from '@angular/core';
 import { ColorScale } from '../../../../models/leaflet/colors';
 
 @Component({
   selector: 'app-color-scale-display',
   imports: [],
   templateUrl: './color-scale-display.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './color-scale-display.scss',
 })
 export class ColorScaleDisplay {

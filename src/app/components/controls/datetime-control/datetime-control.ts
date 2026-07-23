@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, model, OnInit, Signal } from '@angular/core';
+import { Component, computed, inject, input, model, OnInit, Signal, ChangeDetectionStrategy } from '@angular/core';
 import { DatetimeSelector } from '../datetime-selector/datetime-selector';
 import { AssetManager } from '../../../services/util/asset-manager';
 import { MatIconModule, MatIconRegistry } from "@angular/material/icon";
@@ -16,6 +16,7 @@ import { DateTime } from 'luxon';
     DatetimeSelector
   ],
   templateUrl: './datetime-control.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './datetime-control.scss',
 })
 export class DatetimeControl implements OnInit {

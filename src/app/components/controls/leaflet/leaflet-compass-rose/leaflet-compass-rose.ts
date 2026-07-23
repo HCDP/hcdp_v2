@@ -1,10 +1,11 @@
-import { Component, effect, ElementRef, input, Input, viewChild } from '@angular/core';
+import { Component, effect, ElementRef, input, Input, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { Control, DomUtil, Map, ControlOptions } from "leaflet";
 
 @Component({
   selector: 'app-leaflet-compass-rose',
   imports: [],
   templateUrl: './leaflet-compass-rose.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './leaflet-compass-rose.scss',
 })
 export class LeafletCompassRose {

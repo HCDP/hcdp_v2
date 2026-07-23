@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { GlobalPreferenceManager } from '../../services/state/global-preference-manager';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogRef, MatDialogModule } from '@angular/material/dialog';
@@ -24,6 +24,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     MatTooltipModule
   ],
   templateUrl: './global-settings.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './global-settings.scss',
 })
 export class GlobalSettings {

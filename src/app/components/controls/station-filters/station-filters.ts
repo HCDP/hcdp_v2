@@ -1,4 +1,4 @@
-import { Component, input, signal, computed } from '@angular/core';
+import { Component, input, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -28,6 +28,7 @@ import { HCDPStationDataManager, StationData, StationFilter } from '../../../mod
     MatDividerModule
   ],
   templateUrl: './station-filters.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './station-filters.scss',
 })
 export class StationFilters {

@@ -13,5 +13,13 @@
 , "src/app/components/tabs/timeseries/timeseries.old"  ],
   "exclude": [
     "src/**/*.spec.ts"
-  ]
+  ],
+  "angularCompilerOptions": {
+    "extendedDiagnostics": {
+      "checks": {
+        "nullishCoalescingNotNullable": "suppress",
+        "optionalChainNotNullable": "suppress"
+      }
+    }
+  }
 }
