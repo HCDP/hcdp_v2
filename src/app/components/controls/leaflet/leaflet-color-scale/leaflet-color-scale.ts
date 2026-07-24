@@ -23,6 +23,7 @@ export class LeafletColorScale {
 
   map = input.required<Map>();
   mapState = input.required<MapState>();
+  label = input.required<string>();
   dynamicRange = input<[number, number] | undefined>(undefined);
   position = input<ControlPosition>("bottomright");
 

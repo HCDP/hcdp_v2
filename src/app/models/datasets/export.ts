@@ -154,10 +154,16 @@ export class ExportTimeseriesDataHandler extends ExportDataHandler {
     super(exportData, datasetParams);
     this._timeseriesData = timeseriesData;
 
+    let defaultStart = timeseriesData.jumpBackward(timeseriesData.end);
+    if(defaultStart === null) {
+      defaultStart = timeseriesData.start;
+    }
+
     this._dateState = {
-      start: timeseriesData.start,
+      start: defaultStart,
       end: timeseriesData.end
     }
+    console.log(this._dateState.start.toISO());
   }
 
   get startDate() { 

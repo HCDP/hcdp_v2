@@ -3,11 +3,12 @@
   <button mat-icon-button class="config-btn" (click)="openConfig($event)">
     <mat-icon>settings</mat-icon>
   </button>
+  <div class="scale-header">
+    {{label()}}
+  </div>
   <div class="scale-body">
     @if(activeScaleObj()) {
       <app-color-scale-display [colorScale]="activeScaleObj()!"></app-color-scale-display>
     }
   </div>
-
-  
 </div>

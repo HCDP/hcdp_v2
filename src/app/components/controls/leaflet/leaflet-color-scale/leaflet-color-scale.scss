@@ -1,62 +1,28 @@
 .color-scale-container {
-  padding: 10px;
+  padding: 10px 4px 10px 10px; // Top: 10px, Right: 4px (removes excess), Bottom: 10px, Left: 10px
   padding-top: 0;
   background: rgba(180, 185, 195, 0.7); // Semi-transparent grey panel background
-
   border-radius: 16px;
-  font-family: Arial, sans-serif;
-  color: #000;
   pointer-events: auto;
-  width: max-content;
+  max-width: 100px;
+  width: fit-content; // Allows the container to tightly hug the contents
 
   .scale-header {
     font-weight: bold;
-    font-size: 15px;
+    font-size: 13px;
     margin-bottom: 12px;
     text-align: left;
+    margin: 0;
   }
 
   .scale-body {
     display: flex;
     align-items: stretch;
+    justify-content: center;
+    margin: 7px;
     gap: 2px;
     height: 150px; // Standard height for the vertical display stack
 
-    .scale-gradient-bar {
-      width: 28px;
-      height: 100%;
-      border: 1px solid rgba(0, 0, 0, 0.2);
-    }
-
-    .scale-labels {
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      height: 100%;
-      font-size: 13px;
-      font-weight: 500;
-
-      .scale-label-row {
-        display: flex;
-        align-items: center;
-        line-height: 0;
-        transform: translateY(-1px);
-
-        // Nudges top and bottom text slightly inward so they stay aligned with the bar caps
-        &:first-child { transform: translateY(6px); }
-        &:last-child { transform: translateY(-6px); }
-
-        .label-tick {
-          margin-right: 2px;
-          font-weight: bold;
-          color: #333;
-        }
-
-        .label-text {
-          white-space: nowrap;
-        }
-      }
-    }
   }
 }
 

@@ -28,11 +28,11 @@ export class HCDPDataset {
   private _active: WritableSignal<boolean> = signal(false);
 
   constructor(definition: HCDPDatasetDefinition) {
-    const { id, label, description, layout } = definition;
-    this._data = this.initializeData(id, label, description, layout);
+    const { id, label, datatypeLabel, description, layout } = definition;
+    this._data = this.initializeData(id, label, datatypeLabel, description, layout);
   }
 
-  private async initializeData(id: string, label: string , description: string, visLayout: HCDPLayout) {
+  private async initializeData(id: string, label: string , datatypeLabel: string, description: string, visLayout: HCDPLayout) {
     let { schema, data } = visLayout;
     switch(schema) {
       case "timeseries": {
@@ -40,11 +40,11 @@ export class HCDPDataset {
         let { datasetParams, timeseries } = layout;
         let range = await this.getDatasetRange(timeseries, datasetParams);
         return runInInjectionContext(this.injector, () => {
-          return new HCDPDatasetTimeseriesVisualization(id, label, description, layout, { range }, this._active.asReadonly());
+          return new HCDPDatasetTimeseriesVisualization(id, label, datatypeLabel, description, layout, { range }, this._active.asReadonly());
         });
       }
       case "static": {
-        return new HCDPDatasetStaticVisualization("static", id, label, description, [], this._active.asReadonly()); 
+        return new HCDPDatasetStaticVisualization("static", id, label, datatypeLabel, description, [], this._active.asReadonly()); 
       }
     }
   }
@@ -102,16 +102,18 @@ export abstract class HCDPDatasetVisualization {
 
   private _id: string;
   private _label: string;
+  private _datatypeLabel: string;
   private _description: string;
   private _tabManager: TabManager;
   private _active: Signal<boolean>;
 
-  constructor(type: string, id: string, label: string, description: string, tabs: Tab[], active: Signal<boolean>) {
+  constructor(type: string, id: string, label: string, datatypeLabel: string, description: string, tabs: Tab[], active: Signal<boolean>) {
     this.type = type;
     this._tabManager = new TabManager(tabs);
     this._active = active;
     this._id = id;
     this._label = label;
+    this._datatypeLabel = datatypeLabel;
     this._description = description;
   }
 
@@ -129,6 +131,10 @@ export abstract class HCDPDatasetVisualization {
 
   get label() {
     return this._label;
+  }
+
+  get datatypeLabel() {
+    return this._datatypeLabel;
   }
 
   get description() {
@@ -154,13 +160,13 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
   private _unitData: UnitData;
   
 
-  constructor(id: string, label: string, description: string, layout: TimeseriesSchemaData, initData: {range: [DateTime, DateTime]}, active: Signal<boolean>) {
+  constructor(id: string, label: string, datatypeLabel: string, description: string, layout: TimeseriesSchemaData, initData: {range: [DateTime, DateTime]}, active: Signal<boolean>) {
     let tabs: Tab[] = [
       new Tab("options", "Options", DatasetOptions),
       new Tab("locations", "Locations", Locations),
-      new Tab("timeseries", "Timeseries and Stats", Timeseries)
+      new Tab("timeseries", "Charts", Timeseries)
     ];
-    super("timeseries", id, label, description, tabs, active);
+    super("timeseries", id, label, datatypeLabel, description, tabs, active);
     
     let { datasetParams, streams, timeseries, options, mapLayers, exportData, unitSource } = layout;
     let { range } = initData;
@@ -256,6 +262,28 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
 
   get dateChunks() {
     return this._dateChunks;
+  }
+
+  get units() {
+    return this._unitData.units;
+  }
+
+  valueLabel(includePeriod: boolean = false) {
+    let datatype = this.datatypeLabel;
+    let unit = this.units().shortName;
+
+    let label = "";
+    if(includePeriod) {
+      let period = this.timeseriesData.period.getLabel("data");
+      period = `${period.charAt(0).toUpperCase()}${period.slice(1)}`;
+      label += `${period} `
+    }
+    label += `${datatype}`;
+    if(unit) {
+      label += ` (${unit})`;
+    }
+    
+    return label;
   }
 }
 

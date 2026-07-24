@@ -78,10 +78,10 @@ export class ExportContainer {
   });
 
   startDate = linkedSignal<DateTime>(() => {
-    return this.tsHandler()?.startDate ?? DateTime.now();
+    return this.tsHandler()?.checkStartDateState() ?? DateTime.now();
   });
   endDate = linkedSignal<DateTime>(() => {
-    return this.tsHandler()?.endDate ?? DateTime.now();
+    return this.tsHandler()?.checkEndDateState() ?? DateTime.now();
   });
 
 

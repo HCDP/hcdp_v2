@@ -5,6 +5,7 @@ import { HCDPTimeseriesData } from "./timeseries";
 export interface HCDPDatasetDefinition {
   id: string,
   label: string,
+  datatypeLabel: string,
   description: string,
   layout: HCDPLayout
 };
@@ -109,7 +110,6 @@ export interface TimeseriesSchemaData {
     experimental: boolean,
     usage: string
   },
-  computeUnitConversionsFrom: UnitBase | null,
   datasetParams: Record<string, string>,
   // need to arrange units, streams, and layers into groups
   unitSource: UnitSource,
@@ -169,7 +169,6 @@ export interface StaticSchemaData {
     experimental: boolean,
     usage: string
   },
-  computeUnitConversionsFrom: UnitBase | null,
   datasetParams: Record<string, string>,
   streams: DataStreamRecipe[],
   options: DataOptions,

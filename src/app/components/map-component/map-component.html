@@ -19,6 +19,7 @@
   <app-leaflet-color-scale
     [map]="readyMap"
     [mapState]="typedDataset().mapState"
+    [label]="valueLabel()"
     [dynamicRange]="mapRange()" 
     (colorScale)="setColorScale($any($event))">
   </app-leaflet-color-scale>

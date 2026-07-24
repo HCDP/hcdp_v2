@@ -1,9 +1,10 @@
-import { Component, computed, effect, input, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, input, ChangeDetectionStrategy, inject } from '@angular/core';
 import { LineSeriesOption, graphic, EChartsOption } from 'echarts';
 import { DateTime } from 'luxon';
 import { Period } from '../../../models/datasets/time';
 import { NgxEchartsDirective, NGX_ECHARTS_CONFIG } from 'ngx-echarts';
 import * as echarts from 'echarts';
+import { Configuration } from '../../../services/configuration/configuration';
 
 @Component({
   selector: 'app-timeseries-chart',
@@ -19,15 +20,15 @@ import * as echarts from 'echarts';
   ]
 })
 export class TimeseriesChart {
+  private config = inject(Configuration);
+
   period = input.required<Period>();
   dataStream = input.required<Map<DateTime, number> | null>();
 
   // Baseline options (Static, sets up axes/colors/styles)
   chartOptions: EChartsOption = this.initChartBase();
 
-  // --- THE BETTER WAY ---
-  // A computed signal that automatically derives the ECharts update payload
-  // anytime dataStream or period changes. No effect() needed!
+
   updateOptions = computed<EChartsOption>(() => {
     const rawMap = this.dataStream();
 
@@ -41,7 +42,7 @@ export class TimeseriesChart {
     const sortedEntries = Array.from(rawMap.entries())
       .map(([dt, val]) => [dt.toMillis(), val] as [number, number])
       .sort((a, b) => a[0] - b[0]);
-
+    
     const expectedIntervalMs = this.period().valueOf(); 
     const processedData: [number, number | null][] = [];
 
@@ -62,8 +63,15 @@ export class TimeseriesChart {
       }
     }
 
-    // 4. Return the merge payload
+    // set min zoom level to one period higher than ds interval
+    let minZoomSpan = this.period().getHigherOrder()?.valueOf();
+
     return {
+      dataZoom: [
+        {
+          minValueSpan: minZoomSpan
+        }
+      ],
       series: [{ data: processedData } as LineSeriesOption]
     };
   });
@@ -90,11 +98,6 @@ export class TimeseriesChart {
 
     return {
       animation: false,
-      title: {
-        text: 'Rainfall',
-        left: 'center',
-        textStyle: { color: textColor, fontSize: 16 }
-      },
       tooltip: {
         trigger: 'axis',
         axisPointer: { type: 'cross' }
@@ -122,7 +125,6 @@ export class TimeseriesChart {
       dataZoom: [{ type: 'inside', disabled: false, zoomOnMouseWheel: true, moveOnMouseMove: true, moveOnMouseWheel: false }],
       series: [
         {
-          name: 'Rainfall',
           type: 'line',
           symbol: 'none',
           data: [], 

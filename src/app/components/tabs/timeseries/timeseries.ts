@@ -13,10 +13,11 @@ import { DecimalPipe } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatCardModule } from '@angular/material/card';
 import { TabManager } from '../../../models/datasets/tabManager';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-timeseries',
-  imports: [ TimeseriesChart, MatProgressSpinnerModule, DecimalPipe, MatTableModule, MatCardModule ],
+  imports: [ TimeseriesChart, MatProgressSpinnerModule, DecimalPipe, MatTableModule, MatCardModule, MatIconModule ],
   templateUrl: './timeseries.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './timeseries.scss'
@@ -34,6 +35,11 @@ export class Timeseries extends TabBase {
     // requires dataset to be timeseries vis
     let dataset = this.dataset() as HCDPDatasetTimeseriesVisualization;
     return dataset;
+  });
+
+  subtext = computed(() => {
+    let datatype = this.castDataset();
+    return datatype.valueLabel();
   });
 
   tabManager = computed(() => {
@@ -65,10 +71,10 @@ export class Timeseries extends TabBase {
     if (!data) return [];
 
     return [
-      { metric: 'Map Minimum', value: data.min },
-      { metric: 'Map Maximum', value: data.max },
-      { metric: 'Map Mean', value: data.mean },
-      { metric: 'Map Standard Deviation', value: data.stddev }
+      { metric: `Minimum`, value: data.min },
+      { metric: `Maximum`, value: data.max },
+      { metric: `Mean`, value: data.mean },
+      { metric: `Standard Deviation`, value: data.stddev }
     ];
   });
 
@@ -88,7 +94,7 @@ export class Timeseries extends TabBase {
 
         this.dataStream.update(current => {
           const updatedMap = current ? new Map(current) : new Map();
-          data.forEach((val, key) => updatedMap.set(key, val));
+          data.forEach((val, key) => updatedMap.set(key, val.toFixed(2)));
           return updatedMap;
         });
       });
@@ -169,9 +175,20 @@ export class Timeseries extends TabBase {
 
     effect(() => {
       let location = this.castDataset().locationManager.location();
+      
       if(!location) {
         this.timeseriesInfo.set(null);
         return;
+      }
+
+      let label: string;
+      if(location.type == "map") {
+        let { lat, lng } = location.location;
+        label = `${lat.toFixed(4)}, ${lng.toFixed(4)} Timeseries Data`;
+      }
+      else {
+        let { name, skn } = location.location;
+        label = `${name} (SKN: ${skn}) Timeseries Data`;
       }
 
       untracked(() => {
@@ -220,7 +237,7 @@ export class Timeseries extends TabBase {
         delete mergedParams.date
       }
       
-      let timeseriesInfo = new TimeseriesInfo(streamType, mergedParams);
+      let timeseriesInfo = new TimeseriesInfo(streamType, mergedParams, label);
       untracked(() => {
         let currentTimeseriesInfo = this.timeseriesInfo();
         if(currentTimeseriesInfo === null || !timeseriesInfo.equal(currentTimeseriesInfo)) {
@@ -235,10 +252,12 @@ export class Timeseries extends TabBase {
 class TimeseriesInfo {
   private _type: DataStreamType;
   private _params: Params
+  private _label: string;
 
-  constructor(type: DataStreamType, params: Params) {
+  constructor(type: DataStreamType, params: Params, label: string) {
     this._type = type;
     this._params = params;
+    this._label = label;
   }
 
   get type() {
@@ -247,6 +266,10 @@ class TimeseriesInfo {
 
   get params() {
     return this._params;
+  }
+
+  get label() {
+    return this._label;
   }
 
   public equal(compare: TimeseriesInfo): boolean {

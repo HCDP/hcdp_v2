@@ -70,6 +70,7 @@ export class HCDPTimeseriesData {
     let jumpDate = null;
     if(higherOrder) {
       jumpDate = higherOrder.subtract(intervals, date);
+      console.log(jumpDate.toISO());
       // round date to valid period and round out of range
       jumpDate = this.checkDate(jumpDate);
     }

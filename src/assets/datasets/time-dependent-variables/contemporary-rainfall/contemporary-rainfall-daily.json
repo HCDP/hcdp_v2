@@ -1,6 +1,7 @@
 {
   "id": "contemporary_daily_rainfall",
   "label": "Contemporary Daily Rainfall",
+  "datatypeLabel": "Rainfall",
   "description": "Daily rainfall from January 1 1990 to Previous day. These maps represent the amount of rainfall from midnight on the target day to midnight at the end of the day. Station rainfall data are interpolated using an automated optimized climate aided ordinary kriging methodology",
   "layout": {
     "schema": "timeseries",
@@ -8,7 +9,6 @@
       "warnings": {
         "experimental": true
       },
-      "computeUnitConversionsFrom": "mm",
       "datasetParams": {
         "location": "hawaii",
         "datatype": "rainfall",

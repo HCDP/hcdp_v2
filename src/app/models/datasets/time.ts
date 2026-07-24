@@ -152,9 +152,9 @@ export class Period {
     }
   }
 
-  add(intervals: number, date: DateTime) {
-    // round down so shift up one interval will snap to next interval up
-    let normalizedDate = this.round(date, "down");
+  add(intervals: number, date: DateTime, align: boolean = false) {
+    // if set to align, round down so shift up one interval will snap to next interval up
+    let normalizedDate = align ? this.round(date, "down") : date;
     // if calendar resets are used anchor point shifts, need to round after each interval
     if(this._options.type == "standard" || this._options.type == "unit") {
       for (let i = 0; i < intervals; i++) {
@@ -169,9 +169,9 @@ export class Period {
     return normalizedDate;
   }
 
-  subtract(intervals: number, date: DateTime) {
-    // round up so shift back one interval will snap to next interval down
-    let normalizedDate = this.round(date, "up");
+  subtract(intervals: number, date: DateTime, align: boolean = false) {
+    // if set to align, round up so shift back one interval will snap to next interval down
+    let normalizedDate = align ? this.round(date, "up") : date;
     // if calendar resets are used anchor point shifts, need to round after each interval
     if(this._options.type == "standard" || this._options.type == "unit") {
       for (let i = 0; i < intervals; i++) {

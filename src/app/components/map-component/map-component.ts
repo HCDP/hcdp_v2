@@ -35,6 +35,10 @@ export class MapComponent {
     return this.dataset().tabManager;
   });
 
+  valueLabel = computed(() => {
+    return this.typedDataset().valueLabel();
+  })
+
   readonly isSpinning = computed(() => {
     const dataset = this.typedDataset();
     if(!dataset || !dataset.dataStreams) return false;
