@@ -43,6 +43,7 @@ export const STANDARD_UNIT_PRECEDENT: TwoWayMap<StandardDateTimeUnit, number> = 
   ["year", 4]
 ]);
 
+export type FormatType = "ISO" | "locale";
 
 const MAX_CALENDAR_LIMITS: Record<DateTimeUnit, number> = {
   millisecond: 1000, // Rolls over to a second
@@ -104,7 +105,45 @@ export class Period {
     }
   }
 
-  formatDate(date: DateTime): string {
+  formatDate(date: DateTime, format: FormatType = "ISO"): string {
+    // locale format
+    if(format === "locale") {
+      let options: Intl.DateTimeFormatOptions;
+
+      switch(this._unit) {
+        case "year":
+        case "quarter":
+          options = { year: 'numeric' };
+          break;
+        case "month":
+          options = { year: 'numeric', month: 'short' };
+          break;
+        case "week":
+        case "day":
+          options = { year: 'numeric', month: 'short', day: 'numeric' };
+          break;
+        case "hour":
+          options = { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric' };
+          break;
+        case "minute":
+        case "second":
+          options = { 
+            year: 'numeric', month: 'short', day: 'numeric', 
+            hour: 'numeric', minute: '2-digit', second: '2-digit' 
+          };
+          break;
+        case "millisecond":
+          options = { 
+            year: 'numeric', month: 'short', day: 'numeric', 
+            hour: 'numeric', minute: '2-digit', second: '2-digit', 
+            fractionalSecondDigits: 3 
+          };
+          break;
+      }
+      return date.toLocaleString(options);
+    }
+
+    // ISO Format Logic
     switch(this._unit) {
       case "year":
       case "quarter": {
@@ -120,10 +159,10 @@ export class Period {
       case "hour":
       case "minute":
       case "second": {
-        return date.toFormat("yyyy-MM-ddThh:mm:ss");
+        return date.toFormat("yyyy-MM-dd'T'HH:mm:ss");
       }
       case "millisecond": {
-        return date.toFormat("yyyy-MM-ddThh:mm:ss.SSS");
+        return date.toFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
       }
     }
   }

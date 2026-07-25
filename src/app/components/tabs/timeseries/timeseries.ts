@@ -14,6 +14,8 @@ import { MatTableModule } from '@angular/material/table';
 import { MatCardModule } from '@angular/material/card';
 import { TabManager } from '../../../models/datasets/tabManager';
 import { MatIconModule } from '@angular/material/icon';
+import { OptionState } from '../../../models/datasets/stateController';
+import { Statistics } from '../../../models/general/stats';
 
 @Component({
   selector: 'app-timeseries',
@@ -28,13 +30,22 @@ export class Timeseries extends TabBase {
   apiHandler = inject(ApiHandler);
 
   dataStream = signal<Map<DateTime, number> | null>(null);
-
   timeseriesInfo = signal<TimeseriesInfo | null>(null);
+  graphStats = signal<{
+    metric: string;
+    value: number;
+  }[]>([]);
 
   castDataset = computed(() => {
     // requires dataset to be timeseries vis
     let dataset = this.dataset() as HCDPDatasetTimeseriesVisualization;
     return dataset;
+  });
+
+  date = computed(() => {
+    let controller = this.castDataset().dataState.getControl("date")! as OptionState<"date">;
+    let date = controller.value();
+    return date;
   });
 
   subtext = computed(() => {
@@ -46,8 +57,8 @@ export class Timeseries extends TabBase {
     return this.dataset().tabManager;
   });
 
-  period = computed(() => {
-    return this.castDataset().timeseriesData.period;
+  timeseriesData = computed(() => {
+    return this.castDataset().timeseriesData;
   });
 
   rasterData = computed(() => {
@@ -65,19 +76,23 @@ export class Timeseries extends TabBase {
   displayedColumns: string[] = ['metric', 'value'];
 
   statsDataSource = computed(() => {
-    const data = this.rasterData();
+    const data = this.rasterData()?.stats;
     
     // Return empty array if data isn't loaded yet
     if (!data) return [];
 
-    return [
-      { metric: `Minimum`, value: data.min },
-      { metric: `Maximum`, value: data.max },
-      { metric: `Mean`, value: data.mean },
-      { metric: `Standard Deviation`, value: data.stddev }
-    ];
+    return this.getStatisticsBlock(data);
   });
 
+
+  getStatisticsBlock(stats: Statistics) {
+    return [
+      { metric: `Minimum`, value: stats.min },
+      { metric: `Maximum`, value: stats.max },
+      { metric: `Mean`, value: stats.mean },
+      { metric: `Standard Deviation`, value: stats.stddev }
+    ];
+  }
 
 
   timeseriesDataResource = resource({
@@ -112,14 +127,22 @@ export class Timeseries extends TabBase {
     }
   });
 
+
+
+  setViewportstats(viewportStats: Statistics) {
+    let statBlock = this.getStatisticsBlock(viewportStats);
+    this.graphStats.set(statBlock);
+  }
+
+
   private async createStationTSQuery(info: TimeseriesInfo, dateRange: [DateTime, DateTime], abortSignal: AbortSignal): Promise<Map<DateTime, number>> {
     let ep = "/stations/value";
 
     let [ start, end ] = dateRange;
     const queryParams = {
       ...info.params,
-      startDate: this.period().formatDate(start), 
-      endDate: this.period().formatDate(end)
+      startDate: this.timeseriesData().formatDate(start), 
+      endDate: this.timeseriesData().formatDate(end)
     };
 
     const data = await firstValueFrom(
@@ -131,7 +154,7 @@ export class Timeseries extends TabBase {
         for(let item of values) {
           let { value: valueData } = item;
           let { value, date } = valueData;
-          tsMap.set(DateTime.fromISO(date), value);
+          tsMap.set(this.timeseriesData().parseDate(date), value);
         }
         return tsMap;
       }))
@@ -155,8 +178,8 @@ export class Timeseries extends TabBase {
         abortSignal: abortSignal
       }).pipe(map((values: Record<string, number>) => {
         let tsMap = new Map<DateTime, number>();
-        for(let ts in values) {
-          tsMap.set(DateTime.fromISO(ts), values[ts]);
+        for(let date in values) {
+          tsMap.set(this.timeseriesData().parseDate(date), values[date]);
         }
         return tsMap;
       }))

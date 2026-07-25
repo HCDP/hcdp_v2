@@ -1,6 +1,24 @@
+<div class="chart-header">
+  @for (period of zoomPeriods(); track period.unit) {
+    <!-- Uses Angular's titlecase pipe to format 'month' to 'Month' -->
+    <button matButton="filled" class="zoom-btn" (click)="zoomTo(period)">
+      Zoom to {{ period.unit | titlecase }}
+    </button>
+  }
+  <button matButton="filled" class="zoom-btn" (click)="zoomToAll()">View All</button>
+</div>
+
 <div class="chart-wrapper">
-  <div echarts 
+  <div echarts
+    [initOpts]="initOpts"
     [options]="chartOptions" 
-    [merge]="updateOptions()">
+    [merge]="updateOptions()"
+    (chartInit)="onChartInit($event)"
+    (chartDataZoom)="onDataZoom()">
   </div>
+</div>
+
+<div class="date-controls-row">
+  <app-datetime-selector label="Start Date" [min]="timeseriesData().start" [max]="endDate()" [period]="timeseriesData().period" [(date)]="startDate"></app-datetime-selector>
+  <app-datetime-selector label="End Date" [min]="startDate()" [max]="timeseriesData().end" [period]="timeseriesData().period" [(date)]="endDate"></app-datetime-selector>
 </div>

@@ -48,11 +48,23 @@
         </div>
       }
 
-      <div class="stats-grid">
+      <div>
         <app-timeseries-chart
           [dataStream]="dataStream()"
-          [period]="period()">
+          [timeseriesData]="timeseriesData()"
+          [dataLabel]="subtext()"
+          [date]="date()"
+          (viewportStats)="setViewportstats($event)">
         </app-timeseries-chart>
+
+        <div class="stats-grid">
+        @for(element of graphStats(); track element.metric) {
+          <div class="stat-block">
+            <span class="stat-label">{{ element.metric }}</span>
+            <span class="stat-value">{{ element.value | number:'1.2-2' }}</span>
+          </div>
+        }
+      </div>
       </div>
     </mat-card-content>
   </mat-card>

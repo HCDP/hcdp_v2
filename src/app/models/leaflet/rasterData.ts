@@ -1,61 +1,66 @@
+import { Statistics } from "../general/stats";
 
 export class RasterData {
-  private data: Map<number, number>;
-  private header: RasterHeader;
-  private stats: RasterStats;
+  private _data: Map<number, number>;
+  private _header: RasterHeader;
+  private _stats: Statistics;
 
-  constructor(data: RasterValues, header: RasterHeader, stats: RasterStats) {
-    this.data = new Map<number, number>(data);
-    this.header = header;
-    this.stats = stats;
+  constructor(data: RasterValues, header: RasterHeader, stats: Statistics) {
+    this._data = new Map<number, number>(data);
+    this._header = header;
+    this._stats = stats;
+  }
+
+  get stats() {
+    return { ...this._stats };
   }
 
   get min() {
-    return this.stats.min;
+    return this._stats.min;
   }
 
   get max() {
-    return this.stats.max;
+    return this._stats.max;
   }
 
   get mean() {
-    return this.stats.mean;
+    return this._stats.mean;
   }
 
   get stddev() {
-    return this.stats.stddev;
+    return this._stats.stddev;
   }
 
   get cols() {
-    return this.header.nCols;
+    return this._header.nCols;
   }
 
   get rows() {
-    return this.header.nRows;
+    return this._header.nRows;
   }
 
   get xllCorner() {
-    return this.header.xllCorner;
+    return this._header.xllCorner;
   }
 
   get yllCorner() {
-    return this.header.yllCorner;
+    return this._header.yllCorner;
   }
 
   get cellXSize() {
-    return this.header.cellXSize;
+    return this._header.cellXSize;
   }
 
   get cellYSize() {
-    return this.header.cellYSize;
+    return this._header.cellYSize;
   }
 
   get indices() {
-    return this.data.keys();
+    return this._data.keys();
   }
 
   valueAtIndex(index: number) {
-    return this.data.get(index) ?? NaN;
+    return this._data.get(index) ?? NaN;
   }
 
   valueAtGrid(x: number, y: number) {
@@ -63,7 +68,7 @@ export class RasterData {
   }
 
   gridIndex(x: number, y: number) {
-    return x + y * this.header.nCols;
+    return x + y * this._header.nCols;
   }
 }
 
@@ -77,11 +82,4 @@ export type RasterHeader = {
   yllCorner: number,
   cellXSize: number,
   cellYSize:  number,
-};
-
-export type RasterStats = {
-  min: number,
-  max: number,
-  mean: number,
-  stddev: number
 };

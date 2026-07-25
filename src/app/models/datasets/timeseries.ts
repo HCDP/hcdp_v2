@@ -1,5 +1,5 @@
 import { DateTime } from "luxon";
-import { Period } from "./time";
+import { FormatType, Period } from "./time";
 import { inject } from "@angular/core";
 import { Configuration } from "../../services/configuration/configuration";
 
@@ -103,6 +103,24 @@ export class HCDPTimeseriesData {
       date = this._period.add(1, date);
     }
     return dates;
+  }
+
+  formatMs(ms: number, format: FormatType = "ISO"): string {
+    return this.formatDate(this.parseMs(ms), format);
+  }
+
+  formatISO(dateStr: string, format: FormatType = "ISO") {
+    return this.formatDate(this.parseDate(dateStr), format);
+  }
+
+  formatDate(date: DateTime, format: FormatType = "ISO"): string {
+    return this._period.formatDate(date, format);
+  }
+
+  parseMs(ms: number): DateTime {
+    return DateTime.fromMillis(ms, {
+      zone: this.config.timezone,
+    });
   }
 
   parseDate(dateStr: string): DateTime {

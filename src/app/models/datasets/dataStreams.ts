@@ -5,12 +5,13 @@ import { Params } from "@angular/router";
 import { Observable, of, switchMap, tap } from "rxjs";
 import { rxResource } from "@angular/core/rxjs-interop";
 import { WorkerInterconnect } from "../../services/workerInterconnect/worker-interconnect";
-import { RasterData, RasterStats } from "../leaflet/rasterData";
+import { RasterData } from "../leaflet/rasterData";
 import { StationMetadataRetreiver } from "../../services/stations/station-metadata-retreiver";
 import { HCDPStationDataManager, RawStationData, StationValue } from "./stations";
 import { DataStateController } from "./stateController";
 import { UnitTranslations } from "../../services/unitHandlers/unit-translations";
 import { UnitData } from "./dataset";
+import { Statistics } from "../general/stats";
 
 export class DataStreamManager {
   private requestManager = inject(ApiHandler);
@@ -141,7 +142,7 @@ export class DataStreamManager {
     return undefined;
   }
 
-  private getRasterStats(indexedValues: [number, number][]): RasterStats {
+  private getRasterStats(indexedValues: [number, number][]): Statistics {
     // if empty return NaNs
     if(indexedValues.length == 0) {
       return {

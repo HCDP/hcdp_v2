@@ -195,7 +195,7 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
     };
     options.controls.unshift(dateControl);
     // add default date value
-    options.defaults.date = timeseriesData.period.formatDate(defaultDate);
+    options.defaults.date = timeseriesData.formatDate(defaultDate);
 
     this._dataState = new DataStateController(active, options);
     let { source, convertFrom } = unitSource;

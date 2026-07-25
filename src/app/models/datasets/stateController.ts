@@ -410,7 +410,7 @@ class DateStateController extends OptionStateController<"date"> {
     // if url value not provided or needs to be corrected, set update
     if(setURL) {
       // use period formatted date
-      const formattedDate = values.period.formatDate(initialDate);
+      const formattedDate = values.formatDate(initialDate);
       updateParams[id] = formattedDate;
     }
 
@@ -431,7 +431,7 @@ class DateStateController extends OptionStateController<"date"> {
       // if the corrected date is different than the provided url date, update in URL
       if(!urlDate.equals(correctedDate)) {
         // default formatting to period formatting
-        const formattedDate = values.period.formatDate(correctedDate);
+        const formattedDate = values.formatDate(correctedDate);
         updateParams[id] = formattedDate;
       }
       // if the current date is not equal to the corrected url date, set the control value
@@ -442,12 +442,12 @@ class DateStateController extends OptionStateController<"date"> {
     // if invlid reset url param to current date
     else {
       // default formatting to period formatting
-      const formattedDate = values.period.formatDate(currentDate);
+      const formattedDate = values.formatDate(currentDate);
       updateParams[id] = formattedDate;
     }
   }
 
   protected getStringValue() {
-    return this._controlData.values.period.formatDate(this._value());
+    return this._controlData.values.formatDate(this._value());
   }
 }
