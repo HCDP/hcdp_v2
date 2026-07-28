@@ -163,7 +163,6 @@ export class ExportTimeseriesDataHandler extends ExportDataHandler {
       start: defaultStart,
       end: timeseriesData.end
     }
-    console.log(this._dateState.start.toISO());
   }
 
   get startDate() { 

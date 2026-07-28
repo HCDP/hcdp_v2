@@ -24,4 +24,12 @@
       
     </mat-expansion-panel>
   }
+  @if(!layoutManager.smallScreen()) {
+    <div class="layout-selector">
+      <mat-button-toggle-group name="layout" aria-label="Layout" hideSingleSelectionIndicator="true" [(ngModel)]="layoutManager.layoutStyle">
+        <mat-button-toggle value="vertical" matTooltip="Vertical Layout"><mat-icon>border_horizontal</mat-icon></mat-button-toggle>
+        <mat-button-toggle value="horizontal" matTooltip="Horizontal Layout"><mat-icon>border_vertical</mat-icon></mat-button-toggle>
+      </mat-button-toggle-group>
+    </div>
+  }
 </div>

@@ -1,4 +1,4 @@
-<div class="vis-container">
+<div class="vis-container" [class.horizontal]="layoutManager.layoutStyle() === 'horizontal'">
   <div #dataContainer class="data-container">
     <app-data-panel [dataset]="dataset()"></app-data-panel> 
   </div>

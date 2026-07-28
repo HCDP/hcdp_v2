@@ -14,6 +14,7 @@ import { Spinner } from 'spin.js';
 import { LayerData } from '../../models/datasets/recipe';
 import { MapLocation } from '../../models/datasets/locationManager';
 import { DataStreamManager } from '../../models/datasets/dataStreams';
+import { Configuration } from '../../services/configuration/configuration';
 
 @Component({
   selector: 'app-map-component',
@@ -25,6 +26,7 @@ import { DataStreamManager } from '../../models/datasets/dataStreams';
 export class MapComponent {
   private injector = inject(Injector);
   private assetService = inject(AssetManager);
+  private config = inject(Configuration);
 
   imageContainer = input.required<ElementRef>();
   dataset = input.required<HCDPDatasetVisualization>();
@@ -73,15 +75,6 @@ export class MapComponent {
       return a[0] === b[0] && a[1] === b[1];
     }
   });
-
-  readonly extents: {[county: string]: L.LatLngBoundsExpression} = {
-    ka: [ [ 21.819, -159.816 ], [ 22.269, -159.25125 ] ],
-    oa: [ [ 21.18, -158.322 ], [ 21.7425, -157.602 ] ],
-    ma: [ [ 20.343, -157.35 ], [ 21.32175, -155.92575 ] ],
-    bi: [ [ 18.849, -156.243 ], [ 20.334, -154.668 ] ],
-    st: [ [ 18.849, -159.816 ], [ 22.269, -154.668 ] ],
-    bounds: [ [14.050369038588524, -167.60742187500003], [26.522031143884014, -144.47021484375003] ]
-  };
 
   private baseLayers: {[label: string]: L.TileLayer};
   private layerControl!: L.Control.Layers;
@@ -278,11 +271,11 @@ export class MapComponent {
   private initMap(): void {
     const map = L.map(this.mapElement().nativeElement, {
       layers: [this.baseLayers["Satellite (Google)"]],
-      zoom: 7,
-      center: L.latLng(20.559, -157.242),
+      zoom: this.config.defaultZoom,
+      center: this.config.mapCenter,
       attributionControl: false,
-      minZoom: 6,
-      maxBounds: this.extents.bounds
+      minZoom: this.config.minZoom,
+      maxBounds: this.config.mapBounds
     });
     this.map.set(map);
     this.invalidateSize();

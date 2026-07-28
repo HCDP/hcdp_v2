@@ -1,49 +1,99 @@
-.resize-bar {
-  border-top: 3px ridge rgba(196, 196, 196, 0.4);
-  border-bottom: 3px ridge rgba(196, 196, 196, 0.4);
-  position: relative;
-  display: inline-block;
-  background-image: linear-gradient(0deg, #84ade2, #3874c2 2%, #84ade2);
-  height: 10px;
-  min-height: 10px;
+.vis-container {
+  /* 1. Default Variables (Vertical Layout) */
+  --flex-flow: column nowrap;
+  
+  /* Containers */
+  --data-width: 100%;
+  --data-height: calc(50% - 5px);
+  --map-width: 100%;
+  --map-height: auto; 
+
+  /* Resize Bar */
+  --resize-width: 100%;
+  --resize-height: 10px;
+  --resize-cursor: ns-resize; /* North-South arrow */
+  --resize-border-tb: 3px ridge rgba(196, 196, 196, 0.4);
+  --resize-border-lr: none;
+  --resize-gradient: linear-gradient(0deg, #84ade2, #3874c2 2%, #84ade2);
+
+  /* Resize Bar Line Handle */
+  --line-width: 50px;
+  --line-height: 2px;
+
+  /* 2. Overrides for Horizontal Layout */
+  &.horizontal {
+    --flex-flow: row nowrap;
+
+    --data-width: calc(50% - 5px);
+    --data-height: 100%;
+    --map-width: auto;
+    --map-height: 100%;
+
+    --resize-width: 10px;
+    --resize-height: 100%;
+    --resize-cursor: ew-resize; /* East-West arrow */
+    --resize-border-tb: none;
+    --resize-border-lr: 3px ridge rgba(196, 196, 196, 0.4);
+    --resize-gradient: linear-gradient(90deg, #84ade2, #3874c2 2%, #84ade2);
+
+    --line-width: 2px;
+    --line-height: 50px;
+  }
+
+  height: 100%;
   width: 100%;
-  z-index: 1000;
+  display: flex;
+  flex-flow: var(--flex-flow);
 }
 
-.resize-bar:hover {
-  cursor: ns-resize;
+/* 3. Apply the variables to your elements */
+.data-container {
+  display: inline-block; /* Or flex, depending on internal needs */
+  position: relative;
+  width: var(--data-width);
+  height: var(--data-height);
+  min-height: 0;
+  min-width: 0; /* Prevents flex flex-blowouts in row mode */
+}
+
+.resize-bar {
+  border-top: var(--resize-border-tb);
+  border-bottom: var(--resize-border-tb);
+  border-left: var(--resize-border-lr);
+  border-right: var(--resize-border-lr);
+  position: relative;
+  display: inline-block;
+  background-image: var(--resize-gradient);
+  
+  width: var(--resize-width);
+  min-width: var(--resize-width);
+  height: var(--resize-height);
+  min-height: var(--resize-height);
+  z-index: 1000;
+
+  &:hover {
+    cursor: var(--resize-cursor);
+  }
 }
 
 .line {
   position: absolute;
-  width: 50px;
-  height: 2px;
+  width: var(--line-width);
+  height: var(--line-height);
   top: 50%;
   left: 50%;
-  margin: -1px 0 0 0;
   background-color: lightgray;
-}
-
-.vis-container {
-  height: 100%;
-  width: 100%;
-  display: flex;
-  flex-flow: column nowrap;
-}
-
-.data-container {
-  display: inline-block;
-  position: relative;
-  width: 100%;
-  height: calc(50% - 5px);
-  min-height: 0;
+  
+  /* Upgrade: Replaced your margin calculation with transform. 
+     This perfectly centers the line in both horizontal and vertical modes automatically. */
+  transform: translate(-50%, -50%); 
 }
 
 .map-container {
-  min-height: 0;
   flex: 1;
-  width: 100%;
+  width: var(--map-width);
+  height: var(--map-height);
+  min-height: 0;
+  min-width: 0; /* Prevents flex blowouts in row mode */
   z-index: 500;
 }
-
-

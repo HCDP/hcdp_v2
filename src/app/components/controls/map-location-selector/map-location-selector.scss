@@ -1,15 +1,3 @@
-.table-buffer {
-  padding-top: 10px;
-}
-
-.details-buffer {
-  padding-top: 20px;
-}
-
-.container {
-  gap: 20px;
-}
-
 .location-input-container {
   width: 100%;
   
@@ -17,6 +5,7 @@
     width: 100%;
   }
 
+  // Centers the spinner perfectly inside the matSuffix button
   mat-spinner {
     margin: 0 auto;
   }

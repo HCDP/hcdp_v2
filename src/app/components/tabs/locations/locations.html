@@ -6,7 +6,7 @@
   @if(stationResource.value(); as stations) {
     <div class="container">
       <app-location-selector
-      (selectedLocation)="selectMapLocation($event)">
+        (selectedLocation)="selectMapLocation($event)">
       </app-location-selector>
       <app-station-filters
         [manager]="stations">
@@ -21,6 +21,15 @@
           [(selectedStation)]="selectedStation">
         </app-station-table>
       </div>
+
+      @let locationData = locationManager().location();
+      @if(locationData && locationData.type === "station") {
+        <div class="details-buffer">
+          <app-station-details
+            [station]="locationData.location">
+          </app-station-details>
+        </div>
+      }
     </div>
   }
 }

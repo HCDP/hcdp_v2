@@ -1,4 +1,4 @@
-import { Component, input, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, signal, computed, ChangeDetectionStrategy, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -9,8 +9,9 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
-
-import { HCDPStationDataManager, StationData, StationFilter } from '../../../models/datasets/stations'; // Ensure path is correct
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { HCDPStationDataManager, StationData, StationFilter } from '../../../models/datasets/stations';
+import { StationFormatHelper } from '../../../services/stations/station-format-helper';
 
 @Component({
   selector: 'app-station-filters',
@@ -25,13 +26,16 @@ import { HCDPStationDataManager, StationData, StationFilter } from '../../../mod
     MatSlideToggleModule,
     MatChipsModule,
     MatCardModule,
-    MatDividerModule
+    MatDividerModule,
+    MatTooltipModule
   ],
   templateUrl: './station-filters.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './station-filters.scss',
 })
 export class StationFilters {
+  private formatHelper = inject(StationFormatHelper);
+
   manager = input.required<HCDPStationDataManager>();
 
   // --- FORM STATE ---
@@ -42,9 +46,8 @@ export class StationFilters {
   rangeMax = signal<number | null>(null);
   negateInput = signal<boolean>(false);
 
-  // --- COMPUTED SIGNALS ---
+  // --- COMPUTED s ---
 
-  // 1. Extract all available fields dynamically from the loaded data
   availableFields = computed(() => {
     const dataMap = this.manager().stationData;
     const allKeys = new Set<string>();
@@ -63,11 +66,10 @@ export class StationFilters {
 
     return Array.from(allKeys).map(key => ({
       value: key as keyof StationData,
-      label: this.manager().getLabel(key) || key 
+      label: this.formatHelper.getLabel(key) || key 
     })).sort((a, b) => a.label.localeCompare(b.label));
   });
 
-  // 2. Determine type and collect unique existing values for the selected field
   fieldMetadata = computed(() => {
     const field = this.selectedField();
     if (!field) return null;
@@ -80,7 +82,7 @@ export class StationFilters {
     let absMin = Infinity;
     let absMax = -Infinity;
 
-    for (const st of Object.values(dataMap)) {
+    for(const st of Object.values(dataMap)) {
       const val = st[field];
       if (val !== undefined && val !== null) {
         type = typeof val === 'number' ? 'number' : 'string';
@@ -101,33 +103,32 @@ export class StationFilters {
 
     const availableValues = Array.from(uniqueStringValues).map(v => ({
       raw: v,
-      formatted: this.manager().getFormattedValue(field, v) as string
+      formatted: this.formatHelper.getFormattedValue(field, v) as string
     })).sort((a, b) => a.formatted.localeCompare(b.formatted));
 
     return { type, availableValues, absMin, absMax };
   });
 
-  // 3. Filter the multi-select options based on the user's search text
   filteredDropdownValues = computed(() => {
     const meta = this.fieldMetadata();
-    if (!meta || meta.type !== 'string') return [];
+    if(!meta || meta.type !== 'string') return [];
 
     const search = this.dropdownSearch().toLowerCase().trim();
-    if (!search) return meta.availableValues;
+    if(!search) return meta.availableValues;
 
     return meta.availableValues.filter(val => 
       val.formatted.toLowerCase().includes(search)
     );
   });
 
-  // 4. Validate form state based on the current field type
   isFormValid = computed(() => {
     const meta = this.fieldMetadata();
-    if (!meta) return false;
+    if(!meta) return false;
 
     if (meta.type === 'string') {
       return this.selectedStringValues().length > 0;
-    } else {
+    }
+    else {
       return this.rangeMin() !== null && 
              this.rangeMax() !== null && 
              this.rangeMin()! <= this.rangeMax()!;
@@ -144,11 +145,12 @@ export class StationFilters {
   addFilter() {
     const field = this.selectedField();
     const meta = this.fieldMetadata();
-    if (!field || !meta || !this.isFormValid()) return;
+    if(!field || !meta || !this.isFormValid()) return;
 
-    if (meta.type === 'string') {
+    if(meta.type === 'string') {
       this.manager().addFilter(field, 'value', this.selectedStringValues(), this.negateInput());
-    } else {
+    }
+    else {
       this.manager().addFilter(field, 'range', [this.rangeMin()!, this.rangeMax()!], this.negateInput());
     }
 
@@ -169,41 +171,45 @@ export class StationFilters {
   }
 
   getFilterDisplayText(filter: StationFilter): string {
-    const f = filter as any; 
-    const fieldLabel = this.manager().getLabel(f.field) || f.field;
-    const prefix = f.negate ? 'NOT ' : '';
+    const fieldLabel = this.formatHelper.getLabel(filter.field) || filter.field;
+    const prefix = filter.negate ? 'NOT ' : '';
 
-    if (f.type === 'value') {
-      const formattedVals = (f.values as string[]).map(v => this.manager().getFormattedValue(f.field, v));
-      return `${prefix}${fieldLabel} in (${formattedVals.join(', ')})`;
-    } else {
-      return `${prefix}${fieldLabel} between ${f.values[0]} and ${f.values[1]}`;
+    if(filter.type === "value") {
+      const formattedVals = (filter.values as string[]).map(v => this.formatHelper.getFormattedValue(filter.field, v));
+      return `${fieldLabel} ${prefix}in (${formattedVals.join(', ')})`;
+    }
+    else {
+      return `${fieldLabel} ${prefix}between ${filter.values[0]} and ${filter.values[1]}`;
     }
   }
 
   validateNumericRange(inputType: 'min' | 'max') {
     const meta = this.fieldMetadata();
-    if (!meta || meta.type !== 'number') return;
+    if(!meta || meta.type !== 'number') return;
 
     const currentMin = this.rangeMin();
     const currentMax = this.rangeMax();
 
-    if (inputType === 'min' && currentMin !== null) {
-      if (currentMin < meta.absMin) {
+    if(inputType === 'min' && currentMin !== null) {
+      if(currentMin < meta.absMin) {
         this.rangeMin.set(meta.absMin);
-      } else if (currentMax !== null && currentMin > currentMax) {
+      }
+      else if (currentMax !== null && currentMin > currentMax) {
         this.rangeMin.set(currentMax); // Snap to the user's Max
-      } else if (currentMin > meta.absMax) {
+      }
+      else if (currentMin > meta.absMax) {
         this.rangeMin.set(meta.absMax); // Snap to the absolute Max
       }
     }
 
-    if (inputType === 'max' && currentMax !== null) {
-      if (currentMax > meta.absMax) {
+    if(inputType === 'max' && currentMax !== null) {
+      if(currentMax > meta.absMax) {
         this.rangeMax.set(meta.absMax);
-      } else if (currentMin !== null && currentMax < currentMin) {
+      }
+      else if (currentMin !== null && currentMax < currentMin) {
         this.rangeMax.set(currentMin); // Snap to the user's Min
-      } else if (currentMax < meta.absMin) {
+      }
+      else if (currentMax < meta.absMin) {
         this.rangeMax.set(meta.absMin); // Snap to the absolute Min
       }
     }

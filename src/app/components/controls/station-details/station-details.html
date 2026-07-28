@@ -1,0 +1,17 @@
+
+<div class="details-card">
+  <h3 class="card-title">
+    Station Details
+  </h3>
+  
+  <table class="property-table">
+    <tbody>
+      @for (row of tableRows(); track row.label) {
+        <tr>
+          <th>{{ row.label }}</th>
+          <td>{{ row.value }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

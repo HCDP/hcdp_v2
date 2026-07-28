@@ -71,10 +71,12 @@
   overflow-y: auto;
 }
 
+.layout-selector {
+  display: none;
+}
 
-// /* 3. THE SUSPECT: If your topbar is inside a <mat-toolbar>, you MUST override its default centering! */
-// mat-toolbar {
-//   align-items: flex-start !important;
-//   height: auto !important; /* Allows the toolbar to stretch downward instead of strictly centering its contents */
-//   min-height: 64px; /* Keeps the standard Material toolbar minimum height */
-// }
+@media(min-width: 1000px) {
+  .layout-selector {
+    display: block;
+  }
+}

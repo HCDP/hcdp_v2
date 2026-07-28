@@ -316,9 +316,6 @@ export class TimeseriesChart {
     this.startDate.set(startDate);
     this.endDate.set(endDate);
 
-    console.log(mean, stddev)
-
-    // 5. Emit the final payload
     this.viewportStats.emit({
       min,
       max,

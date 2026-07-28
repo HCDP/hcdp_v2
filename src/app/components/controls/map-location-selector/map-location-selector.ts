@@ -1,4 +1,4 @@
-import { Component, signal, ChangeDetectionStrategy, model } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy, model, inject } from '@angular/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
@@ -7,9 +7,11 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { FormControl, ValidationErrors, AbstractControl, ReactiveFormsModule } from '@angular/forms';
 import { MapLocation } from '../../../models/datasets/locationManager';
+import { Configuration } from '../../../services/configuration/configuration';
+import { latLngBounds } from 'leaflet';
 
 @Component({
-  selector: 'app-location-selector',
+  selector: 'app-map-location-selector',
   imports: [
     MatFormFieldModule,
     MatInputModule,
@@ -19,21 +21,12 @@ import { MapLocation } from '../../../models/datasets/locationManager';
     MatProgressSpinnerModule,
     ReactiveFormsModule
   ],
-  templateUrl: './location-selector.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
-  styleUrl: './location-selector.scss',
+  templateUrl: './map-location-selector.html',
+  styleUrl: './map-location-selector.scss',
 })
-export class LocationSelector {
+export class MapLocationSelector {
+  config = inject(Configuration);
 
-  // SHOULD MOVE THIS TO CONFIGURATION OR SOMETHING FOR REUSE
-  private readonly BOUNDS = {
-    minLat: 18.849,
-    maxLat: 22.269,
-    minLng: -159.816,
-    maxLng: -154.668
-  };
-
-  // --- Geolocation State ---
   mapLocation = model<MapLocation>();
 
   isLocating = signal(false);
@@ -66,13 +59,18 @@ export class LocationSelector {
     const parts = control.value.split(',');
     const lat = parseFloat(parts[0]);
     const lng = parseFloat(parts[1]);
+    const bounds = latLngBounds(this.config.dataBounds);
+    const minLat = bounds.getSouth();
+    const maxLat = bounds.getNorth();
+    const minLng = bounds.getWest();
+    const maxLng = bounds.getEast();
 
     // Check against your specific geofence bounds
     if(
-      lat < this.BOUNDS.minLat || 
-      lat > this.BOUNDS.maxLat || 
-      lng < this.BOUNDS.minLng || 
-      lng > this.BOUNDS.maxLng
+      lat < minLat || 
+      lat > maxLat || 
+      lng < minLng || 
+      lng > maxLng
     ) {
       return { outOfBounds: true };
     }
@@ -88,13 +86,19 @@ export class LocationSelector {
 
     try {
       const coords = await this.getUserLocation();
+
+      const bounds = latLngBounds(this.config.dataBounds);
+      const minLat = bounds.getSouth();
+      const maxLat = bounds.getNorth();
+      const minLng = bounds.getWest();
+      const maxLng = bounds.getEast();
       
       // Geofence the user's physical location
       if(
-        coords.lat < this.BOUNDS.minLat || 
-        coords.lat > this.BOUNDS.maxLat || 
-        coords.lng < this.BOUNDS.minLng || 
-        coords.lng > this.BOUNDS.maxLng
+        coords.lat < minLat || 
+        coords.lat > maxLat || 
+        coords.lng < minLng || 
+        coords.lng > maxLng
       ) {
         this.locationError.set('Your current location is outside the supported region.');
         this.locationControl.setValue(''); 

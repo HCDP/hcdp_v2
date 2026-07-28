@@ -3,6 +3,7 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { HCDPStationDataManager, StationData } from '../../../models/datasets/stations';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { StationFormatHelper } from '../../../services/stations/station-format-helper';
 
 @Component({
   selector: 'app-station-table',
@@ -13,6 +14,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 })
 export class StationTable {
   private el = inject(ElementRef);
+  formatHelper = inject(StationFormatHelper);
+
   manager = input.required<HCDPStationDataManager>();
   
   selectedStation = model<StationData | undefined>(); 

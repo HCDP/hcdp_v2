@@ -15,9 +15,8 @@
         </mat-select>
       </mat-form-field>
 
-      @if (fieldMetadata(); as meta) {
-        
-        @if (meta.type === 'string') {
+      @if(fieldMetadata(); as meta) {
+        @if(meta.type === 'string') {
           <mat-form-field appearance="outline" class="wide-input">
             <mat-label>Select Values</mat-label>
             <mat-select [(ngModel)]="selectedStringValues" multiple (openedChange)="!$event ? dropdownSearch.set('') : null">
@@ -31,7 +30,7 @@
                   class="dropdown-search-input">
               </div>
 
-              @for (val of filteredDropdownValues(); track val.raw) {
+              @for(val of filteredDropdownValues(); track val.raw) {
                 <mat-option [value]="val.raw">{{ val.formatted }}</mat-option>
               }
 
@@ -81,14 +80,14 @@
     </div>
   </mat-card-content>
 
-  @if (manager().stationFilters.length > 0) {
+  @if(manager().stationFilters.length > 0) {
     <mat-divider></mat-divider>
     <mat-card-actions class="active-filters-container">
-      <span class="active-label">Active:</span>
       <mat-chip-set aria-label="Active filters">
-        @for (filter of manager().stationFilters; track filter) {
-          <mat-chip (removed)="removeFilter(filter)" [color]="$any(filter).negate ? 'warn' : 'accent'">
-            {{ getFilterDisplayText(filter) }}
+        @for(filter of manager().stationFilters; track filter) {
+          @let label = getFilterDisplayText(filter);
+          <mat-chip (removed)="removeFilter(filter)" [color]="$any(filter).negate ? 'warn' : 'accent'" [matTooltip]="label">
+            {{ label }}
             <button matChipRemove>
               <mat-icon>cancel</mat-icon>
             </button>

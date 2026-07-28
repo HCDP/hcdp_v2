@@ -1,0 +1,33 @@
+<div class="location-input-container">
+  <mat-form-field class="example-full-width" appearance="outline">
+    <mat-label>Go to location (Lat, Lng)</mat-label>
+    
+    <input matInput 
+           [formControl]="locationControl"
+           placeholder="e.g., 19.7030, -155.0839">
+
+    <button mat-icon-button 
+            matSuffix 
+            (click)="handleLocationRequest()" 
+            [disabled]="isLocating()"
+            matTooltip="Get my current location">
+      
+      @if(isLocating()) {
+        <mat-spinner diameter="20"></mat-spinner>
+      }
+      @else {
+        <mat-icon>my_location</mat-icon>
+      }
+    </button>
+
+    @if(locationControl.hasError('invalidFormat')) {
+      <mat-error>Format must be "latitude, longitude"</mat-error>
+    }
+    @if(locationControl.hasError('outOfBounds')) {
+      <mat-error>Coordinates are outside the supported region.</mat-error>
+    }
+    @if(locationError()) {
+      <mat-error>{{ locationError() }}</mat-error>
+    }
+  </mat-form-field>
+</div>

@@ -20,15 +20,39 @@ export class Configuration {
   }
 
   get timezone() {
-    return this.config.timezone;
+    return this.config.locationData.timezone;
   }
 
   get location() {
-     return this.config.location;
+     return this.config.locationData.location;
+  }
+
+  get dataBounds() {
+    return this.config.locationData.mapView.bounds.data;
+  }
+
+  get mapBounds() {
+    return this.config.locationData.mapView.bounds.map;
+  }
+
+  get defaultZoom() {
+    return this.config.locationData.mapView.zoom;
+  }
+
+  get minZoom() {
+    return this.config.locationData.mapView.minZoom;
+  }
+  
+  get mapCenter() {
+    return this.config.locationData.mapView.center;
+  }
+
+  sectionBounds(section: string) {
+    return this.config.locationData.mapView.bounds.sections[section]
   }
 
   api(id: string) {
-    return this.config.api[id];
+    return { ...this.config.api[id] };
   }
 
 }

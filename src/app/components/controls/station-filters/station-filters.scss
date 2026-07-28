@@ -1,60 +1,15 @@
 .filter-card {
-  margin: 16px 0;
+  margin: 8px 0;
   
   mat-card-header {
-    margin-bottom: 16px;
+    margin-bottom: 8px;
+    padding-top: 12px;
   }
 }
 
-.filter-form-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  align-items: flex-start;
 
-  mat-form-field {
-    flex: 1 1 180px;
-  }
 
-  .wide-input {
-    flex: 2 1 250px;
-  }
 
-  .narrow-input {
-    flex: 1 1 100px;
-  }
-
-  .toggle-container {
-    display: flex;
-    align-items: center;
-    height: 56px;
-    padding: 0 8px;
-  }
-
-  .button-container {
-    display: flex;
-    align-items: center;
-    height: 56px;
-    
-    button {
-      height: 48px;
-    }
-  }
-}
-
-.active-filters-container {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  padding: 16px;
-
-  .active-label {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--mat-sys-on-surface-variant, #666);
-  }
-}
 
 /* --- Mat-Select Multi-Search Styles --- */
 .dropdown-search-container {
@@ -102,17 +57,6 @@
 
 
 
-
-
-.filter-card {
-  margin: 8px 0; /* Was 16px */
-  
-  mat-card-header {
-    margin-bottom: 8px; /* Was 16px */
-    padding-top: 12px;
-  }
-}
-
 /* Shrink the gaps between form inputs */
 .filter-form-grid {
   display: flex;
@@ -158,10 +102,24 @@
   flex-wrap: wrap;
   gap: 8px; /* Was 12px */
   padding: 8px 16px; /* Was 16px */
+  width: 100%;
 
   .active-label {
     font-size: 13px; /* Slightly smaller text */
     font-weight: 500;
     color: var(--mat-sys-on-surface-variant, #666);
+  }
+
+  mat-chip-set {
+    width: 100%;
+  }
+
+  mat-chip {
+    white-space: nowrap;      /* 1. Prevents the text from wrapping to a new line */
+    overflow: hidden;         /* 2. Hides the text that overflows the container's bounds */
+    text-overflow: ellipsis;  /* 3. Adds the '...' at the end */
+    
+    /* IMPORTANT: The element must have a constrained width to know when to truncate */
+    max-width: calc(50% - 8px); /* Or a fixed width like 250px */
   }
 }

@@ -1,5 +1,4 @@
-import { formatNumber } from "@angular/common"
-import { signal, Signal, WritableSignal } from "@angular/core"
+import { signal, WritableSignal } from "@angular/core"
 
 export interface RawStationData<T = StationMetadata | StationValue> {
   name: string,
@@ -54,77 +53,7 @@ export interface StationData {
 }
 
 export class HCDPStationDataManager {
-  private static readonly FORMAT: Record<string, {
-    name: string,
-    translate?: (value: any) => string
-  }> = {
-    skn: {
-      name: "Station ID (SKN)"
-    },
-    name: {
-      name: "Name"
-    },
-    observer: {
-      name: "Observer"
-    },
-    network: {
-      name: "Network"
-    },
-    island: {
-      name: "Island",
-      translate: (value: string) => {
-        let trans: Record<string, string> = {
-          BI: "Hawaiʻi",
-          OA: "Oʻahu",
-          MA: "Maui",
-          KA: "Kauai",
-          MO: "Molokaʻi",
-          KO: "Kahoʻolawe",
-          LA: "Lānaʻi"
-        }
-        return trans[value];
-      }
-    },
-    value: {
-      name: "Value",
-      translate: (value: number) => {
-        return formatNumber(value, navigator.language, "1.2-2");
-      }
-    },
-    elevation_m: {
-      name: "Elevation (m)",
-      translate: (value: number) => {
-        return formatNumber(value, navigator.language, "1.2-2");
-      }
-    },
-    lat: {
-      name: "Latitude",
-      translate: (value: number) => {
-        return formatNumber(value, navigator.language, "1.4-4");
-      }
-    },
-    lng: {
-      name: "Longitude",
-      translate: (value: number) => {
-        return formatNumber(value, navigator.language, "1.4-4");
-      }
-    },
-    ncei_id: {
-      name: "NCEI ID"
-    },
-    nws_id: {
-      name: "NWS ID"
-    },
-    nesdis_id: {
-      name: "NESDIS ID"
-    },
-    scan_id: {
-      name: "Scan ID"
-    },
-    smart_node_rf_id: {
-      name: "Smart Node RFID"
-    }
-  };
+  
 
 
 
@@ -146,18 +75,6 @@ export class HCDPStationDataManager {
     }
     this._stationFilters = [];
     this._filteredStationsSignal = signal(Object.values(this.dataMap));
-  }
-
-  getLabel(field: string) {
-    return HCDPStationDataManager.FORMAT[field]?.name;
-  }
-
-  getFormattedValue(field: string, value: any) {
-    let translationFunction = HCDPStationDataManager.FORMAT[field]?.translate;
-    if(translationFunction) {
-      return translationFunction(value);
-    }
-    return value;
   }
 
   get stationData() {
@@ -215,16 +132,16 @@ export class HCDPStationDataManager {
 }
 
 export class StationFilter {
-  private field: keyof StationData;
-  private type: "value" | "range";
-  private values: string[] | [number, number];
-  private negate: boolean;
+  private _field: keyof StationData;
+  private _type: "value" | "range";
+  private _values: string[] | [number, number];
+  private _negate: boolean;
 
   constructor(field: keyof StationData, type: "value" | "range", values: string[] | [number, number], negate: boolean = false) {
-    this.field = field;
-    this.type = type;
-    this.values = values;
-    this.negate = negate;
+    this._field = field;
+    this._type = type;
+    this._values = values;
+    this._negate = negate;
   }
 
   match(stationData: StationData): boolean {
@@ -246,5 +163,21 @@ export class StationFilter {
       match = !match;
     }
     return match;
+  }
+
+  get field(): keyof StationData {
+    return this._field;
+  }
+
+  get type(): "value" | "range" {
+    return this._type;
+  }
+
+  get values(): string[] | [number, number] {
+    return this._values;
+  }
+
+  get negate(): boolean {
+    return this._negate;
   }
 }

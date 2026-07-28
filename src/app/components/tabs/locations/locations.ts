@@ -1,18 +1,18 @@
-import { Component, resource, computed, signal, effect, untracked, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, signal, effect, untracked, ChangeDetectionStrategy } from '@angular/core';
 import { MatTableModule } from '@angular/material/table';
 import { MatSortModule } from '@angular/material/sort';
 import { TabBase } from "../tab-base/tab-base";
-import { HCDPDatasetTimeseriesVisualization, HCDPVisSubtypes } from '../../../models/datasets/dataset';
+import { HCDPVisSubtypes } from '../../../models/datasets/dataset';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { StationTable } from '../../controls/station-table/station-table';
 import { StationFilters } from '../../controls/station-filters/station-filters';
 import { LocationSelector } from '../../controls/location-selector/location-selector';
 import { MapLocation } from '../../../models/datasets/locationManager';
 import { StationData } from '../../../models/datasets/stations';
-
+import { StationDetails } from '../../controls/station-details/station-details';
 @Component({
   selector: 'app-locations',
-  imports: [MatTableModule, MatSortModule, MatProgressSpinnerModule, StationTable, StationFilters, LocationSelector],
+  imports: [MatTableModule, MatSortModule, MatProgressSpinnerModule, StationTable, StationFilters, LocationSelector, StationDetails],
   templateUrl: './locations.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './locations.scss',
