@@ -158,7 +158,7 @@ export class TimeseriesChart {
 
 
 
-
+  private zoomThrottle: number;
 
 
   constructor() {
@@ -202,7 +202,11 @@ export class TimeseriesChart {
   }
 
   onDataZoom() {
-    this.updateViewportStats();
+    // throttle so not constantly recomputing
+    clearTimeout(this.zoomThrottle);
+    this.zoomThrottle = setTimeout(() => {
+      this.updateViewportStats();
+    }, 500);
   }
 
   zoomToAll() {
@@ -257,9 +261,7 @@ export class TimeseriesChart {
        endMs = keys[keys.length - 1].toMillis();
     }
 
-    // 2. Variables to calculate stats
-    // Note: We use a loop instead of Math.max(...array) because large datasets 
-    // (e.g. 100,000+ points) will trigger a Maximum Call Stack Size Exceeded error.
+
     let min = Infinity;
     let max = -Infinity;
     let sum = 0;
