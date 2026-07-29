@@ -1,16 +1,16 @@
 <div class="location-input-container">
   <mat-form-field class="example-full-width" appearance="outline">
-    <mat-label>Go to location (Lat, Lng)</mat-label>
+    <mat-label>Go to Location (Lat, Lng)</mat-label>
     
     <input matInput 
            [formControl]="locationControl"
-           placeholder="e.g., 19.7030, -155.0839">
+           placeholder="e.g., 19.7012, -155.0809">
 
     <button mat-icon-button 
             matSuffix 
             (click)="handleLocationRequest()" 
             [disabled]="isLocating()"
-            matTooltip="Get my current location">
+            matTooltip="Go to current location">
       
       @if(isLocating()) {
         <mat-spinner diameter="20"></mat-spinner>

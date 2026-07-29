@@ -73,6 +73,19 @@
 
 .layout-selector {
   display: none;
+
+  mat-icon {
+    font-size: 27px;
+  }
+
+  ::ng-deep .mat-button-toggle-group-appearance-standard {
+    border-radius: 0;
+    
+    .mat-button-toggle-label-content {
+      line-height: 22px;
+      padding: 10px;
+    }
+  }
 }
 
 @media(min-width: 1000px) {

@@ -1,4 +1,4 @@
-import { Component, signal, ChangeDetectionStrategy, model, inject } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy, model, inject, effect, DestroyRef } from '@angular/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
@@ -9,6 +9,7 @@ import { FormControl, ValidationErrors, AbstractControl, ReactiveFormsModule } f
 import { MapLocation } from '../../../models/datasets/locationManager';
 import { Configuration } from '../../../services/configuration/configuration';
 import { latLngBounds } from 'leaflet';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-map-location-selector',
@@ -25,23 +26,47 @@ import { latLngBounds } from 'leaflet';
   styleUrl: './map-location-selector.scss',
 })
 export class MapLocationSelector {
-  config = inject(Configuration);
+  private destroyRef = inject(DestroyRef);
+  private config = inject(Configuration);
 
-  mapLocation = model<MapLocation>();
+  mapLocation = model.required<MapLocation | undefined>();
 
   isLocating = signal(false);
   locationError = signal<string | null>(null);
 
-  // The new form control bound to the internal validator
   locationControl = new FormControl("", [this.coordinateValidator.bind(this)]);
 
   constructor() {
-    // Listen to input, update the output signal if valid
-    this.locationControl.valueChanges.subscribe(val => {
-      if(this.locationControl.valid && val) {
-        const parts = val.split(',');
-        this.mapLocation.set({ lat: parseFloat(parts[0]), lng: parseFloat(parts[1]) });
+    this.setupTwoWaySync();
+  }
+
+  private setupTwoWaySync() {
+    // Form -> Signal
+    this.locationControl.valueChanges
+    .pipe(takeUntilDestroyed(this.destroyRef))
+    .subscribe((value) => {
+      if(this.locationControl.valid && value) {
+        const [lat, lng] = value.split(',').map(n => parseFloat(n));
+        const location = this.mapLocation();
+        if(!location) return;
+        // prevent passing same location
+        if (location.lat !== lat || location.lng !== lng) {
+          this.mapLocation.set({ lat, lng });
+        }
       }
+    });
+
+    // Signal -> Form
+    effect(() => {
+      const location = this.mapLocation();
+      if(!location) return;
+      const strVal = `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`;
+      // Only update if different
+      if(this.locationControl.value !== strVal) {
+        // use emitEvent: false to prevent valueChange sub from firing
+        this.locationControl.setValue(strVal, { emitEvent: false });
+      }
+
     });
   }
 

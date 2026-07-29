@@ -53,10 +53,6 @@ export interface StationData {
 }
 
 export class HCDPStationDataManager {
-  
-
-
-
   private dataMap: Record<string, StationData>;
   private _stationFilters: StationFilter[];
   private _filteredStationsSignal: WritableSignal<StationData[]>;

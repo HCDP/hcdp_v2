@@ -22,17 +22,6 @@ export class VisualizationContainer {
   dataContainerRef = viewChild.required<ElementRef>('dataContainer');
   mapContainerRef = viewChild.required<ElementRef>('mapContainer');
 
-  layoutData = {
-    dragbar: {
-      vertical: {
-        axis: "y",
-        side: "top",
-        span: "height",
-        flow: "column"
-      }
-    }
-  };
-
   startResize(touch: boolean): boolean {
     let moveHandler = (event: MouseEvent | TouchEvent) => {
       let dragbar: HTMLElement = this.dragbar().nativeElement;

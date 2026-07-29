@@ -1,6 +1,6 @@
 <div class="main-container">
   <div class="button-container">
-    @for (control of dateMoveData.back.moveData; track control.icon) {
+    @for(control of dateMoveData.back.moveData; track control.icon) {
       <button class="control-button" mat-mini-fab [matTooltip]="control.tooltip" [disabled]="dateMoveData.back.disabled()" (click)="control.trigger()">
         <mat-icon [svgIcon]="control.icon"></mat-icon>
       </button>
@@ -10,7 +10,7 @@
     <app-datetime-selector [min]="timeseries().start" [max]="timeseries().end" [period]="timeseries().period" [(date)]="date"></app-datetime-selector>
   </div>
   <div class="button-container">
-    @for (control of dateMoveData.forward.moveData; track control.icon) {
+    @for(control of dateMoveData.forward.moveData; track control.icon) {
       <button class="control-button" mat-mini-fab [matTooltip]="control.tooltip" [disabled]="dateMoveData.forward.disabled()" (click)="control.trigger()">
         <mat-icon [svgIcon]="control.icon"></mat-icon>
       </button>

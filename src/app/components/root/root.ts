@@ -52,7 +52,7 @@ export class Root {
 
   
   visualizationSelected = computed(() => {
-    let currentView = this.urlStateManager.paths()["view"];
+    let currentView = this.urlStateManager.paths().view;
     return currentView;
   });
 

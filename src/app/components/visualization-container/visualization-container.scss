@@ -53,7 +53,9 @@
   width: var(--data-width);
   height: var(--data-height);
   min-height: 0;
-  min-width: 0; /* Prevents flex flex-blowouts in row mode */
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: auto;
 }
 
 .resize-bar {

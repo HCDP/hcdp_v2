@@ -1,3 +1,9 @@
+:host {
+  container-type: inline-size;
+  display: block;
+  width: 100%; /* Allows host to measure parent width without collapsing */
+}
+
 .control-button {
   width: 30px;
   height: 100%;
@@ -10,24 +16,51 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
 }
 
 .date-container {
   padding-left: 5px;
   padding-right: 5px;
+  box-sizing: border-box;
+  white-space: nowrap; /* Prevents date control text wrapping internally */
 }
-
 
 .main-container {
   position: relative;
-  width: max-content;
+  width: fit-content;  /* Shrink-wraps around the widest child (.date-container) */
+  max-width: 100%;
   padding: 5px;
-  display: inline-flex;
-  align-items: stretch; /* Changed from center to stretch */
+  display: flex;
+  flex-direction: row; 
+  align-items: stretch;
   justify-content: center;
   height: fit-content;
+  box-sizing: border-box;
 }
 
+/* Vertical Stack Query */
+@container (max-width: 450px) {
+  .main-container {
+    flex-direction: column;
+    align-items: stretch; /* Forces button containers to stretch to date-container width */
+    gap: 10px;
+  }
+
+  .button-container {
+    display: flex;
+    padding-left: 5px;  /* Matches date-container padding */
+    padding-right: 5px;
+    gap: 4px;           /* Replaces button margins for exact edge-to-edge calculation */
+  }
+
+  .control-button {
+    flex: 1;            /* Distributes extra width evenly across all buttons */
+    width: auto;        /* Allows expanding past original 30px limit */
+    min-width: 0;       /* Prevents buttons from overflowing container */
+    margin: 2px 0;      /* Removes side margins so edge buttons align flush */
+  }
+}
 
 :host ::ng-deep app-datetime-selector .mat-mdc-form-field-subscript-wrapper {
   display: none;

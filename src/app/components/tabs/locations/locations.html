@@ -1,15 +1,15 @@
 
+<div class="container">
+  <app-map-location-selector
+    [(mapLocation)]="mapLocation">
+  </app-map-location-selector>
   @if(stationData(); as stationResource) {
-  @if(stationResource.isLoading()) {
-    <mat-spinner></mat-spinner>
-  }
-  @if(stationResource.value(); as stations) {
-    <div class="container">
-      <app-location-selector
-        (selectedLocation)="selectMapLocation($event)">
-      </app-location-selector>
+    @if(stationResource.isLoading()) {
+      <mat-spinner></mat-spinner>
+    }
+    @if(stationResource.value(); as stationManager) {
       <app-station-filters
-        [manager]="stations">
+        [manager]="stationManager">
       </app-station-filters>
 
       <div class="table-buffer">
@@ -17,21 +17,20 @@
           Stations
         </h3>
         <app-station-table 
-          [manager]="stations"
+          [stations]="stationManager.filteredStations()"
           [(selectedStation)]="selectedStation">
         </app-station-table>
       </div>
 
-      @let locationData = locationManager().location();
-      @if(locationData && locationData.type === "station") {
+      @if(selectedStation(); as station) {
         <div class="details-buffer">
           <app-station-details
-            [station]="locationData.location">
+            [station]="station">
           </app-station-details>
         </div>
       }
-    </div>
+    }
   }
-}
+</div>
 
 

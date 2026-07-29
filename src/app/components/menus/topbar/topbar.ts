@@ -1,4 +1,4 @@
-import { Component, effect, inject, input, ChangeDetectionStrategy, signal } from '@angular/core';
+import { Component, effect, inject, input, ChangeDetectionStrategy, signal, computed } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule}  from '@angular/material/icon';
 import { MatSidenav } from '@angular/material/sidenav';
@@ -10,8 +10,8 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { FormsModule } from '@angular/forms';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { GlobalPreferenceManager } from '../../../services/state/global-preference-manager.js';
 import { LayoutManager } from '../../../services/state/layout-manager.js';
+import { UrlStateManager } from '../../../services/state/url-state-manager.js';
 
 @Component({
   selector: 'app-topbar',
@@ -24,13 +24,17 @@ export class Topbar {
   private readonly dialog = inject(MatDialog);
   private readonly dsFactory = inject(DatasetFactory);
   layoutManager = inject(LayoutManager);
+  urlManager = inject(UrlStateManager);
 
   sidenav = input.required<MatSidenav>();
+
+  isVis = computed(() => {
+    return this.urlManager.paths().view === "visualize";
+  });
 
   dataset: HCDPDatasetVisualization | undefined;
 
   constructor() {
-
     effect((onCleanup) => {
       const ds = this.dsFactory.dataset.value();
       

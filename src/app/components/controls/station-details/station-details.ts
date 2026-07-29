@@ -18,10 +18,12 @@ export class StationDetails {
     let rows: { label: string, value: string | number }[] = [];
     for(let field in station) {
       let castField = field as keyof StationData;
-      let value = this.formatHelper.getFormattedValue(castField, station[castField]);
-      if(value !== undefined && value !== null) {
+      let value = this.formatHelper.getFormattedValue(castField, station[castField]) ?? undefined;
+      let label = this.formatHelper.getLabel(castField) ?? undefined;
+      // ignore values that have no value and fields with no label definition
+      if(value !== undefined && label !== undefined) {
         let row = {
-          label: this.formatHelper.getLabel(castField),
+          label,
           value
         }
         rows.push(row);
