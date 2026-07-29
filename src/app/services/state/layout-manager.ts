@@ -1,4 +1,4 @@
-import { effect, inject, Service, signal } from '@angular/core';
+import { effect, inject, linkedSignal, Service, signal } from '@angular/core';
 import { GlobalPreferenceManager } from './global-preference-manager';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -6,9 +6,11 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 @Service()
 export class LayoutManager {
   readonly globalPrefs = inject(GlobalPreferenceManager);
-  private readonly  breakpointObserver = inject(BreakpointObserver);
+  private readonly breakpointObserver = inject(BreakpointObserver);
 
-  layoutStyle = signal<"vertical" | "horizontal">(this.globalPrefs.preferences().layout ?? "vertical");
+  layoutStyle = linkedSignal<"vertical" | "horizontal">(() => {
+    return this.globalPrefs.preferences().layout ?? "vertical"
+  });
   smallScreen = signal<boolean>(false);
   
   constructor() {
