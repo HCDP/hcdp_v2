@@ -69,6 +69,7 @@
   line-height: 1.4;
   max-height: 10vh;
   overflow-y: auto;
+  margin-bottom: 5px;
 }
 
 .layout-selector {
@@ -92,4 +93,9 @@
   .layout-selector {
     display: block;
   }
+}
+
+.button-container > * {
+  margin: 10px;
+  margin-left: 0;
 }

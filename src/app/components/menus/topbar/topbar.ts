@@ -1,4 +1,4 @@
-import { Component, effect, inject, input, ChangeDetectionStrategy, signal, computed } from '@angular/core';
+import { Component, effect, inject, input, ChangeDetectionStrategy, computed } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule}  from '@angular/material/icon';
 import { MatSidenav } from '@angular/material/sidenav';
@@ -11,11 +11,12 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { FormsModule } from '@angular/forms';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { LayoutManager } from '../../../services/state/layout-manager.js';
-import { UrlStateManager } from '../../../services/state/url-state-manager.js';
+import { DataView, UrlStateManager } from '../../../services/state/url-state-manager.js';
+import { NgTemplateOutlet } from '@angular/common';
 
 @Component({
   selector: 'app-topbar',
-  imports: [MatButtonModule, MatIconModule, MatExpansionModule, MatButtonToggleModule, FormsModule, MatTooltipModule],
+  imports: [MatButtonModule, MatIconModule, MatExpansionModule, MatButtonToggleModule, FormsModule, MatTooltipModule, NgTemplateOutlet],
   templateUrl: './topbar.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './topbar.scss',
@@ -63,5 +64,10 @@ export class Topbar {
 
   openSettings(): void {
     this.dialog.open(GlobalSettings, {});
+  }
+
+  changeView(view: DataView) {
+    console.log(view);
+    this.urlManager.changeView(view);
   }
 }

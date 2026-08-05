@@ -60,15 +60,24 @@ export class UrlStateManager {
   }
 
   // navigate to dataset view
-  navigate(dataset: string, view: string) {
+  navigate(dataset: string, view: DataView = "visualize") {
     // clean slashes off of path variables
     dataset = dataset.replace(/^\/+|\/+$/g, '');
-    view = view.replace(/^\/+|\/+$/g, '');
     let currentDataset = this.currentPaths;
-    
     // only navigate if actually changing the path
     if(currentDataset.dataset !== dataset || currentDataset.view !== view) {
       this.router.navigate([dataset, view]);
     }
   }
+
+  changeView(view: DataView = "visualize") {
+    let currentDataset = this.currentPaths;
+    // only navigate if actually changing the path
+    if(currentDataset.view !== view) {
+      console.log(this.route);
+      this.router.navigate([currentDataset.dataset, view]);
+    }
+  }
 }
+
+export type DataView = "visualize" | "export";

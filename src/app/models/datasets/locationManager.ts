@@ -1,6 +1,5 @@
 import { signal, WritableSignal } from "@angular/core";
-import { StationData } from "./stations";
-
+import { StationMetadata } from "./stations";
 
 export class LocationManager {
   private _locationRef: WritableSignal<LocationData | null>;
@@ -10,8 +9,8 @@ export class LocationManager {
   }
 
   selectLocation(type: "map", location: MapLocation): void
-  selectLocation(type: "station", location: StationData): void
-  selectLocation(type: "map" | "station", location: MapLocation | StationData): void {
+  selectLocation(type: "station", location: StationMetadata): void
+  selectLocation(type: "map" | "station", location: MapLocation | StationMetadata): void {
     this._locationRef.set({
       type,
       location
@@ -28,7 +27,7 @@ export type LocationData = {
   location: MapLocation
 } | {
   type: "station",
-  location: StationData
+  location: StationMetadata
 }
 
 export interface MapLocation {

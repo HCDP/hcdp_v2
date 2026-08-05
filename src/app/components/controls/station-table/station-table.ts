@@ -49,7 +49,7 @@ export class StationTable {
     });
 
     effect(() => {
-      const activeId = this.selectedStation()?.skn;
+      const activeId = this.selectedStation()?.metadata.skn;
       if(activeId) {
         setTimeout(() => {
           const rowElement = this.el.nativeElement.querySelector(`[data-skn="${activeId}"]`);

@@ -8,7 +8,7 @@ import { LeafletColorScale } from '../controls/leaflet/leaflet-color-scale/leafl
 import { RasterData } from '../../models/leaflet/rasterData';
 import { ColorScale } from '../../models/leaflet/colors';
 import { HCDPStationDataManager, StationData } from '../../models/datasets/stations';
-import { rasterLayer, RasterLayer } from '../../models/leaflet/rasterLayer';
+import { rasterLayer } from '../../models/leaflet/rasterLayer';
 import { MatSliderModule } from '@angular/material/slider';
 import { Spinner } from 'spin.js';
 import { LayerData } from '../../models/datasets/recipe';
@@ -81,7 +81,7 @@ export class MapComponent {
 
   map = signal<L.Map | undefined>(undefined);
   roseOptions: RoseControlOptions;
-  imageHiddenControls = ["leaflet-control-zoom", "leaflet-control-layers", "leaflet-control-export"];
+  imageHiddenControls = ["leaflet-control-zoom", "leaflet-control-layers", "leaflet-control-export", "color-scale-config-btn"];
 
   constructor() {
     this.baseLayers = {
@@ -92,7 +92,7 @@ export class MapComponent {
       "Shaded Relief (ESRI)": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}', { maxZoom: 13, zIndex: 1 })
     };
 
-    let roseImage = "/arrows/nautical.svg";
+    let roseImage = "/images/hcdp_compass_rose.png";
     let roseURL = this.assetService.getAssetURL(roseImage);
     this.roseOptions = {
       image: roseURL,
@@ -511,7 +511,9 @@ export class MapComponent {
     stations.forEach((station: StationData) => {
       const markerColor = colorScale!.getColor(station.value).hex(); 
       const { radius, weight } = computeMarkerSizing();
-      const marker = L.circleMarker([station.lat, station.lng], {
+      const { metadata, value } = station;
+      const { lat, lng, name, skn } = metadata;
+      const marker = L.circleMarker([lat, lng], {
         radius,
         fillColor: markerColor,
         color: '#000',
@@ -521,7 +523,7 @@ export class MapComponent {
       });
 
       // Set up the popup content
-      const popupContent = `<b>${station.name || 'Station ' + station.skn}</b><br/>SKN: ${station.skn}<br/>Value: ${station.value.toFixed(2)}`;
+      const popupContent = `<b>${name || 'Station ' + skn}</b><br/>SKN: ${skn}<br/>Value: ${value.toFixed(2)}`;
       let popupContainer = this.createPopupContainer(popupContent);
       
       // Disable autoPan so the popup opening doesn't interrupt flyTo
@@ -529,10 +531,10 @@ export class MapComponent {
 
       // Map -> App synchronization
       marker.on('click', () => {
-        this.typedDataset().locationManager.selectLocation("station", station);
+        this.typedDataset().locationManager.selectLocation("station", metadata);
       });
 
-      markerMap.set(station.skn, marker);
+      markerMap.set(skn, marker);
       stationGroup.addLayer(marker);
     });
 
@@ -557,13 +559,13 @@ export class MapComponent {
         const selectedLoc = this.typedDataset().locationManager.location();
         
         if(selectedLoc?.type === "station") {
-          const stationData = selectedLoc.location as StationData;
-          const marker = markerMap.get(stationData.skn);
+          const stationMetadata = selectedLoc.location;
+          const marker = markerMap.get(stationMetadata.skn);
           
           if(marker) {
             // flyTo prevents snapping and guarantees smooth animation.
             mapInstance.flyTo(
-              [stationData.lat, stationData.lng], 
+              [stationMetadata.lat, stationMetadata.lng], 
               mapInstance.getZoom(), 
               {
                 animate: true,

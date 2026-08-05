@@ -1,6 +1,6 @@
 import { signal, WritableSignal } from "@angular/core"
 
-export interface RawStationData<T = StationMetadata | StationValue> {
+export interface RawStationData<T = RawStationMetadata | StationValue> {
   name: string,
   value: T,
   _etag: {
@@ -11,9 +11,9 @@ export interface RawStationData<T = StationMetadata | StationValue> {
   }
 }
 
+export type RawStationMetadata = StationMetadata & { id_field: string, station_group: string };
+
 export interface StationMetadata {
-  // unused right now
-  // station_group: string,
   skn: string,
   lat: number,
   lng: number,
@@ -35,21 +35,36 @@ export interface StationValue {
   station_id: string,
 }
 
-export interface StationData {
-  skn: string,
-  lat: number,
-  lng: number,
-  elevation_m?: number
-  name?: string,
-  observer?: string,
-  network?: string,
-  island?: string,
-  ncei_id?: string,
-  nws_id?: string,
-  nesdis_id?: string,
-  scan_id?: string,
-  smart_node_rf_id?: string,
-  value: number
+
+export class StationData {
+  private _metadata: StationMetadata;
+  private _value: number;
+
+  constructor(metadata: StationMetadata, value: number) {
+    this._metadata = metadata;
+    this._value = value;
+  }
+
+  get fields(): StationDataField[] {
+    return [...Object.keys(this._metadata), "value"] as StationDataField[];
+  }
+
+  get metadata() {
+    return { ...this._metadata };
+  }
+
+  get value() {
+    return this._value;
+  }
+
+  getField(field: StationDataField) {
+    if(field === "value") {
+      return this._value;
+    }
+    else {
+      return this._metadata[field];
+    }
+  }
 }
 
 export class HCDPStationDataManager {
@@ -63,10 +78,7 @@ export class HCDPStationDataManager {
     for(let value of values) {
       let skn = value.station_id;
       let valueMetadata = metadata[skn];
-      let stationData: StationData = {
-        ...valueMetadata,
-        value: value.value
-      }
+      let stationData: StationData = new StationData(valueMetadata, value.value);
       this.dataMap[skn] = stationData;
     }
     this._stationFilters = [];
@@ -90,7 +102,7 @@ export class HCDPStationDataManager {
   }
 
 
-  addFilter(field: keyof StationData, type: "value" | "range", values: string[] | [number, number], negate: boolean = false) {
+  addFilter(field: StationDataField, type: "value" | "range", values: string[] | [number, number], negate: boolean = false) {
     let filter = new StationFilter(field, type, values, negate);
     this._stationFilters.push(filter);
     this.filterValues();
@@ -127,13 +139,17 @@ export class HCDPStationDataManager {
   }
 }
 
+
+export type StationMetadataField = keyof StationMetadata;
+export type StationDataField = StationMetadataField | "value";
+
 export class StationFilter {
-  private _field: keyof StationData;
+  private _field: StationDataField;
   private _type: "value" | "range";
   private _values: string[] | [number, number];
   private _negate: boolean;
 
-  constructor(field: keyof StationData, type: "value" | "range", values: string[] | [number, number], negate: boolean = false) {
+  constructor(field: StationDataField, type: "value" | "range", values: string[] | [number, number], negate: boolean = false) {
     this._field = field;
     this._type = type;
     this._values = values;
@@ -141,7 +157,7 @@ export class StationFilter {
   }
 
   match(stationData: StationData): boolean {
-    let value = stationData[this.field];
+    let value = stationData.getField(this._field);
     
     if(value === undefined) {
       return false;
@@ -161,7 +177,7 @@ export class StationFilter {
     return match;
   }
 
-  get field(): keyof StationData {
+  get field(): StationDataField {
     return this._field;
   }
 

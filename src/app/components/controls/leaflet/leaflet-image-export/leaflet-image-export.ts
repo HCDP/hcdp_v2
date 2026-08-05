@@ -59,7 +59,6 @@ export class LeafletImageExport {
           }
         }
 
-
         await rasterizeHTML.drawDocument(document, canvas);
         //copy to a new canvas cut to the right size
         let croppedCanvas = document.createElement("canvas");
@@ -103,6 +102,16 @@ export class LeafletImageExport {
     }
   }
 
+  private getContentDimensions(element: HTMLElement) {
+    const rect = element.getBoundingClientRect();
+    const style = window.getComputedStyle(element);
+    
+    return {
+      width: rect.width - (parseFloat(style.paddingLeft) || 0) - (parseFloat(style.paddingRight) || 0) - (parseFloat(style.borderLeftWidth) || 0) - (parseFloat(style.borderRightWidth) || 0),
+      height: rect.height - (parseFloat(style.paddingTop) || 0) - (parseFloat(style.paddingBottom) || 0) - (parseFloat(style.borderTopWidth) || 0) - (parseFloat(style.borderBottomWidth) || 0)
+    };
+  }
+
   //cannot render canvases
   private async prepareDOMForExport(root: HTMLElement): Promise<HTMLNodeReplaceData[]> {
     let replaceData: HTMLNodeReplaceData[] = [];
@@ -114,6 +123,9 @@ export class LeafletImageExport {
     for(let child of Array.from(root.childNodes)) {
       let node = <HTMLElement>child;
       if(node.tagName == "IMG") {
+
+        const { width: targetWidth, height: targetHeight } = this.getContentDimensions(node);
+
         root.removeChild(node);
         let imageNode: HTMLImageElement = <HTMLImageElement>node;
 
@@ -125,13 +137,13 @@ export class LeafletImageExport {
         let ctx = canvasNode.getContext("2d");
 
         if(ctx) {
-          canvasNode.width = imageNode.width;
-          canvasNode.height = imageNode.height;
+          canvasNode.width = targetWidth;
+          canvasNode.height = targetHeight;
           let imageEl = document.createElement("img");
   
           let imageDrawn = new Promise<void>((resolve) => {
             let drawImageToContext = () => {
-              ctx.drawImage(sourceClone, 0, 0);
+              ctx.drawImage(sourceClone, 0, 0, targetWidth, targetHeight);
               let dataURL = canvasNode.toDataURL();
               imageEl.src = dataURL;
               resolve();
@@ -141,7 +153,8 @@ export class LeafletImageExport {
   
           //set html props
           imageEl.className = imageNode.className;
-          imageEl.width = imageNode.width;
+          imageEl.width = targetWidth; 
+          imageEl.height = targetHeight;
           for(let style in imageNode.style) {
             try {
               imageEl.style[style] = imageNode.style[style];

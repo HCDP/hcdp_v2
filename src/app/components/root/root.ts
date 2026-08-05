@@ -9,10 +9,11 @@ import { DatasetFactory } from '../../services/datasets/dataset-factory.js';
 import { HCDPDataset } from '../../models/datasets/dataset.js';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { LayoutManager } from '../../services/state/layout-manager.js';
+import { MatButtonModule } from '@angular/material/button';
 
 @Component({
   selector: 'app-root',
-  imports: [VisualizationContainer, Sidebar, MatSidenavModule, Topbar, ExportContainer, MatProgressSpinnerModule],
+  imports: [VisualizationContainer, Sidebar, MatSidenavModule, Topbar, ExportContainer, MatProgressSpinnerModule, MatButtonModule],
   templateUrl: './root.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './root.scss',

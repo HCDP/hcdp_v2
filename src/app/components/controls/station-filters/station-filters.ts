@@ -10,7 +10,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { HCDPStationDataManager, StationData, StationFilter } from '../../../models/datasets/stations';
+import { HCDPStationDataManager, StationDataField, StationFilter } from '../../../models/datasets/stations';
 import { StationFormatHelper } from '../../../services/stations/station-format-helper';
 
 @Component({
@@ -39,34 +39,29 @@ export class StationFilters {
   manager = input.required<HCDPStationDataManager>();
 
   // --- FORM STATE ---
-  selectedField = signal<keyof StationData | null>(null);
+  selectedField = signal<StationDataField | null>(null);
   selectedStringValues = signal<string[]>([]);
-  dropdownSearch = signal<string>(''); 
+  dropdownSearch = signal<string>(""); 
   rangeMin = signal<number | null>(null);
   rangeMax = signal<number | null>(null);
   negateInput = signal<boolean>(false);
 
-  // --- COMPUTED s ---
+  // --- COMPUTED ---
 
   availableFields = computed(() => {
     const dataMap = this.manager().stationData;
-    const allKeys = new Set<string>();
-    
-    // Define the exact fields you want to hide from the user
-    const ignoredFields = ['id_field', 'station_group']; 
+    const allFields = new Set<StationDataField>();
 
-    for (const st of Object.values(dataMap)) {
-      Object.keys(st).forEach(k => {
-        // Only add the key if it is NOT in the ignored list
-        if (!ignoredFields.includes(k)) {
-          allKeys.add(k);
-        }
-      });
+    for(let skn in dataMap) {
+      let station = dataMap[skn];
+      for(let field of station.fields) {
+        allFields.add(field)
+      }
     }
 
-    return Array.from(allKeys).map(key => ({
-      value: key as keyof StationData,
-      label: this.formatHelper.getLabel(key) || key 
+    return Array.from(allFields).map((field: StationDataField) => ({
+      value: field,
+      label: this.formatHelper.getLabel(field)
     })).sort((a, b) => a.label.localeCompare(b.label));
   });
 
@@ -75,31 +70,32 @@ export class StationFilters {
     if (!field) return null;
 
     const dataMap = this.manager().stationData;
-    let type: 'string' | 'number' = 'string';
+    let type: "string" | "number" = "string";
     const uniqueStringValues = new Set<string>();
     
     // Track absolute min and max for numbers
     let absMin = Infinity;
     let absMax = -Infinity;
 
-    for(const st of Object.values(dataMap)) {
-      const val = st[field];
-      if (val !== undefined && val !== null) {
-        type = typeof val === 'number' ? 'number' : 'string';
+    for(const station of Object.values(dataMap)) {
+      const value = station.getField(field) ?? undefined;
+      if(value !== undefined) {
+        type = typeof value === "number" ? "number" : "string";
         
-        if (type === 'string') {
-          uniqueStringValues.add(val as string);
-        } else if (type === 'number') {
-          const numVal = val as number;
-          if (numVal < absMin) absMin = numVal;
-          if (numVal > absMax) absMax = numVal;
+        if(type === "string") {
+          uniqueStringValues.add(value as string);
+        }
+        else if(type === "number") {
+          const numVal = value as number;
+          if(numVal < absMin) absMin = numVal;
+          if(numVal > absMax) absMax = numVal;
         }
       }
     }
 
     // Fallback just in case a numeric field has no data at all
-    if (absMin === Infinity) absMin = 0;
-    if (absMax === -Infinity) absMax = 0;
+    if(absMin === Infinity) absMin = 0;
+    if(absMax === -Infinity) absMax = 0;
 
     const availableValues = Array.from(uniqueStringValues).map(v => ({
       raw: v,
@@ -125,7 +121,7 @@ export class StationFilters {
     const meta = this.fieldMetadata();
     if(!meta) return false;
 
-    if (meta.type === 'string') {
+    if(meta.type === "string") {
       return this.selectedStringValues().length > 0;
     }
     else {

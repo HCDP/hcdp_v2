@@ -1,6 +1,6 @@
 import { inject, Signal, ResourceRef, computed, Injector } from "@angular/core";
 import { ApiHandler, HttpOptions } from "../../services/requests/api-handler";
-import { DataStreamRecipe, DataStreamType, UnitBase, UnitSource, UnitValue } from "./recipe";
+import { DataStreamRecipe, DataStreamType, UnitBase, UnitValue } from "./recipe";
 import { Params } from "@angular/router";
 import { Observable, of, switchMap, tap } from "rxjs";
 import { rxResource } from "@angular/core/rxjs-interop";

@@ -27,25 +27,6 @@ export class Locations extends TabBase {
     return this.typedDataset().locationManager;
   });
 
-
-  selectedStation = linkedSignal<StationData | undefined>(() => {
-    let locationData = this.locationManager().location();
-    let station: StationData | undefined;
-    if(locationData && locationData.type == "station") {
-      station = locationData.location;
-    }
-    return station;
-  });
-  mapLocation = linkedSignal<MapLocation | undefined>(() => {
-    let locationData = this.locationManager().location();
-    let location: MapLocation | undefined;
-    if(locationData && locationData.type == "map") {
-      location = locationData.location;
-    }
-    return location;
-  });
-
-
   stationData = computed(() => {
     let streamData = this.typedDataset().dataStreams;
     let streams = streamData.getStreamsOfType("stations");
@@ -57,6 +38,28 @@ export class Locations extends TabBase {
     }
     return undefined;
   });
+
+  selectedStation = linkedSignal<StationData | undefined>(() => {
+    let locationData = this.locationManager().location();
+    let station: StationData | undefined;
+    if(locationData && locationData.type == "station") {
+      let skn = locationData.location.skn;
+      station = this.stationData()?.value().filteredStations().find((station: StationData) => station.metadata.skn === skn);
+    }
+    return station;
+  });
+
+  mapLocation = linkedSignal<MapLocation | undefined>(() => {
+    let locationData = this.locationManager().location();
+    let location: MapLocation | undefined;
+    if(locationData && locationData.type == "map") {
+      location = locationData.location;
+    }
+    return location;
+  });
+
+
+  
 
 
   constructor() {
@@ -81,6 +84,6 @@ export class Locations extends TabBase {
   }
 
   selectStation(station: StationData) {
-    this.locationManager().selectLocation("station", station);
+    this.locationManager().selectLocation("station", station.metadata);
   }
 }

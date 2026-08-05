@@ -1,13 +1,13 @@
 .rose {
-  margin: auto;
-  width: 90%;
+  width: auto;
   height: 90%;
   opacity: 100%;
 }
 
 .rose-container {
+  padding: 0 7px;
   display: flex;
-  width: 100px;
+  width: auto;
   height: 100px;
   border-radius: 5px;
   justify-content: center;

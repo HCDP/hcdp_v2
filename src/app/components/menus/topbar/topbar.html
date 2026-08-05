@@ -1,3 +1,18 @@
+<ng-template #viewToggle let-actionLabel="toggle data view">
+  <div class="button-container">
+    @if(isVis()) {
+      <button matButton="filled" aria-label="Export dataset data" (click)="changeView('export')">
+        Export Data 
+      </button>
+    }
+    @else {
+      <button matButton="filled" aria-label="Visualize dataset data" (click)="changeView('visualize')">
+        Visualize Data 
+      </button>
+    }
+  </div>
+</ng-template>
+
 <div class="topbar-container">
   <button matMiniFab aria-label="Toggle dataset category selector" (click)="toggleSidenav()">
     <mat-icon>menu</mat-icon>
@@ -21,8 +36,14 @@
       </mat-expansion-panel-header>
       
       <p class="expanded-description">{{dataset.description}}</p>
-      
+
+      @if(layoutManager.smallScreen()) {
+        <ng-container *ngTemplateOutlet="viewToggle" />
+      }
     </mat-expansion-panel>
+    @if(!layoutManager.smallScreen()) {
+      <ng-container *ngTemplateOutlet="viewToggle" />
+    }
   }
   @if(!layoutManager.smallScreen() && isVis()) {
     <div class="layout-selector">

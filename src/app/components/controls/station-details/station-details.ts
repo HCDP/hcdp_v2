@@ -16,10 +16,9 @@ export class StationDetails {
   tableRows = computed(() => {
     let station = this.station();
     let rows: { label: string, value: string | number }[] = [];
-    for(let field in station) {
-      let castField = field as keyof StationData;
-      let value = this.formatHelper.getFormattedValue(castField, station[castField]) ?? undefined;
-      let label = this.formatHelper.getLabel(castField) ?? undefined;
+    for(let field of station.fields) {
+      let value = this.formatHelper.getFormattedValue(field, station.getField(field)) ?? undefined;
+      let label = this.formatHelper.getLabel(field) ?? undefined;
       // ignore values that have no value and fields with no label definition
       if(value !== undefined && label !== undefined) {
         let row = {

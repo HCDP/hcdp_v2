@@ -6,7 +6,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { RouterModule } from '@angular/router';
-import { UrlStateManager } from '../../../services/state/url-state-manager';
+import { DataView, UrlStateManager } from '../../../services/state/url-state-manager';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 @Component({
@@ -75,7 +75,7 @@ export class Sidebar implements OnInit {
   }
 
   selectViewComponent(node: DatasetSelectorDatasetNode, visualizationSelected: boolean) {
-    let view = visualizationSelected ? "visualize" : "export";
+    let view: DataView = visualizationSelected ? "visualize" : "export";
     this.urlStateManager.navigate(node.link, view);
   }
 }

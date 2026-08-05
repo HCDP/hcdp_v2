@@ -3,7 +3,6 @@
     "type": "category",
     "label": "Time dependent Variables",
     "nodes": [
-      
       {
         "type": "category",
         "label": "Contemporary Rainfall (RF)",

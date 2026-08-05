@@ -1,18 +1,16 @@
 .color-scale-container {
-  padding: 10px 4px 10px 10px; // Top: 10px, Right: 4px (removes excess), Bottom: 10px, Left: 10px
-  padding-top: 0;
-  background: rgba(180, 185, 195, 0.7); // Semi-transparent grey panel background
+  padding: 10px 4px 10px 10px; 
+  background: rgba(180, 185, 195, 0.7); 
   border-radius: 16px;
   pointer-events: auto;
   max-width: 100px;
-  width: fit-content; // Allows the container to tightly hug the contents
+  width: fit-content; 
 
   .scale-header {
     font-weight: bold;
     font-size: 13px;
-    margin-bottom: 12px;
     text-align: left;
-    margin: 0;
+    margin: 0; 
   }
 
   .scale-body {
@@ -21,11 +19,11 @@
     justify-content: center;
     margin: 7px;
     gap: 2px;
-    height: 150px; // Standard height for the vertical display stack
-
+    height: 150px; 
   }
 }
 
-.config-btn {
+.color-scale-config-btn {
   width: 100%;
+  margin-top: -10px; 
 }
