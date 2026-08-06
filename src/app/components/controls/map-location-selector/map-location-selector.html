@@ -1,10 +1,12 @@
 <div class="location-input-container">
-  <mat-form-field class="example-full-width" appearance="outline">
+  <mat-form-field class="full-width" appearance="outline">
     <mat-label>Go to Location (Lat, Lng)</mat-label>
     
-    <input matInput 
+    <input #locationInput matInput 
            [formControl]="locationControl"
-           placeholder="e.g., 19.7012, -155.0809">
+           placeholder="e.g., 19.7012, -155.0809"
+           (keydown.enter)="$event.target.blur()"
+           (blur)="updateInputLocation()">
 
     <button mat-icon-button 
             matSuffix 

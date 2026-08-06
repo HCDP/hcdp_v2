@@ -1,4 +1,4 @@
-import { Component, signal, ChangeDetectionStrategy, model, inject, effect, DestroyRef } from '@angular/core';
+import { Component, signal, model, inject, effect, viewChild, ElementRef } from '@angular/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
@@ -9,7 +9,6 @@ import { FormControl, ValidationErrors, AbstractControl, ReactiveFormsModule } f
 import { MapLocation } from '../../../models/datasets/locationManager';
 import { Configuration } from '../../../services/configuration/configuration';
 import { latLngBounds } from 'leaflet';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-map-location-selector',
@@ -26,8 +25,9 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
   styleUrl: './map-location-selector.scss',
 })
 export class MapLocationSelector {
-  private destroyRef = inject(DestroyRef);
   private config = inject(Configuration);
+  
+  locationInputElement = viewChild.required<ElementRef<HTMLInputElement>>("locationInput");
 
   mapLocation = model.required<MapLocation | undefined>();
 
@@ -37,30 +37,11 @@ export class MapLocationSelector {
   locationControl = new FormControl("", [this.coordinateValidator.bind(this)]);
 
   constructor() {
-    this.setupTwoWaySync();
-  }
-
-  private setupTwoWaySync() {
-    // Form -> Signal
-    this.locationControl.valueChanges
-    .pipe(takeUntilDestroyed(this.destroyRef))
-    .subscribe((value) => {
-      if(this.locationControl.valid && value) {
-        const [lat, lng] = value.split(',').map(n => parseFloat(n));
-        const location = this.mapLocation();
-        if(!location) return;
-        // prevent passing same location
-        if (location.lat !== lat || location.lng !== lng) {
-          this.mapLocation.set({ lat, lng });
-        }
-      }
-    });
-
     // Signal -> Form
     effect(() => {
       const location = this.mapLocation();
       if(!location) return;
-      const strVal = `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`;
+      const strVal = `${this.formatCoordValue(location.lat)}, ${this.formatCoordValue(location.lng)}`;
       // Only update if different
       if(this.locationControl.value !== strVal) {
         // use emitEvent: false to prevent valueChange sub from firing
@@ -68,6 +49,23 @@ export class MapLocationSelector {
       }
 
     });
+  }
+
+  // Form -> Signal
+  updateInputLocation() {
+    let value = this.locationControl.value;
+    if(this.locationControl.valid && value) {
+        const [lat, lng] = value.split(',').map(n => parseFloat(n));
+        const location = this.mapLocation();
+        // prevent passing same location
+        if(!location || location.lat !== lat || location.lng !== lng) {
+          this.mapLocation.set({ lat, lng });
+        }
+      }
+  }
+
+  formatCoordValue(value: number) {
+    return parseFloat(value.toFixed(4)).toString();
   }
 
   // --- Internal Validator ---
@@ -90,7 +88,7 @@ export class MapLocationSelector {
     const minLng = bounds.getWest();
     const maxLng = bounds.getEast();
 
-    // Check against your specific geofence bounds
+    // Check against hawaii geofence
     if(
       lat < minLat || 
       lat > maxLat || 
@@ -131,10 +129,10 @@ export class MapLocationSelector {
       }
       
       // If valid, update the form control
-      this.locationControl.setValue(`${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}`);
-      
+      this.locationControl.setValue(`${this.formatCoordValue(coords.lat)}, ${this.formatCoordValue(coords.lng)}`);
+      this.locationInputElement().nativeElement.blur();
     }
-    catch (error: any) {
+    catch(error: any) {
       this.locationError.set(error.message || 'Unable to retrieve location');
     }
     finally {

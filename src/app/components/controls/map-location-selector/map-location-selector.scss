@@ -1,8 +1,12 @@
 .location-input-container {
   width: 100%;
   
-  .example-full-width {
+  .full-width {
     width: 100%;
+
+    button {
+      margin-right: 5px;
+    }
   }
 
   // Centers the spinner perfectly inside the matSuffix button

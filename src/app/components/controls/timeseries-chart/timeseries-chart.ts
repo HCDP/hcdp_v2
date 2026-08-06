@@ -331,13 +331,11 @@ export class TimeseriesChart {
 
 private resolveThemeColor(cssVar: string, fallback: string, opacity: number = 1): string {
   const div = document.createElement('div');
-  div.style.visibility = 'hidden'; // Safer than display: none for computed styles
+  div.style.visibility = 'hidden';
   
-  // Assign the raw variable. The browser natively resolves light-dark() based on the current theme.
   div.style.color = `var(${cssVar}, ${fallback})`;
   document.body.appendChild(div);
-  
-  // This will ALWAYS return a resolved format, e.g., "rgb(25, 118, 210)"
+
   const computedColor = getComputedStyle(div).color; 
   document.body.removeChild(div);
 
