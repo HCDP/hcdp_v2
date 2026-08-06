@@ -236,7 +236,7 @@ export class Timeseries extends TabBase {
       }
       else {
         streamType = "stations";
-        baseParams.station_id = location.location;
+        baseParams.station_id = location.location.skn;
       }
       streamIds = this.castDataset().dataStreams.getStreamIdsOfType(streamType);
       // if no streams for the selected type reset and ignore

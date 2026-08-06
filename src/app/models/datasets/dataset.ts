@@ -16,6 +16,7 @@ import { ExportTimeseriesDataHandler } from "./export";
 import { LocationManager } from "./locationManager";
 import { TabManager } from "./tabManager";
 import { Configuration } from "../../services/configuration/configuration";
+import { Details } from "../../components/tabs/details/details";
 
 
 
@@ -162,6 +163,7 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
 
   constructor(id: string, label: string, datatypeLabel: string, description: string, layout: TimeseriesSchemaData, initData: {range: [DateTime, DateTime]}, active: Signal<boolean>) {
     let tabs: Tab[] = [
+      new Tab("details", "Details", Details),
       new Tab("options", "Options", DatasetOptions),
       new Tab("locations", "Locations", Locations),
       new Tab("timeseries", "Charts", Timeseries)

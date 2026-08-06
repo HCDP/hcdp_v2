@@ -74,7 +74,6 @@ export class UrlStateManager {
     let currentDataset = this.currentPaths;
     // only navigate if actually changing the path
     if(currentDataset.view !== view) {
-      console.log(this.route);
       this.router.navigate([currentDataset.dataset, view]);
     }
   }

@@ -25,7 +25,6 @@ export class VisualizationContainer {
   startResize(touch: boolean): boolean {
     let moveHandler = (event: MouseEvent | TouchEvent) => {
       let dragbar: HTMLElement = this.dragbar().nativeElement;
-      // Note: adjust the ref name below if you named it dataContainer instead of dataContainerRef
       let dataContainer: HTMLElement = this.dataContainerRef().nativeElement; 
       
       let isHorizontal = this.layoutManager.layoutStyle() === "horizontal";

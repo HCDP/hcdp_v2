@@ -67,7 +67,6 @@ export class Topbar {
   }
 
   changeView(view: DataView) {
-    console.log(view);
     this.urlManager.changeView(view);
   }
 }
