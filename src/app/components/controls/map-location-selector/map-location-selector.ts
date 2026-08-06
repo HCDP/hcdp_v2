@@ -41,7 +41,7 @@ export class MapLocationSelector {
     effect(() => {
       const location = this.mapLocation();
       if(!location) return;
-      const strVal = `${this.formatCoordValue(location.lat)}, ${this.formatCoordValue(location.lng)}`;
+      const strVal = `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`;
       // Only update if different
       if(this.locationControl.value !== strVal) {
         // use emitEvent: false to prevent valueChange sub from firing
@@ -64,9 +64,9 @@ export class MapLocationSelector {
       }
   }
 
-  formatCoordValue(value: number) {
-    return parseFloat(value.toFixed(4)).toString();
-  }
+  // formatCoordValue(value: number) {
+  //   return parseFloat(value.toFixed(4)).toString();
+  // }
 
   // --- Internal Validator ---
 
@@ -129,7 +129,7 @@ export class MapLocationSelector {
       }
       
       // If valid, update the form control
-      this.locationControl.setValue(`${this.formatCoordValue(coords.lat)}, ${this.formatCoordValue(coords.lng)}`);
+      this.locationControl.setValue(`${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}`);
       this.locationInputElement().nativeElement.blur();
     }
     catch(error: any) {
