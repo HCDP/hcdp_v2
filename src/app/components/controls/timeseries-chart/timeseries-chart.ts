@@ -329,35 +329,34 @@ export class TimeseriesChart {
 
 
 
+private resolveThemeColor(cssVar: string, fallback: string, opacity: number = 1): string {
+  const div = document.createElement('div');
+  div.style.visibility = 'hidden'; // Safer than display: none for computed styles
+  
+  // Assign the raw variable. The browser natively resolves light-dark() based on the current theme.
+  div.style.color = `var(${cssVar}, ${fallback})`;
+  document.body.appendChild(div);
+  
+  // This will ALWAYS return a resolved format, e.g., "rgb(25, 118, 210)"
+  const computedColor = getComputedStyle(div).color; 
+  document.body.removeChild(div);
 
-
-
-
-
-
-
-
-
+  // Extract the raw numbers to construct an ECharts-safe rgba string
+  const rgbValues = computedColor.match(/\d+(\.\d+)?/g);
+  if (rgbValues && rgbValues.length >= 3) {
+    return `rgba(${rgbValues[0]}, ${rgbValues[1]}, ${rgbValues[2]}, ${opacity})`;
+  }
+  
+  return fallback;
+}
 
   private initChartBase() {
-    // 1. Extract styles natively
-    const styles = getComputedStyle(document.body);
-    let primaryColor = styles.getPropertyValue('--mat-sys-on-primary-container').trim() || '#1976d2';
-    const textColor = styles.getPropertyValue('--mat-sys-on-surface').trim() || '#333333';
-    const axisLineColor = styles.getPropertyValue('--mat-sys-outline-variant').trim() || '#ccc';
-
-    // 2. Resolve the light-dark() CSS function cleanly
-    if (primaryColor.startsWith('light-dark')) {
-      const matches = primaryColor.match(/light-dark\s*\(\s*([^,]+)\s*,\s*([^)]+)\s*\)/);
-      if (matches) {
-        const isDarkMode = document.body.classList.contains('dark-theme') || 
-                           document.body.classList.contains('dark-mode') ||
-                           window.matchMedia('(prefers-color-scheme: dark)').matches;
-        primaryColor = isDarkMode ? matches[2].trim() : matches[1].trim();
-      }
-    }
-
-    const areaGradientColor = primaryColor + '66';
+    const primaryColor = this.resolveThemeColor('--mat-sys-on-primary-container', '#1976d2');
+    const areaGradientColor = this.resolveThemeColor('--mat-sys-on-primary-container', '#1976d2', 0.6);
+    const transparentColor = this.resolveThemeColor('--mat-sys-on-primary-container', '#1976d2', 0);
+    
+    const textColor = this.resolveThemeColor('--mat-sys-on-surface', '#333333');
+    const axisLineColor = this.resolveThemeColor('--mat-sys-outline-variant', '#333333');
 
     return {
       animation: false,
@@ -379,7 +378,8 @@ export class TimeseriesChart {
         nameLocation: 'middle',
         nameGap: 30,
         nameTextStyle: {
-          fontSize: 15
+          fontSize: 15,
+          color: textColor
         },
         type: 'time',
         boundaryGap: [0, 0],
@@ -407,7 +407,7 @@ export class TimeseriesChart {
           areaStyle: {
             color: new graphic.LinearGradient(0, 0, 0, 1, [
               { offset: 0, color: areaGradientColor },
-              { offset: 1, color: primaryColor + '00' }
+              { offset: 1, color: transparentColor }
             ])
           }
         } as LineSeriesOption
