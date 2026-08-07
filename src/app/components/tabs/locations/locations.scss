@@ -9,7 +9,7 @@
 .container {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 10px;
   min-width: 0;
 }
 
@@ -23,4 +23,8 @@
   mat-spinner {
     margin: 0 auto;
   }
+}
+
+.station-header {
+  margin-bottom: 0;
 }

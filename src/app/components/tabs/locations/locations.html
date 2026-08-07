@@ -8,14 +8,14 @@
       <mat-spinner></mat-spinner>
     }
     @if(stationResource.value(); as stationManager) {
+      <h3 class="station-header">
+        Stations
+      </h3>
       <app-station-filters
         [manager]="stationManager">
       </app-station-filters>
 
       <div class="table-buffer">
-        <h3>
-          Stations
-        </h3>
         <app-station-table 
           [stations]="stationManager.filteredStations()"
           [(selectedStation)]="selectedStation">

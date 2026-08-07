@@ -39,6 +39,47 @@ export class StationTable {
   });
 
   constructor() {
+    this.dataSource.sortingDataAccessor = (item, property) => {
+      switch(property) {
+        case 'skn': return item.metadata.skn;
+        case 'name': return item.metadata.name;
+        case 'island': return item.metadata.island;
+        case 'network': return item.metadata.network;
+        case 'value': return item.value;
+        default: return (item as any)[property];
+      }
+    };
+
+    this.dataSource.sortData = (data, sort) => {
+      const active = sort.active;
+      const direction = sort.direction;
+      
+      // If no column is sorted, or direction is cleared, return original data
+      if (!active || direction === '') {
+        return data;
+      }
+
+      return data.sort((a, b) => {
+        const valueA = this.dataSource.sortingDataAccessor(a, active);
+        const valueB = this.dataSource.sortingDataAccessor(b, active);
+
+        // Standard comparison
+        let result = 0;
+        if(valueA != null && valueB != null) {
+          result = valueA < valueB ? -1 : valueA > valueB ? 1 : 0;
+        }
+        else if (valueA != null) {
+          result = 1;
+        }
+        else if (valueB != null) {
+          result = -1; 
+        }
+
+        // Invert because angular material arrows are dumb
+        return result * (direction === 'asc' ? -1 : 1);
+      });
+    };
+    
     effect(() => {
       const currentStations = this.stations();
       this.dataSource.data = currentStations;
