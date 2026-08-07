@@ -159,9 +159,11 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
   private _locationManager: LocationManager;
   private _dateChunks: [DateTime, DateTime][];
   private _unitData: UnitData;
+  private _datasetParams: Record<string, string>;
   
 
   constructor(id: string, label: string, datatypeLabel: string, description: string, layout: TimeseriesSchemaData, initData: {range: [DateTime, DateTime]}, active: Signal<boolean>) {
+
     let tabs: Tab[] = [
       new Tab("details", "Details", Details),
       new Tab("options", "Options", DatasetOptions),
@@ -173,6 +175,8 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
     let { datasetParams, streams, timeseries, options, mapLayers, exportData, unitSource } = layout;
     let { range } = initData;
     let [ startDate, endDate ] = range;
+
+    this._datasetParams = datasetParams;
     
     let defaultDate: DateTime;
     if(timeseries.defaultDate) {
@@ -237,6 +241,37 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
       date = chunkEnd;
     }
   }
+
+
+  getParameterizedString(streams?: string[], exclude: string[] = []) {
+    let parameterizedString = this.id;
+    let excludeSet = new Set<string>([...exclude, ...Object.keys(this._datasetParams), "returnEmptyNotFound", "type"]);
+    if(streams) {
+      let consumed: Set<string> = new Set<string>();
+      for(let stream of streams) {
+        let streamParams = this._dataStreamManager.getStreamParams(stream)() ?? {}
+        for(let field in streamParams) {
+          // skip consumed fields
+          if(!excludeSet.has(field) &&!consumed.has(field)) {
+            parameterizedString += `_${streamParams[field]}`;
+            consumed.add(field);
+          }
+        }
+      }
+    }
+    else {
+      for(let field of this._dataStreamManager.universalParams) {
+        if(!excludeSet.has(field)) {
+          let value = this._dataState.getControl(field)?.stringValue;
+          if(value) {
+            parameterizedString += `_${value}`;
+          }
+        }
+      }
+    }
+    return parameterizedString;
+  }
+
 
   get exportData() {
     return this._exportData;

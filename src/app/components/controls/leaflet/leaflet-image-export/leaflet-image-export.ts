@@ -14,6 +14,7 @@ export class LeafletImageExport {
 
   map = input.required<LMap>();
   imageContainer = input.required<ElementRef>();
+  filename = input<string>("HCDP_map");
 
   position = input<ControlPosition>("topleft");
   hiddenControls = input<string[]>([]);
@@ -71,7 +72,7 @@ export class LeafletImageExport {
           croppedCtx.putImageData(imgData, 0, 0);
 
           let link = document.createElement("a");
-          link.download = "HCDP_map.png";
+          link.download = `${this.filename()}.png`;
           link.href = croppedCanvas.toDataURL("image/png");
           document.body.appendChild(link);
           link.click();

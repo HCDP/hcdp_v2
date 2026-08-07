@@ -29,6 +29,8 @@ export class Timeseries extends TabBase {
 
   apiHandler = inject(ApiHandler);
 
+  displayedColumns: string[] = ['metric', 'value'];
+
   dataStream = signal<Map<DateTime, number> | null>(null);
   timeseriesInfo = signal<TimeseriesInfo | null>(null);
   graphStats = signal<{
@@ -49,8 +51,20 @@ export class Timeseries extends TabBase {
   });
 
   subtext = computed(() => {
-    let datatype = this.castDataset();
-    return datatype.valueLabel();
+    let dataset = this.castDataset();
+    let label = dataset.valueLabel();
+    return label;
+    
+  });
+
+  mapStatLabel = computed(() => {
+    let dataset = this.castDataset();
+    let controller = dataset.dataState.getControl("date");
+    let label = "Map Statistics";
+    if(controller) {
+      label = `${controller.stringValue} ${label}`;
+    }
+    return label;
   });
 
   tabManager = computed(() => {
@@ -73,7 +87,30 @@ export class Timeseries extends TabBase {
     return undefined;
   });
 
-  displayedColumns: string[] = ['metric', 'value'];
+
+  tsExportName = computed(() => {
+    let dataset = this.castDataset();
+    let location = dataset.locationManager.location();
+
+    if(!location) return "";
+
+    let label: string;
+    if(location.type == "map") {
+      let streamIds = dataset.dataStreams.getStreamIdsOfType("raster");
+      let parameterizedString = dataset.getParameterizedString(streamIds, ["date"]);
+      let { lat, lng } = location.location;
+      label = `${lat.toFixed(4)}_${lng.toFixed(4)}_${parameterizedString}`;
+    }
+    else {
+      let streamIds = dataset.dataStreams.getStreamIdsOfType("stations");
+      let parameterizedString = dataset.getParameterizedString(streamIds, ["date"]);
+      let { name, skn } = location.location;
+      label = `${name?.toLowerCase().split(" ").join("_")}_skn${skn}_${parameterizedString}`;
+    }
+
+    return label;
+  });
+  
 
   statsDataSource = computed(() => {
     const data = this.rasterData()?.stats;

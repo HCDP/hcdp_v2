@@ -44,7 +44,7 @@ export class Locations extends TabBase {
     let station: StationData | undefined;
     if(locationData && locationData.type == "station") {
       let skn = locationData.location.skn;
-      station = this.stationData()?.value().filteredStations().find((station: StationData) => station.metadata.skn === skn);
+      station = this.stationData()?.value()?.filteredStations()?.find((station: StationData) => station.metadata.skn === skn);
     }
     return station;
   });

@@ -1,11 +1,16 @@
 <div class="chart-header">
-  @for (period of zoomPeriods(); track period.unit) {
+  @for(period of zoomPeriods(); track period.unit) {
     <!-- Uses Angular's titlecase pipe to format 'month' to 'Month' -->
     <button matButton="filled" class="zoom-btn" (click)="zoomTo(period)">
       Zoom to {{ period.unit | titlecase }}
     </button>
   }
   <button matButton="filled" class="zoom-btn" (click)="zoomToAll()">View All</button>
+  <br>
+  <mat-checkbox 
+    [(ngModel)]="showDateLine">
+    Show Selected Date Line
+  </mat-checkbox>
 </div>
 
 <div class="chart-wrapper">

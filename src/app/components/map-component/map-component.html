@@ -13,7 +13,8 @@
   <app-leaflet-image-export
     [map]="readyMap"
     [imageContainer]="imageContainer()"
-    [hiddenControls]="imageHiddenControls">
+    [hiddenControls]="imageHiddenControls"
+    [filename]="typedDataset().getParameterizedString()">
   </app-leaflet-image-export>
 
   <app-leaflet-color-scale
@@ -34,8 +35,8 @@
     <div style="font-size: 12px; margin-bottom: 8px;">Map Opacity</div>
     <mat-slider min="0" max="100" step="1" discrete>
       <input matSliderThumb 
-             [value]="mapOpacity()" 
-             (input)="updateOpacity($event)">
+        [value]="mapOpacity()" 
+        (input)="updateOpacity($event)">
     </mat-slider>
   </div>
 </div>

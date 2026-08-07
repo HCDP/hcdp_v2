@@ -5,7 +5,7 @@
       <div mat-card-avatar class="header-icon">
         <mat-icon color="primary">analytics</mat-icon>
       </div>
-      <mat-card-title>Map Statistics</mat-card-title>
+      <mat-card-title>{{mapStatLabel()}}</mat-card-title>
       <mat-card-subtitle>{{subtext()}}</mat-card-subtitle>
     </mat-card-header>
     
@@ -54,7 +54,8 @@
           [timeseriesData]="timeseriesData()"
           [dataLabel]="subtext()"
           [date]="date()"
-          (viewportStats)="setViewportstats($event)">
+          (viewportStats)="setViewportstats($event)"
+          [downloadName]="tsExportName()">
         </app-timeseries-chart>
 
         <div class="stats-grid">

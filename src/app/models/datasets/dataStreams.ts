@@ -24,6 +24,7 @@ export class DataStreamManager {
   private _streamParams: Record<string, Signal<Params | undefined>>;
   private _datasetParams: Record<string, string>;
   private _stateController: DataStateController;
+  private _universalParams: Set<string>;
 
 
   constructor(datasetParams: Record<string, string>, streams: DataStreamRecipe[], stateController: DataStateController, unitData: UnitData) {
@@ -36,9 +37,18 @@ export class DataStreamManager {
   }
 
   private createStreams(streams: DataStreamRecipe[], unitData: UnitData) {
+    let universalParams: Set<string> | null = null;
     this._streamMap = {};
     for(let recipe of streams) {
       const { id, type, bind, staticParams } = recipe;
+
+      let paramSet = new Set([...bind, ...Object.keys(staticParams)]);
+      if(universalParams) {
+        universalParams = universalParams.intersection(paramSet);
+      }
+      else {
+        universalParams = paramSet;
+      }
 
       let resource = null;
       switch(type) {
@@ -57,6 +67,7 @@ export class DataStreamManager {
         units: unitData.units
       };
     }
+    this._universalParams = universalParams ?? new Set<string>();
   }
 
   // T = Raw Data Type
@@ -284,6 +295,10 @@ export class DataStreamManager {
 
   public getStreamParams(id: string) {
     return this._streamParams[id];
+  }
+
+  get universalParams() {
+    return new Set<string>(this._universalParams);
   }
 }
 
