@@ -104,12 +104,14 @@ export interface LayerData {
   label: string
 }
 
+export interface DataWarnings {
+    experimental?: boolean,
+    usage?: string
+  }
+
 export interface TimeseriesSchemaData {
   experimental: boolean,
-  warnings: {
-    experimental: boolean,
-    usage: string
-  },
+  warnings?: DataWarnings,
   datasetParams: Record<string, string>,
   // need to arrange units, streams, and layers into groups
   unitSource: UnitSource,

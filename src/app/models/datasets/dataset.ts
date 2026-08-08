@@ -8,7 +8,7 @@ import { ApiHandler } from "../../services/requests/api-handler";
 import { DateTime } from "luxon";
 import { firstValueFrom, map } from "rxjs";
 import { Period } from "./time";
-import { HCDPDatasetDefinition, HCDPLayout, OptionControlData, TimeseriesData, TimeseriesSchemaData, UnitBase, UnitValue } from "./recipe";
+import { DataWarnings, HCDPDatasetDefinition, HCDPLayout, OptionControlData, TimeseriesData, TimeseriesSchemaData, UnitBase, UnitValue } from "./recipe";
 import { DataStreamManager } from "./dataStreams";
 import { DataStateController, OptionState } from "./stateController";
 import { MapState } from "./mapState";
@@ -160,6 +160,7 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
   private _dateChunks: [DateTime, DateTime][];
   private _unitData: UnitData;
   private _datasetParams: Record<string, string>;
+  private _warnings: DataWarnings | undefined;
   
 
   constructor(id: string, label: string, datatypeLabel: string, description: string, layout: TimeseriesSchemaData, initData: {range: [DateTime, DateTime]}, active: Signal<boolean>) {
@@ -172,11 +173,12 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
     ];
     super("timeseries", id, label, datatypeLabel, description, tabs, active);
     
-    let { datasetParams, streams, timeseries, options, mapLayers, exportData, unitSource } = layout;
+    let { datasetParams, streams, timeseries, options, mapLayers, exportData, unitSource, warnings } = layout;
     let { range } = initData;
     let [ startDate, endDate ] = range;
 
     this._datasetParams = datasetParams;
+    this._warnings = warnings;
     
     let defaultDate: DateTime;
     if(timeseries.defaultDate) {
@@ -272,6 +274,9 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
     return parameterizedString;
   }
 
+  get warnings() {
+    return { ...this._warnings };
+  }
 
   get exportData() {
     return this._exportData;

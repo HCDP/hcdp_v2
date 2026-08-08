@@ -4,6 +4,11 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+
+  mat-sidenav-content {
+    height:100%;
+    overflow:hidden;
+  }
 }
 
 app-topbar {

@@ -1,4 +1,4 @@
-import { Component, computed, input, ChangeDetectionStrategy, output, effect, linkedSignal, signal } from '@angular/core';
+import { Component, computed, input, ChangeDetectionStrategy, output, effect, linkedSignal, signal, inject } from '@angular/core';
 import { LineSeriesOption, graphic, EChartsOption } from 'echarts';
 import { DateTime } from 'luxon';
 import { NgxEchartsDirective, NGX_ECHARTS_CONFIG } from 'ngx-echarts';
@@ -11,6 +11,7 @@ import { Statistics } from '../../../models/general/stats';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { FormsModule } from '@angular/forms';
+import { ThrottleHandler } from '../../../models/util/util';
 
 @Component({
   selector: 'app-timeseries-chart',
@@ -39,8 +40,6 @@ export class TimeseriesChart {
   date = input.required<DateTime>();
   downloadName = input<string>("Location");
 
-  private zoomThrottle: number;
-
   showDateLine = signal<boolean>(true);
 
   startDate = linkedSignal(() => {
@@ -51,6 +50,9 @@ export class TimeseriesChart {
   });
 
   viewportStats = output<Statistics>();
+
+  // throttle zoom data so not constantly recomputing
+  private dataZoomThrottle = new ThrottleHandler(500);
 
   // baseline options
   chartOptions: EChartsOption = this.initChartBase();
@@ -255,12 +257,9 @@ export class TimeseriesChart {
     this.chartInstance = ec;
   }
 
+
   onDataZoom() {
-    // throttle so not constantly recomputing
-    clearTimeout(this.zoomThrottle);
-    this.zoomThrottle = setTimeout(() => {
-      this.updateViewportStats();
-    }, 500);
+    this.dataZoomThrottle.run(this.updateViewportStats.bind(this));
   }
 
   zoomToAll() {

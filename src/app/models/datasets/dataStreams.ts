@@ -286,11 +286,11 @@ export class DataStreamManager {
   }
 
   public getStreamType(id: string) {
-    return this._streamMap[id].type;
+    return this._streamMap[id]?.type;
   }
   
   public getStream(id: string) {
-    return this._streamMap[id].stream;
+    return this._streamMap[id]?.stream;
   } 
 
   public getStreamParams(id: string) {

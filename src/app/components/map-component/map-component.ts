@@ -8,17 +8,21 @@ import { LeafletColorScale } from '../controls/leaflet/leaflet-color-scale/leafl
 import { RasterData } from '../../models/leaflet/rasterData';
 import { ColorScale } from '../../models/leaflet/colors';
 import { HCDPStationDataManager, StationData } from '../../models/datasets/stations';
-import { rasterLayer } from '../../models/leaflet/rasterLayer';
+import { RasterLayer, rasterLayer } from '../../models/leaflet/rasterLayer';
 import { MatSliderModule } from '@angular/material/slider';
 import { Spinner } from 'spin.js';
 import { LayerData } from '../../models/datasets/recipe';
 import { MapLocation } from '../../models/datasets/locationManager';
 import { DataStreamManager } from '../../models/datasets/dataStreams';
 import { Configuration } from '../../services/configuration/configuration';
+import { LeafletHeader } from '../controls/leaflet/leaflet-header/leaflet-header';
+import { FormsModule } from '@angular/forms';
+import { ThrottleHandler } from '../../models/util/util';
+import { ExperimentalBanner } from '../controls/experimental-banner/experimental-banner';
 
 @Component({
   selector: 'app-map-component',
-  imports: [LeafletCompassRose, LeafletImageExport, LeafletColorScale, MatSliderModule],
+  imports: [LeafletHeader, LeafletCompassRose, LeafletImageExport, LeafletColorScale, MatSliderModule, FormsModule, ExperimentalBanner],
   templateUrl: './map-component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './map-component.scss',
@@ -27,6 +31,9 @@ export class MapComponent {
   private injector = inject(Injector);
   private assetService = inject(AssetManager);
   private config = inject(Configuration);
+
+  private resizeThrottle = new ThrottleHandler(100);
+  private opacityThrottle = new ThrottleHandler(50, true);
 
   imageContainer = input.required<ElementRef>();
   dataset = input.required<HCDPDatasetVisualization>();
@@ -39,7 +46,23 @@ export class MapComponent {
 
   valueLabel = computed(() => {
     return this.typedDataset().valueLabel();
-  })
+  });
+
+  isExperimental = computed(() => {
+    return !!this.typedDataset().warnings?.experimental;
+  });
+
+  headerLabel = computed(() => {
+    return this.dataset().label;
+  });
+
+  headerSublabel = computed(() => {
+    let dateControl = this.typedDataset().dataState.getControl("date");
+    if(dateControl) {
+      return dateControl.stringValue;
+    }
+    return undefined;
+  });
 
   readonly isSpinning = computed(() => {
     const dataset = this.typedDataset();
@@ -119,12 +142,9 @@ export class MapComponent {
 
     effect((onCleanup) => {
       const element = this.imageContainer().nativeElement;
-      let invalidateSizeThrottle: number;
+      
       const resizeObserver = new ResizeObserver(() => {
-        clearTimeout(invalidateSizeThrottle);
-        invalidateSizeThrottle = setTimeout(() => {
-          this.invalidateSize();
-        }, 100);
+        this.resizeThrottle.run(this.invalidateSize.bind(this));
       });
       resizeObserver.observe(element);
       onCleanup(() => {
@@ -247,7 +267,7 @@ export class MapComponent {
       onDatasetCleanup(() => {
         isCancelled = true;
         
-        // 1. Wipe hover interactions and unbind map listeners
+        // Wipe hover interactions and unbind map listeners
         clearHoverEffect();
         map.off('mousemove', onMapMouseMove);
         map.off('mouseout', onMapMouseOut);
@@ -260,13 +280,6 @@ export class MapComponent {
     });
   }
 
-  updateOpacity(event: Event) {
-    const input = event.target as HTMLInputElement;
-    const value = parseInt(input.value, 10);
-    
-    this.mapOpacity.set(value);
-    this.typedDataset().mapState.opacity = value;
-  }
 
   private initMap(): void {
     const map = L.map(this.mapElement().nativeElement, {
@@ -371,6 +384,10 @@ export class MapComponent {
     return layerEffectRef!;
   }
 
+  private setOpacity(layer: RasterLayer, opacity: number) {
+    layer.setOpacity(opacity / 100);
+    this.typedDataset().mapState.opacity = opacity;
+  }
 
   private handleRasterLayer(data: RasterData, colorScale: ColorScale, mapInstance: L.Map) {
     this.mapRange.set([data.min, data.max]);
@@ -387,11 +404,14 @@ export class MapComponent {
     untracked(() => {
       opacityEffect = effect(() => {
         const opacity = this.mapOpacity();
-        leafletLayer.setOpacity(opacity / 100); 
+        this.opacityThrottle.run(() => {
+          this.setOpacity(leafletLayer, opacity);
+        });
+        
       }, { injector: this.injector });
     });
 
-    // 1. Map -> App Synchronization
+    // Map -> App Synchronization
     const onMapClick = (e: L.LeafletMouseEvent | any) => {
       const value = leafletLayer.geoPosToGridValue(e.latlng.lat, e.latlng.lng);
       if(isNaN(value)) {
@@ -403,7 +423,7 @@ export class MapComponent {
 
     mapInstance.on('click', onMapClick);
     
-    // 2. App -> Map Synchronization
+    // App -> Map Synchronization
     let selectionEffect: EffectRef;
     untracked(() => {
       selectionEffect = effect(() => {
@@ -461,7 +481,7 @@ export class MapComponent {
       }, { injector: this.injector });
     });
 
-    // 3. Clear the box ifthe user manually closes the popup
+    // Clear the box if the user manually closes the popup
     const onPopupClose = () => {
       if(currentHighlight) {
         mapInstance.removeLayer(currentHighlight);

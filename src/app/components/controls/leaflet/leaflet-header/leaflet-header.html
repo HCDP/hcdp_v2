@@ -1,1 +1,17 @@
-<p>leaflet-header works!</p>
+
+<div #headerControl class="leaflet-verticalcenter">
+  <div class="container">
+    <div class="header-text-box">
+      <p>
+        {{label()}}
+      </p>
+
+      @if(sublabel(); as sl) {
+        <hr>
+        <p>
+          {{sl}}
+        </p>
+      }
+    </div>
+  </div>
+</div>

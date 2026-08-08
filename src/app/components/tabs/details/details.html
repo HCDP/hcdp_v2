@@ -1,3 +1,49 @@
-<p>
-  {{ dsDescription() }}
-</p>
+<div>
+  @if(isExperimental()) {
+    <mat-card class="details-card warning-card">
+      <mat-card-header>
+        <mat-card-title>
+          <b>Caution</b><i class="material-icons">warning_amber</i>
+        </mat-card-title>
+      </mat-card-header>
+      
+      <mat-card-content>
+        Parts of this dataset are experimental and may be updated in the future. Please use with caution.
+      </mat-card-content>
+    </mat-card>
+  }
+  
+  @if(usageWarning(); as usage) {
+    <mat-card class="details-card warning-card">
+      <mat-card-header>
+        <mat-card-title>
+          <b>Caution</b><i class="material-icons">warning_amber</i>
+        </mat-card-title>
+      </mat-card-header>
+      
+      <mat-card-content>
+        <div [innerHTML]="usage"></div>
+      </mat-card-content>
+    </mat-card>
+  }
+
+  <mat-card class="details-card">
+    <mat-card-header>
+      <mat-card-title>{{ dsLabel() }}</mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      {{ dsDescription() }}
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="details-card">
+    <mat-card-header>
+      <mat-card-title>Metadata</mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      {{ metadata() }}
+    </mat-card-content>
+  </mat-card>
+</div>

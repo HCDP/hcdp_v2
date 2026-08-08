@@ -1,6 +1,9 @@
 
 <div class="map-container">
-  <div #mapElement id="map">
+  @if(isExperimental()) {
+    <app-experimental-banner></app-experimental-banner>
+  }
+  <div #mapElement class="map">
   </div>
 </div>
 
@@ -24,6 +27,12 @@
     [dynamicRange]="mapRange()" 
     (colorScale)="setColorScale($any($event))">
   </app-leaflet-color-scale>
+
+  <app-leaflet-header
+    [map]="readyMap"
+    [label]="headerLabel()"
+    [sublabel]="headerSublabel()">
+  </app-leaflet-header>
 }
 
 
@@ -35,8 +44,7 @@
     <div style="font-size: 12px; margin-bottom: 8px;">Map Opacity</div>
     <mat-slider min="0" max="100" step="1" discrete>
       <input matSliderThumb 
-        [value]="mapOpacity()" 
-        (input)="updateOpacity($event)">
+        [(ngModel)]="mapOpacity">
     </mat-slider>
   </div>
 </div>
