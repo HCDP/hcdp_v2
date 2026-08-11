@@ -3,10 +3,11 @@ import { TabBase } from '../tab-base/tab-base';
 import { HCDPVisSubtypes } from '../../../models/datasets/dataset';
 import { DomSanitizer } from '@angular/platform-browser';
 import { MatCardModule } from '@angular/material/card';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 @Component({
   selector: 'app-details',
-  imports: [MatCardModule],
+  imports: [MatCardModule, MatProgressSpinnerModule],
   templateUrl: './details.html',
   styleUrl: './details.scss',
 })
@@ -35,6 +36,10 @@ export class Details extends TabBase {
       return this.sanitizer.bypassSecurityTrustHtml(usage);
     }
     return undefined;
+  });
+
+  detailBlocks = computed(() => {
+    return this.typedDataset().detailBlocks;
   });
 
   metadata = computed(() => {

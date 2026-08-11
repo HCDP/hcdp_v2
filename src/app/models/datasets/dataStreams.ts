@@ -60,6 +60,10 @@ export class DataStreamManager {
           resource = this.createRasterStream(id, bind, staticParams, unitData);
           break;
         }
+        case "text": {
+          resource = this.createTextStream(id, bind, staticParams);
+          break;
+        }
       }
       this._streamMap[id] = {
         type,
@@ -88,7 +92,7 @@ export class DataStreamManager {
       
       for(let param of triggers) {
         const state = this._stateController.getControl(param);
-        if (!state) return undefined; 
+        if(!state) return undefined; 
         mergedParams[param] = state.stringValue;
       }
       return mergedParams;
@@ -100,7 +104,7 @@ export class DataStreamManager {
 
     const requestSignal = computed(() => {
       const params = streamParamsSignal();
-      if (!params) return undefined;
+      if(!params) return undefined;
 
       const localDeps = localDepsSignal ? localDepsSignal() : undefined;
 
@@ -121,9 +125,10 @@ export class DataStreamManager {
         let data$: Observable<T>;
         
         // cache layer: if HTTP params match, skip the network and use the cached data
-        if (cachedRawData !== null && currentHttpParamsStr === lastHttpParamsStr) {
+        if(cachedRawData !== null && currentHttpParamsStr === lastHttpParamsStr) {
           data$ = of(cachedRawData);
-        } else {
+        }
+        else {
           // otherwise fetch new data and cache it
           data$ = this.requestManager.get<T>(source.endpoint, source.options).pipe(
             tap(data => {
@@ -252,6 +257,15 @@ export class DataStreamManager {
         return stationData;
       },
       unitData.units
+    );
+  }
+
+  private createTextStream(id: string, triggers: string[], staticParams: Params) {
+    return this.setupResource<string>(
+      id, 
+      "/files/production/retrieve",
+      triggers, 
+      { params: staticParams, responseType: "text" }
     );
   }
 

@@ -40,3 +40,20 @@ section {
 .email-header h3 {
   margin: 0; 
 }
+
+
+.property-info {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 0;
+
+  .property-label {
+    font-size: 1.1rem;
+    font-weight: 500;
+  }
+
+  .property-desc {
+    font-size: 0.85rem;
+    color: var(--mat-sys-on-surface-variant);
+  }
+}

@@ -17,7 +17,7 @@ export interface HCDPLayout {
   data: TimeseriesSchemaData | StaticSchemaData
 };
 
-export type DataStreamType = "stations" | "raster";
+export type DataStreamType = "stations" | "raster" | "text";
 
 export interface DataStreamRecipe {
   id: string,
@@ -112,6 +112,7 @@ export interface DataWarnings {
 export interface TimeseriesSchemaData {
   experimental: boolean,
   warnings?: DataWarnings,
+  detailBlocks?: DetailBlock[],
   datasetParams: Record<string, string>,
   // need to arrange units, streams, and layers into groups
   unitSource: UnitSource,
@@ -120,6 +121,12 @@ export interface TimeseriesSchemaData {
   timeseries: TimeseriesData,
   mapLayers: MapLayers,
   exportData: ExportData
+}
+
+export interface DetailBlock {
+  label: string,
+  type: "stream" | "static",
+  source: string
 }
 
 

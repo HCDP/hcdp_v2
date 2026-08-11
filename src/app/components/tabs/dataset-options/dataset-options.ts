@@ -1,16 +1,15 @@
 import { Component, computed, ChangeDetectionStrategy } from '@angular/core';
-import { AsyncPipe } from '@angular/common';
 import { TabBase } from '../tab-base/tab-base';
 import { DatetimeControl } from '../../controls/datetime-control/datetime-control';
 import { HCDPVisSubtypes } from '../../../models/datasets/dataset';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatChipsModule } from '@angular/material/chips';
 
 @Component({
   selector: 'app-dataset-options',
-  imports: [ DatetimeControl, MatButtonToggleModule, MatTooltipModule, MatIconModule, MatProgressSpinnerModule ],
+  imports: [ DatetimeControl, MatChipsModule, MatTooltipModule, MatIconModule, MatProgressSpinnerModule ],
   templateUrl: './dataset-options.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './dataset-options.scss',

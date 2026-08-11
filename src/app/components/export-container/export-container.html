@@ -14,28 +14,28 @@
     </mat-card>
   }
 
-  @for (group of exportDataConfig().files; track $index) {
+  @for(group of exportDataConfig().files; track $index) {
     <mat-card class="file-group-card" appearance="outlined">
       <mat-card-content>
         <div class="section properties-section">
           <h3 class="section-title">Options</h3>
-          @for (property of group.properties; track property.id) {
+          @for(property of group.properties; track property.id) {
             <div class="property-row">
               <div class="property-info">
                 <span class="property-label">{{ property.label }}</span>
                 <span class="property-desc">{{ property.description }}</span>
               </div>
-              
-              <mat-button-toggle-group multiple>
-                @for (val of property.values; track val.id) {
-                  <mat-button-toggle 
-                    [checked]="exportDataHandler().checkPropertyState(property.id, val.id)"
-                    (change)="onPropertyToggle(property.id, val.id, $event.source, property.values)"
+
+              <mat-chip-listbox multiple>
+                @for(val of property.values; track val.id) {
+                  <mat-chip-option 
+                    [selected]="exportDataHandler().checkPropertyState(property.id, val.id)"
+                    (selectionChange)="onPropertyToggle(property.id, val.id, $event.source, property.values)"
                     [matTooltip]="val.description">
                     {{ val.label }}
-                  </mat-button-toggle>
+                  </mat-chip-option>
                 }
-              </mat-button-toggle-group>
+              </mat-chip-listbox>
             </div>
           }
         </div>
@@ -56,7 +56,7 @@
                   <div class="file-header">
                     <span class="file-label">{{ file.label }}</span>
                     <span class="file-badge"
-                      [matTooltip]="$safeNavigationMigration(exportDataConfig().fileTypes[file.fileType]?.description)">
+                      [matTooltip]="exportDataConfig().fileTypes[file.fileType]?.description">
                       {{ exportDataConfig().fileTypes[file.fileType]?.ext }}
                     </span>
                   </div>
@@ -71,13 +71,19 @@
   }
 
   <div class="email-section">
-    <mat-checkbox
-      [checked]="exportDataHandler().sendToEmail"
-      [disabled]="exportDataHandler().requireEmailExport()"
-      (change)="exportDataHandler().sendToEmail = $event.checked"
-      matTooltip="The download package is too large to be downloaded directly. A download link will be sent to the provided email address when ready.">
-      Send download package to email
-    </mat-checkbox>
+    @let emailRequired = exportDataHandler().requireEmailExport();
+    <span 
+      class="tooltip-wrapper"
+      matTooltip="The download package is too large to be downloaded directly. A download link will be sent to the provided email address when ready."
+      [matTooltipDisabled]="!emailRequired">
+      
+      <mat-checkbox
+        [checked]="exportDataHandler().sendToEmail"
+        [disabled]="emailRequired"
+        (change)="exportDataHandler().sendToEmail = $event.checked">
+        Send download package to email
+      </mat-checkbox>
+    </span>
     <mat-icon
       class="help-icon"
       matTooltip="Package the requested items and email a download link to you. This is required if requesting a large amount of data.">

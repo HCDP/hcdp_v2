@@ -3,6 +3,7 @@
   flex-direction: column;
   gap: 24px;
   padding: 16px;
+  min-width: 400px;
 }
 
 .file-group-card {
@@ -40,7 +41,7 @@
   .property-info {
     display: flex;
     flex-direction: column;
-    padding-bottom: 10px;;
+    padding-bottom: 10px;
 
     .property-label {
       font-weight: 500;
@@ -150,4 +151,14 @@
 
 .gen-spinner {
   padding: 15px;
+}
+
+
+
+.tooltip-wrapper {
+  display: inline-block; 
+}
+
+.tooltip-wrapper mat-checkbox[disabled] {
+  pointer-events: none;
 }

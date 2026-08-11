@@ -2,23 +2,20 @@ import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/cor
 import { GlobalPreferenceManager } from '../../services/state/global-preference-manager';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogRef, MatDialogModule } from '@angular/material/dialog';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatChipsModule } from '@angular/material/chips';
 import { ReactiveFormsModule, FormControl, Validators } from '@angular/forms';
-import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 
-
 @Component({
   selector: 'app-global-settings',
   imports: [
-    MatButtonToggleModule,
     MatButtonModule,
     MatDialogModule,
     ReactiveFormsModule,
-    MatIconModule,
+    MatChipsModule,
     MatFormFieldModule,
     MatInputModule,
     MatTooltipModule

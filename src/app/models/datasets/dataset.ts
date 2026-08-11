@@ -1,4 +1,4 @@
-import { inject, Injector, runInInjectionContext, signal, Signal, WritableSignal } from "@angular/core";
+import { inject, Injector, resource, ResourceRef, runInInjectionContext, signal, Signal, WritableSignal } from "@angular/core";
 import { Tab } from "../layout/tabs";
 import { HCDPTimeseriesData } from "./timeseries";
 import { Locations } from "../../components/tabs/locations/locations";
@@ -8,7 +8,7 @@ import { ApiHandler } from "../../services/requests/api-handler";
 import { DateTime } from "luxon";
 import { firstValueFrom, map } from "rxjs";
 import { Period } from "./time";
-import { DataWarnings, HCDPDatasetDefinition, HCDPLayout, OptionControlData, TimeseriesData, TimeseriesSchemaData, UnitBase, UnitValue } from "./recipe";
+import { DataWarnings, DetailBlock, HCDPDatasetDefinition, HCDPLayout, OptionControlData, TimeseriesData, TimeseriesSchemaData, UnitBase, UnitValue } from "./recipe";
 import { DataStreamManager } from "./dataStreams";
 import { DataStateController, OptionState } from "./stateController";
 import { MapState } from "./mapState";
@@ -161,6 +161,7 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
   private _unitData: UnitData;
   private _datasetParams: Record<string, string>;
   private _warnings: DataWarnings | undefined;
+  private _detailBlocks: { label: string, source: ResourceRef<string> }[];
   
 
   constructor(id: string, label: string, datatypeLabel: string, description: string, layout: TimeseriesSchemaData, initData: {range: [DateTime, DateTime]}, active: Signal<boolean>) {
@@ -173,7 +174,7 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
     ];
     super("timeseries", id, label, datatypeLabel, description, tabs, active);
     
-    let { datasetParams, streams, timeseries, options, mapLayers, exportData, unitSource, warnings } = layout;
+    let { datasetParams, streams, timeseries, options, mapLayers, exportData, unitSource, warnings, detailBlocks } = layout;
     let { range } = initData;
     let [ startDate, endDate ] = range;
 
@@ -228,7 +229,33 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
     this._mapState = new MapState(mapLayers, this._unitData);
     this._exportData = new ExportTimeseriesDataHandler(exportData, datasetParams, this._timeseriesData);
     this._locationManager = new LocationManager();
+
+    this.createDetailBlocks(detailBlocks ?? []);
     this.createDateChunks();
+  }
+
+  private createDetailBlocks(detailBlocks: DetailBlock[]) {
+    this._detailBlocks = detailBlocks.map((detailBlock: DetailBlock) => {
+      let source: ResourceRef<string>;
+      switch(detailBlock.type) {
+        case "static": {
+          source = resource({
+            params: () => undefined,
+            loader: async () => "",
+            defaultValue: detailBlock.source
+          });
+          break;
+        }
+        case "stream": {
+          source = this._dataStreamManager.getStream(detailBlock.source);
+          break;
+        }
+      }
+      return {
+        label: detailBlock.label,
+        source
+      }
+    });
   }
 
   private createDateChunks(): void {
@@ -275,7 +302,11 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
   }
 
   get warnings() {
-    return { ...this._warnings };
+    return { ...(this._warnings ?? {}) };
+  }
+
+  get detailBlocks() {
+    return [...(this._detailBlocks ?? [])];
   }
 
   get exportData() {

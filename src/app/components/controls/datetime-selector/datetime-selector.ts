@@ -10,6 +10,7 @@ import { LuxonDateAdapter } from '@angular/material-luxon-adapter';
 import { DateAdapter, MAT_DATE_FORMATS, MAT_DATE_LOCALE } from '@angular/material/core';
 import { TimeSelector } from '../time-selector/time-selector';
 import { Period, UNIT_PRECEDENT } from '../../../models/datasets/time';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Injectable()
 export class DynamicLuxonAdapter extends LuxonDateAdapter {
@@ -79,6 +80,17 @@ export class DatetimeSelector {
         }
       }
     };
+
+    this.dateControl.valueChanges
+    .pipe(takeUntilDestroyed())
+    .subscribe((newDate) => {
+      // 1. Ensure newDate is not null
+      // 2. Ensure Luxon successfully parsed a valid date
+      // 3. Ensure it passes Angular's min/max validators
+      if (newDate && newDate.isValid && this.dateControl.valid) {
+        this.date.set(newDate);
+      }
+    });
 
     // Reactively sync the external model -> form control
     effect(() => {

@@ -37,6 +37,28 @@
     </mat-card-content>
   </mat-card>
 
+  @for(detailBlock of detailBlocks(); track detailBlock.label) {
+    <mat-card class="details-card">
+      <mat-card-header>
+        <mat-card-title>{{ detailBlock.label }}</mat-card-title>
+      </mat-card-header>
+
+      <mat-card-content>
+        @if(detailBlock.source.isLoading()) {
+          <mat-spinner></mat-spinner>
+        }
+        @else {
+          <div class="document-content">
+            <!-- split on newlines and separate paragraphs for spacing -->
+            @for(line of detailBlock.source.value()?.split('\n'); track $index) {
+              <p class="detail-block-line">{{ line }}</p>
+            }
+        </div>
+        }
+      </mat-card-content>
+    </mat-card>
+  }
+
   <mat-card class="details-card">
     <mat-card-header>
       <mat-card-title>Metadata</mat-card-title>

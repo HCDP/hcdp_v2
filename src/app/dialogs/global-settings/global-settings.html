@@ -2,25 +2,33 @@
 <mat-dialog-content>
   <div class="options">
     <section>
-      <h3>
-        Preferred Units
-      </h3>
-      <mat-button-toggle-group 
-        aria-label="Unit type"
-        [value]="preferredUnit()"
-        (valueChange)="preferredUnit.set($event)">
-        <mat-button-toggle value="metric">Metric</mat-button-toggle>
-        <mat-button-toggle value="usc">US Customary</mat-button-toggle>
-      </mat-button-toggle-group>
+      <div class="property-info">
+        <span class="property-label">Preferred Units</span>
+        <span class="property-desc">The default unit system to display data in.</span>
+      </div>
+      <!-- Replaced toggle group with chip listbox -->
+      <mat-chip-listbox aria-label="Unit type">
+        
+        <mat-chip-option 
+          value="metric"
+          [selected]="preferredUnit() === 'metric'"
+          (selectionChange)="$event.selected ? preferredUnit.set('metric') : (preferredUnit() === 'metric' ? $event.source.select() : null)">
+          Metric
+        </mat-chip-option>
+        
+        <mat-chip-option 
+          value="usc"
+          [selected]="preferredUnit() === 'usc'"
+          (selectionChange)="$event.selected ? preferredUnit.set('usc') : (preferredUnit() === 'usc' ? $event.source.select() : null)">
+          US Customary
+        </mat-chip-option>
+
+      </mat-chip-listbox>
     </section>
     <section>
-      <div class="email-header">
-        <h3>Email Address</h3>
-        <mat-icon
-          class="help-icon"
-          matTooltip="This will be the default email for export features.">
-          help
-        </mat-icon>
+      <div class="property-info">
+        <span class="property-label">Email Adress</span>
+        <span class="property-desc">The default email for export features.</span>
       </div>
       <mat-form-field>
         <mat-label>Email Address</mat-label>

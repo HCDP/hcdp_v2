@@ -19,3 +19,11 @@
     }
   }
 }
+
+.detail-block-line {
+  // Preserves tabs and spaces
+  white-space: pre-wrap;
+  tab-size: 12;
+  // Normal spacing for natural text wrapping
+  line-height: 1.4; 
+}

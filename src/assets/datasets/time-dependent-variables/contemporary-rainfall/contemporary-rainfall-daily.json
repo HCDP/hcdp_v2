@@ -9,6 +9,13 @@
       "warnings": {
         "experimental": true
       },
+      "detailBlocks": [
+        {
+          "label": "Metadata",
+          "type": "stream",
+          "source": "metadata"
+        }
+      ],
       "datasetParams": {
         "location": "hawaii",
         "datatype": "rainfall",
@@ -32,6 +39,14 @@
           "bind": ["date"],
           "staticParams": {
             "type": "data_map"
+          }
+        },
+        {
+          "id": "metadata",
+          "type": "text",
+          "bind": ["date"],
+          "staticParams": {
+            "file": "metadata"
           }
         }
       ],

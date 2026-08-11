@@ -1,4 +1,4 @@
-import { Component, ElementRef, viewChild, input, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, ElementRef, viewChild, input, ChangeDetectionStrategy, inject, effect } from '@angular/core';
 import { CommonModule } from "@angular/common"
 import { DataPanel } from "../data-panel/data-panel";
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -22,6 +22,18 @@ export class VisualizationContainer {
   dataContainerRef = viewChild.required<ElementRef>('dataContainer');
   mapContainerRef = viewChild.required<ElementRef>('mapContainer');
 
+  constructor() {
+    // when layout changes, clear leftover inline styles so the CSS variables govern the size again
+    effect(() => {
+      this.layoutManager.layoutStyle();
+      const dataContainer = this.dataContainerRef()?.nativeElement;
+      if (dataContainer) {
+        dataContainer.style.width = '';
+        dataContainer.style.height = '';
+      }
+    });
+  }
+
   startResize(touch: boolean): boolean {
     let moveHandler = (event: MouseEvent | TouchEvent) => {
       let dragbar: HTMLElement = this.dragbar().nativeElement;
@@ -39,8 +51,10 @@ export class VisualizationContainer {
         x = Math.max(0, x);
         
         dataContainer.style.width = `${x}px`;
-        dataContainer.style.height = ''; // CLEAR inline height so CSS flex can take over
-      } else {
+        // clear inline height so CSS flex can take over
+        dataContainer.style.height = '';
+      }
+      else {
         // --- VERTICAL MODE (Up / Down) ---
         let clientY = touch ? (<TouchEvent>event).touches[0].clientY : (<MouseEvent>event).clientY;
         
@@ -50,7 +64,8 @@ export class VisualizationContainer {
         y = Math.max(0, y);
         
         dataContainer.style.height = `${y}px`;
-        dataContainer.style.width = ''; // CLEAR inline width so CSS flex can take over
+        // clear inline width so CSS flex can take over
+        dataContainer.style.width = '';
       }
       
       return false;

@@ -2,7 +2,6 @@ import { Component, computed, effect, inject, input, linkedSignal, signal, Chang
 import { HCDPDatasetVisualization, HCDPVisSubtypes } from '../../models/datasets/dataset';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
-import { MatButtonToggle, MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -23,6 +22,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { DatetimeSelector } from '../controls/datetime-selector/datetime-selector';
 import { ExportGlobalState } from '../../services/state/export-global-state';
 import { FormsModule } from '@angular/forms';
+import { MatChipsModule, MatChipOption } from '@angular/material/chips';
 
 
 @Component({
@@ -30,7 +30,6 @@ import { FormsModule } from '@angular/forms';
   imports: [
     CommonModule,
     MatCardModule,
-    MatButtonToggleModule,
     MatCheckboxModule,
     MatDividerModule,
     MatTooltipModule,
@@ -41,7 +40,8 @@ import { FormsModule } from '@angular/forms';
     MatButtonModule,
     MatProgressSpinnerModule,
     DatetimeSelector,
-    FormsModule
+    FormsModule,
+    MatChipsModule
   ],
   providers: [
     provideLuxonDateAdapter()
@@ -91,6 +91,31 @@ export class ExportContainer {
     effect(() => {
       this.syncRequiredEmailState();
     });
+
+    effect(() => {
+      const date = this.startDate();
+      const handler = this.tsHandler();
+      if (handler) {
+        handler.updateStartDateState(date); 
+      }
+    });
+
+    effect(() => {
+      const date = this.endDate();
+      const handler = this.tsHandler();
+      if (handler) {
+        handler.updateEndDateState(date); 
+      }
+    });
+
+    effect(() => {
+      const date = this.startDate();
+      const handler = this.tsHandler();
+      if (handler) {
+        handler.updateStartDateState(date); 
+        this.syncRequiredEmailState(); // Recalculate limits based on new date
+      }
+    });
   }
 
   // --- State Synchronization ---
@@ -111,17 +136,18 @@ export class ExportContainer {
 
   // --- Event Handlers ---
 
-  onPropertyToggle(propertyId: string, valueId: string, source: MatButtonToggle, values: FilePropertyValue[]) {
-    const isDeselecting = !source.checked;
+  onPropertyToggle(propertyId: string, valueId: string, source: MatChipOption, values: FilePropertyValue[]) {
+    const isDeselecting = !source.selected; 
     
     // Prevent last item from being toggled off
     if(isDeselecting && this.isPropertyLocked(propertyId, valueId, values)) {
-      source.checked = true;
+      source.selected = true; // Re-select the chip
       return;
     }
 
-    this.exportDataHandler().updateFilePropertyState(propertyId, valueId, source.checked);
-    this.syncRequiredEmailState(); // Recalculate file limits
+    // Pass the selected state to your handler
+    this.exportDataHandler().updateFilePropertyState(propertyId, valueId, source.selected);
+    this.syncRequiredEmailState(); 
   }
 
   onFileToggle(file: FileDetails, isSelected: boolean) {
@@ -174,7 +200,7 @@ export class ExportContainer {
   }
 
   public canExport() {
-    return this.globalExportData.licenseAck() && this.exportDataHandler().filesSelected() && (!this.exportDataHandler().requireEmailExport || this.exportDataHandler().sendToEmail);
+    return this.globalExportData.licenseAck() && this.exportDataHandler().filesSelected() && (!this.exportDataHandler().requireEmailExport() || this.exportDataHandler().sendToEmail);
   }
 
 

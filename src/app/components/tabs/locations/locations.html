@@ -1,5 +1,8 @@
 
 <div class="container">
+  <h2 class="section-header">
+    Map Location
+  </h2>
   <app-map-location-selector
     [(mapLocation)]="mapLocation">
   </app-map-location-selector>
@@ -8,9 +11,9 @@
       <mat-spinner></mat-spinner>
     }
     @if(stationResource.value(); as stationManager) {
-      <h3 class="station-header">
+      <h2 class="section-header">
         Stations
-      </h3>
+      </h2>
       <app-station-filters
         [manager]="stationManager">
       </app-station-filters>

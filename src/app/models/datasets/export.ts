@@ -200,8 +200,10 @@ export class ExportTimeseriesDataHandler extends ExportDataHandler {
   protected override estimateNumFiles(): number {
     let unit = this._timeseriesData.period.unit;
     let interval = this._timeseriesData.period.interval;
-    let numPeriods = this._dateState.end.diff(this._dateState.start, unit).get(unit);
-    numPeriods /= interval;
+    // inclusive at both ends, add 1
+    let numPeriods = this._dateState.end.diff(this._dateState.start, unit).get(unit) + 1;
+    // round up for partial intervals
+    numPeriods = Math.ceil(numPeriods / interval);
     let numFilesPerPeriod = super.estimateNumFiles();
     return numPeriods * numFilesPerPeriod;
   }

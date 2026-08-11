@@ -13,8 +13,7 @@
   <mat-datepicker #datePicker
     [startView]="getDefaultView()"
     (yearSelected)="viewManager('year', $event)"
-    (monthSelected)="viewManager('month', $event)"
-    (closed)="setDate()">
+    (monthSelected)="viewManager('month', $event)">
   </mat-datepicker>
 </mat-form-field>
 

@@ -2,17 +2,11 @@
   @for(control of controls(); track control.id) {
     
     <div class="control-wrapper">
-      <h3>
-        {{ control.label }}
-        <mat-icon
-          aria-hidden="false"
-          aria-label="Tooltip"
-          matTooltipPosition="below"
-          [matTooltip]="control.description"
-          inline="true">
-          help
-        </mat-icon>
-      </h3>
+      <div class="property-info">
+        <span class="property-label">{{ control.label }}</span>
+        <span class="property-desc">{{ control.description }}</span>
+      </div>
+
       
       @switch(control.type) {
         @case("date") {
@@ -26,22 +20,27 @@
         
         @case("list")
         @case("units") {
-          <mat-button-toggle-group 
-            [value]="control.value()" 
-            (change)="control.value.set($event.value)">
+          <mat-chip-listbox>
             @for(option of $any(control.values); track option.id) {
                 @if(control.type == "units") {
-                  <mat-button-toggle [value]="option">
+                  <mat-chip-option 
+                    [value]="option"
+                    [selected]="control.value() === option"
+                    (selectionChange)="$event.selected ? control.value.set(option) : (control.value() === option ? $event.source.select() : null)">
                     {{ option.name }} ({{ option.shortName }})
-                  </mat-button-toggle> 
+                  </mat-chip-option> 
                 }
                 @else {
-                  <mat-button-toggle [value]="option"  [matTooltip]="option.description">
+                  <mat-chip-option 
+                    [value]="option"
+                    [selected]="control.value() === option"
+                    [matTooltip]="option.description"
+                    (selectionChange)="$event.selected ? control.value.set(option) : (control.value() === option ? $event.source.select() : null)">
                     {{ option.label }}
-                  </mat-button-toggle>
+                  </mat-chip-option>
                 }
             }
-          </mat-button-toggle-group>
+          </mat-chip-listbox>
         }
       }
     </div>
