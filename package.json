@@ -60,8 +60,12 @@
   },
   "allowScripts": {
     "@parcel/watcher": true,
-    "esbuild": true,
     "lmdb": true,
-    "msgpackr-extract": true
+    "msgpackr-extract": true,
+    "esbuild@0.28.1": true,
+    "esbuild@0.27.7": true
+  },
+  "overrides": {
+    "esbuild": "^0.28.1"
   }
 }

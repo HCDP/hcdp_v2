@@ -184,3 +184,39 @@ export interface StaticSchemaData {
   mapLayers: MapLayers,
   exportData: ExportData
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+export interface DataGroup {
+  id: string
+  label: string,
+  description: string,
+  units: UnitSource2,
+  streams: string[]
+}
+
+interface UnitSource2 {
+  source: string | UnitValue,
+  standard: [number, number],
+  extreme?: [number, number],
+  limits: [number | null, number | null],
+  convertFrom?: UnitBase
+}
