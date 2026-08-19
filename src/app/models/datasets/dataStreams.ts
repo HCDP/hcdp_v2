@@ -1,4 +1,4 @@
-import { inject, Signal, ResourceRef, computed, Injector } from "@angular/core";
+import { inject, Signal, ResourceRef, computed, Injector, effect, signal, WritableSignal } from "@angular/core";
 import { ApiHandler, HttpOptions } from "../../services/requests/api-handler";
 import { DataStreamRecipe, DataStreamType, UnitBase, UnitValue } from "./recipe";
 import { Params } from "@angular/router";
@@ -13,7 +13,7 @@ import { UnitTranslations } from "../../services/unitHandlers/unit-translations"
 import { UnitData } from "./dataset";
 import { Statistics } from "../general/stats";
 
-export class DataStreamManager {
+export class DataStreamController {
   private requestManager = inject(ApiHandler);
   private workerInterconnect = inject(WorkerInterconnect);
   private injector = inject(Injector);
@@ -26,6 +26,8 @@ export class DataStreamManager {
   private _stateController: DataStateController;
   private _universalParams: Set<string>;
 
+
+  // how to get units into this
 
   constructor(datasetParams: Record<string, string>, streams: DataStreamRecipe[], stateController: DataStateController, unitData: UnitData) {
     this._datasetParams = datasetParams;
@@ -311,14 +313,105 @@ export class DataStreamManager {
     return this._streamParams[id];
   }
 
-  get universalParams() {
+  public get universalParams() {
     return new Set<string>(this._universalParams);
   }
 }
 
 
+
+
+
+
+
+
+
 export interface StreamData {
   type: DataStreamType,
-  stream: ResourceRef<any>,
-  units: Signal<UnitValue>
+  params: Signal<Params>,
+  units: Signal<UnitData>,
+  stream: ResourceRef<any>
+}
+
+
+export class StreamManager {
+  private _universalParams: Signal<Params>;
+  private _streamMap: Record<string, StreamData>;
+
+  constructor(streamMap: Record<string, StreamData>) {
+    this._streamMap = streamMap;
+    const streams = Object.values(streamMap);
+
+    if(streams.length < 1) {
+      this._universalParams = computed(() => ({}));
+    }
+    else {
+      let universalFields = new Set<string>(Object.keys(streams[0].params()));
+      
+      for(let i = 1; i < streams.length; i++) {
+        const streamKeys = new Set<string>(Object.keys(streams[i].params()));
+        universalFields = universalFields.intersection(streamKeys); 
+      }
+
+      const trackingSignal = streams[0].params;
+
+      this._universalParams = computed(() => {
+        const currentParams = trackingSignal(); 
+        const result: Params = {};
+        
+        for(const key of universalFields) {
+          result[key] = currentParams[key];
+        }
+        
+        return result;
+      });
+    }
+    
+  }
+
+  
+  public get streams() {
+    return Object.keys(this._streamMap);
+  }
+
+  public get universalParams() {
+    return this._universalParams;
+  }
+
+
+  public getSubset(streams: string[]) {
+    let subMap: Record<string, StreamData> = {};
+    for(let stream of streams) {
+      subMap[stream] = this._streamMap[stream];
+    }
+    return new StreamManager(subMap);
+  }
+
+  public getStreamsOfType(type: "stations"): Record<string, ResourceRef<HCDPStationDataManager>>;
+  public getStreamsOfType(type: "raster"): Record<string, ResourceRef<RasterData>>;
+  public getStreamsOfType(type: "text"): Record<string, ResourceRef<string>>;
+  public getStreamsOfType(type: DataStreamType) {
+    let streams: Record<string, ResourceRef<any>> = {};
+    for(let streamID in this._streamMap) {
+      if(this._streamMap[streamID].type == type) {
+        streams[streamID] = this._streamMap[streamID].stream;
+      }
+    }
+    return streams;
+  }
+
+  public getStreamIdsOfType(type: DataStreamType) {
+    let ids: string[] = [];
+    for(let streamID in this._streamMap) {
+      if(this._streamMap[streamID].type == type) {
+        ids.push(streamID);
+      }
+    }
+    return ids;
+  }
+
+
+  public getStreamData(id: string) {
+    return { ...this._streamMap[id] };
+  }
 }

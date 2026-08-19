@@ -22,10 +22,20 @@
         "production": "new",
         "period": "day"
       },
-      "unitSource": {
-        "source": "units",
-        "convertFrom": "mm"
-      },
+      "unitData": [
+        {
+          "id": "standard", 
+          "source": "units",
+          "convertFrom": "mm",
+          "standard": [0, 20],
+          "extreme": [0, 250],
+          "limits": [0, null]
+        },
+        {
+          "id": "anom",
+          "source": "units"
+        }
+      ],
       "streams": [
         {
           "id": "stations",
@@ -85,13 +95,23 @@
                 "id": "mm",
                 "name": "Millimeters",
                 "shortName": "mm",
-                "system": "metric"
+                "system": "metric",
+                "range": {
+                  "standard": [0, 25],
+                  "extreme": [0, 250],
+                  "limits": [0, null]
+                }
               },
               {
                 "id": "in",
                 "name": "Inches",
                 "shortName": "in",
-                "system": "usc"
+                "system": "usc",
+                "range": {
+                  "standard": [0, 1],
+                  "extreme": [0, 10],
+                  "limits": [0, null]
+                }
               }
             ]
           }

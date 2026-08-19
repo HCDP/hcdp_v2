@@ -13,7 +13,7 @@ import { MatSliderModule } from '@angular/material/slider';
 import { Spinner } from 'spin.js';
 import { LayerData } from '../../models/datasets/recipe';
 import { MapLocation } from '../../models/datasets/locationManager';
-import { DataStreamManager } from '../../models/datasets/dataStreams';
+import { DataStreamController } from '../../models/datasets/dataStreams';
 import { Configuration } from '../../services/configuration/configuration';
 import { LeafletHeader } from '../controls/leaflet/leaflet-header/leaflet-header';
 import { FormsModule } from '@angular/forms';
@@ -337,7 +337,7 @@ export class MapComponent {
 
 
 
-  private handleDataLayer(dataStreamsManager: DataStreamManager, layer: LayerData, mapInstance: L.Map, datasetLayerGroup: L.LayerGroup) {
+  private handleDataLayer(dataStreamsManager: DataStreamController, layer: LayerData, mapInstance: L.Map, datasetLayerGroup: L.LayerGroup) {
     let { stream, label } = layer;
     let type = dataStreamsManager.getStreamType(stream);
     let dataStream = dataStreamsManager.getStream(stream);

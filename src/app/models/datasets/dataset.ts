@@ -9,7 +9,7 @@ import { DateTime } from "luxon";
 import { firstValueFrom, map } from "rxjs";
 import { Period } from "./time";
 import { DataWarnings, DetailBlock, HCDPDatasetDefinition, HCDPLayout, OptionControlData, TimeseriesData, TimeseriesSchemaData, UnitBase, UnitValue } from "./recipe";
-import { DataStreamManager } from "./dataStreams";
+import { DataStreamController } from "./dataStreams";
 import { DataStateController, OptionState } from "./stateController";
 import { MapState } from "./mapState";
 import { ExportTimeseriesDataHandler } from "./export";
@@ -153,7 +153,7 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
 
   private _timeseriesData: HCDPTimeseriesData;
   private _dataState: DataStateController;
-  private _dataStreamManager: DataStreamManager;
+  private _dataStreamController: DataStreamController;
   private _mapState: MapState;
   private _exportData: ExportTimeseriesDataHandler;
   private _locationManager: LocationManager;
@@ -225,7 +225,7 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
         convertFrom
       };
     }
-    this._dataStreamManager = new DataStreamManager(datasetParams, streams, this._dataState, this._unitData);
+    this._dataStreamController = new DataStreamController(datasetParams, streams, this._dataState, this._unitData);
     this._mapState = new MapState(mapLayers, this._unitData);
     this._exportData = new ExportTimeseriesDataHandler(exportData, datasetParams, this._timeseriesData);
     this._locationManager = new LocationManager();
@@ -247,7 +247,7 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
           break;
         }
         case "stream": {
-          source = this._dataStreamManager.getStream(detailBlock.source);
+          source = this._dataStreamController.getStream(detailBlock.source);
           break;
         }
       }
@@ -278,7 +278,7 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
     if(streams) {
       let consumed: Set<string> = new Set<string>();
       for(let stream of streams) {
-        let streamParams = this._dataStreamManager.getStreamParams(stream)() ?? {}
+        let streamParams = this._dataStreamController.getStreamParams(stream)() ?? {}
         for(let field in streamParams) {
           // skip consumed fields
           if(!excludeSet.has(field) &&!consumed.has(field)) {
@@ -289,7 +289,7 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
       }
     }
     else {
-      for(let field of this._dataStreamManager.universalParams) {
+      for(let field of this._dataStreamController.universalParams) {
         if(!excludeSet.has(field)) {
           let value = this._dataState.getControl(field)?.stringValue;
           if(value) {
@@ -318,7 +318,7 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
   }
 
   get dataStreams() {
-    return this._dataStreamManager;
+    return this._dataStreamController;
   }
 
   get dataState() {
