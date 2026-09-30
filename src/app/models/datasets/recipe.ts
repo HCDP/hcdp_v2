@@ -94,7 +94,7 @@ export type UnitBase = "mm" | "c"
 
 export interface MapLayers { 
   layers: LayerData[],
-  range: DataRange,
+  ranges: Record<string, DataRange>,
   colors: ColorScheme[],
   defaultColor: ColorScheme
 }
@@ -174,10 +174,7 @@ export interface FileDetails {
 
 export interface StaticSchemaData {
   experimental: boolean,
-  warnings: {
-    experimental: boolean,
-    usage: string
-  },
+  warnings?: DataWarnings,
   datasetParams: Record<string, string>,
   streams: DataStreamRecipe[],
   options: DataOptions,
@@ -205,18 +202,18 @@ export interface StaticSchemaData {
 
 
 
-export interface DataGroup {
-  id: string
-  label: string,
-  description: string,
-  units: UnitSource2,
-  streams: string[]
-}
+// export interface DataGroup {
+//   id: string
+//   label: string,
+//   description: string,
+//   units: UnitSource2,
+//   streams: string[]
+// }
 
-interface UnitSource2 {
-  source: string | UnitValue,
-  standard: [number, number],
-  extreme?: [number, number],
-  limits: [number | null, number | null],
-  convertFrom?: UnitBase
-}
+// interface UnitSource2 {
+//   source: string | UnitValue,
+//   standard: [number, number],
+//   extreme?: [number, number],
+//   limits: [number | null, number | null],
+//   convertFrom?: UnitBase
+// }

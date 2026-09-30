@@ -337,13 +337,13 @@ export class HCDPDatasetTimeseriesVisualization extends HCDPDatasetVisualization
     return this._dateChunks;
   }
 
-  get units() {
-    return this._unitData.units;
+  get unitData() {
+    return { ...this._unitData };
   }
 
   valueLabel(includePeriod: boolean = false) {
     let datatype = this.datatypeLabel;
-    let unit = this.units().shortName;
+    let unit = this._unitData.units().shortName;
 
     let label = "";
     if(includePeriod) {

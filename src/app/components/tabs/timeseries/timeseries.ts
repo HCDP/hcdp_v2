@@ -16,6 +16,7 @@ import { TabManager } from '../../../models/datasets/tabManager';
 import { MatIconModule } from '@angular/material/icon';
 import { OptionState } from '../../../models/datasets/stateController';
 import { Statistics } from '../../../models/general/stats';
+import { UnitTranslations } from '../../../services/unitHandlers/unit-translations';
 
 @Component({
   selector: 'app-timeseries',
@@ -25,9 +26,12 @@ import { Statistics } from '../../../models/general/stats';
   styleUrl: './timeseries.scss'
 })
 export class Timeseries extends TabBase {
-  private animationTimeout: number | undefined;
-
   apiHandler = inject(ApiHandler);
+  unitHandler = inject(UnitTranslations);
+
+  private animationTimeout: number | undefined;
+  private cachedRawData: Map<DateTime, number> | null = null;
+  private lastTimeseriesInfo: TimeseriesInfo | null = null;
 
   displayedColumns: string[] = ['metric', 'value'];
 
@@ -42,6 +46,12 @@ export class Timeseries extends TabBase {
     // requires dataset to be timeseries vis
     let dataset = this.dataset() as HCDPDatasetTimeseriesVisualization;
     return dataset;
+  });
+
+  units = computed(() => {
+    let dataset = this.castDataset()
+    let units = dataset.unitData.units();
+    return units;
   });
 
   date = computed(() => {
@@ -133,20 +143,60 @@ export class Timeseries extends TabBase {
 
 
   timeseriesDataResource = resource({
-    params: () => this.timeseriesInfo(),
-    loader: async ({ params: info, abortSignal }) => {
-      this.dataStream.set(null);
+    // Trigger the loader whenever the query info OR the selected unit changes
+    params: () => ({ info: this.timeseriesInfo(), unit: this.units() }),
+    
+    loader: async ({ params: { info, unit }, abortSignal }) => {
+      if(!info) {
+        this.dataStream.set(null);
+        this.cachedRawData = null;
+        this.lastTimeseriesInfo = null;
+        return null;
+      }
 
-      if(!info) return null;
+      // 1. Setup Unit Conversion (similar to checkConvert in DataStreamManager)
+      // Assuming your dataset exposes unitData with the base convertFrom unit
+      const convertFrom = this.castDataset().unitData.convertFrom; 
+      const conversion = (unit && convertFrom && convertFrom !== unit.id) 
+        ? (val: number) => this.unitHandler.convert(convertFrom, unit.id, val)
+        : undefined;
+
+      // 2. Cache Hit: Only units changed, reuse raw data and apply transform
+      if(this.lastTimeseriesInfo && this.lastTimeseriesInfo.equal(info) && this.cachedRawData) {
+         const convertedMap = new Map<DateTime, number>();
+         this.cachedRawData.forEach((val, key) => {
+           let finalVal = conversion ? conversion(val) : val;
+           // Ensure we maintain the number type in the Map
+           convertedMap.set(key, Number(finalVal.toFixed(2))); 
+         });
+         this.dataStream.set(convertedMap);
+         return true;
+      }
+
+      // 3. Cache Miss: Query params changed, fetch new data from network
+      this.dataStream.set(null);
+      this.cachedRawData = new Map<DateTime, number>();
+      this.lastTimeseriesInfo = info;
 
       const dateChunks = this.castDataset().dateChunks;
 
       const chunkRequests = dateChunks.map(async (dateRange: [DateTime, DateTime]) => {
-        let data = await (info.type == "raster" ? this.createRasterTSQuery(info, dateRange, abortSignal) : this.createStationTSQuery(info, dateRange, abortSignal));
+        let data = await (info.type == "raster" 
+            ? this.createRasterTSQuery(info, dateRange, abortSignal) 
+            : this.createStationTSQuery(info, dateRange, abortSignal));
 
         this.dataStream.update(current => {
           const updatedMap = current ? new Map(current) : new Map();
-          data.forEach((val, key) => updatedMap.set(key, val.toFixed(2)));
+          
+          data.forEach((val, key) => {
+            // Save the raw value to our cache layer
+            this.cachedRawData!.set(key, val);
+            
+            // Apply conversion and emit to the UI
+            let finalVal = conversion ? conversion(val) : val;
+            updatedMap.set(key, Number(finalVal.toFixed(2)));
+          });
+          
           return updatedMap;
         });
       });
@@ -155,9 +205,7 @@ export class Timeseries extends TabBase {
         await Promise.all(chunkRequests);
       }
       catch (e: any) {
-        if(e.name !== 'AbortError') {
-          throw e;
-        }
+        if(e.name !== "AbortError") throw e;
       }
 
       return true;
@@ -191,6 +239,7 @@ export class Timeseries extends TabBase {
         for(let item of values) {
           let { value: valueData } = item;
           let { value, date } = valueData;
+
           tsMap.set(this.timeseriesData().parseDate(date), value);
         }
         return tsMap;

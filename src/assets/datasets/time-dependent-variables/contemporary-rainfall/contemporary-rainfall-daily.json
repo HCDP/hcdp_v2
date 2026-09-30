@@ -114,8 +114,7 @@
             "label": "Data Map"
           }
         ],
-        "range": {
-          "units": "mm",
+        "ranges": {
           "standard": [0, 20],
           "extreme": [0, 250],
           "limits": [0, null]
