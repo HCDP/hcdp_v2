@@ -23,14 +23,14 @@
   "private": true,
   "dependencies": {
     "@angular/cdk": "^22.0.6",
-    "@angular/common": "^22.0.8",
-    "@angular/compiler": "^22.0.8",
-    "@angular/core": "^22.0.8",
-    "@angular/forms": "^22.0.8",
+    "@angular/common": "^22.2.0",
+    "@angular/compiler": "^22.2.0",
+    "@angular/core": "^22.2.0",
+    "@angular/forms": "^22.2.0",
     "@angular/material": "^22.0.6",
     "@angular/material-luxon-adapter": "^22.0.6",
-    "@angular/platform-browser": "^22.0.8",
-    "@angular/router": "^22.0.8",
+    "@angular/platform-browser": "^22.2.0",
+    "@angular/router": "^22.2.0",
     "chroma-js": "^3.2.0",
     "comlink": "^4.4.2",
     "echarts": "^6.0.0",
@@ -45,9 +45,9 @@
     "tslib": "^2.3.0"
   },
   "devDependencies": {
-    "@angular/build": "^22.0.7",
-    "@angular/cli": "^22.0.7",
-    "@angular/compiler-cli": "^22.0.8",
+    "@angular/build": "^22.2.0",
+    "@angular/cli": "^22.2.0",
+    "@angular/compiler-cli": "^22.2.0",
     "@types/chroma-js": "^3.1.2",
     "@types/jasmine": "~5.1.0",
     "@types/leaflet": "^1.9.21",
@@ -62,8 +62,7 @@
     "@parcel/watcher": true,
     "lmdb": true,
     "msgpackr-extract": true,
-    "esbuild@0.28.1": true,
-    "esbuild@0.27.7": true
+    "esbuild@0.28.2": true
   },
   "overrides": {
     "esbuild": "^0.28.1"
